@@ -222,7 +222,7 @@ async function loadData() {
     const text = await res.text();
     const json = JSON.parse(text.substring(47, text.length - 2));
     
-    const cols = json.table.cols.map(c => c.label);
+    const cols = json.table.cols.map(c => c.label.replace(/\n/g, ' ').trim());
     const rows = json.table.rows.map(r => {
       const obj = {};
       r.c.forEach((cell, i) => {
