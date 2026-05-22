@@ -35,19 +35,16 @@
   
   .main { padding: 24px; max-width: 1100px; margin: 0 auto; }
   
-  /* Loader */
   .loader { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh; gap: 16px; }
   .loader-spinner { width: 32px; height: 32px; border: 2px solid var(--border); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .loader-text { font-size: 13px; color: var(--muted); }
 
-  /* Sélecteur de date */
   .date-selector { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; }
   .date-selector label { font-size: 12px; color: var(--muted); }
   .date-selector select { background: var(--bg3); border: 1px solid var(--border); color: var(--text); padding: 6px 10px; border-radius: 6px; font-size: 13px; font-family: 'DM Sans', sans-serif; cursor: pointer; }
   .date-selector select:focus { outline: none; border-color: var(--blue); }
 
-  /* KPI grid */
   .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
   .kpi { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 16px; transition: border-color 0.2s; }
   .kpi:hover { border-color: rgba(255,255,255,0.15); }
@@ -66,44 +63,35 @@
   .delta-neg { color: var(--red); }
   .delta-neu { color: var(--muted); }
 
-  /* Charts row */
   .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
   .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
   .card-title { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 14px; }
 
-  /* Bar chart */
   .bar-chart { display: flex; flex-direction: column; gap: 8px; }
   .bar-row { display: flex; align-items: center; gap: 8px; font-size: 12px; }
   .bar-name { width: 110px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
   .bar-track { flex: 1; background: var(--bg3); border-radius: 3px; height: 6px; overflow: hidden; }
   .bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
   .bar-val { width: 50px; text-align: right; color: var(--text); font-weight: 500; font-family: 'DM Mono', monospace; font-size: 11px; }
-  .bar-pct { width: 36px; text-align: right; color: var(--muted); font-size: 11px; }
 
-  /* Cumul chart */
   .cumul-list { display: flex; flex-direction: column; gap: 0; }
   .cumul-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
   .cumul-row:last-child { border-bottom: none; }
   .cumul-label { color: var(--muted); }
   .cumul-val { font-family: 'DM Mono', monospace; font-weight: 500; }
 
-  /* Progress annuel */
   .progress-bar-wrap { margin-top: 8px; }
   .progress-bar-track { background: var(--bg3); border-radius: 4px; height: 6px; overflow: hidden; }
   .progress-bar-fill { height: 100%; border-radius: 4px; background: var(--blue); transition: width 0.8s ease; }
   .progress-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 4px; }
 
-  /* Bottom row */
   .bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-  /* Transfo */
   .tx-big { font-size: 40px; font-weight: 600; font-family: 'DM Mono', monospace; color: var(--blue); line-height: 1; margin-bottom: 4px; }
   .tx-sub { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
 
-  /* Error */
   .error { background: var(--red-bg); border: 1px solid var(--red); border-radius: 10px; padding: 16px; color: var(--red); font-size: 13px; text-align: center; }
 
-  /* Responsive */
   @media (max-width: 768px) {
     .kpi-grid { grid-template-columns: repeat(2, 1fr); }
     .charts-row, .bottom-row { grid-template-columns: 1fr; }
@@ -132,7 +120,7 @@
   <div id="dashboard" style="display:none">
     
     <div class="date-selector">
-      <label>Journée :</label>
+      <label for="datePicker">Journée :</label>
       <select id="datePicker" onchange="renderDay()"></select>
     </div>
 
@@ -155,7 +143,7 @@
       <div class="kpi blue">
         <div class="kpi-label">Cumul écart marge</div>
         <div class="kpi-value val-blue" id="kpi-cumul">—</div>
-        <div class="kpi-delta delta-neu" id="kpi-cumul-sub">Depuis le 1er avril</div>
+        <div class="kpi-delta delta-neu">Depuis le 1er avril</div>
       </div>
     </div>
 
@@ -194,9 +182,33 @@
 <script>
 const SHEET_ID = '1wBm0SyeqC-4HBKZ7J7KefcNfdLiJ7cL2KIf3VEgcp1M';
 const SHEET_NAME = 'Données journalières';
-const API_KEY = 'AIzaSyD-placeholder'; // Remplacer par clé API Google Sheets
 
 let allRows = [];
+
+// Mapping des colonnes par ID (A, B, C...) — indépendant des labels avec sauts de ligne
+const COL = {
+  date: 'A',
+  jour: 'B',
+  sem: 'C',
+  coeff: 'D',
+  caCible: 'E',
+  margeCible: 'F',
+  caReel: 'G',
+  margeBrute: 'H',
+  margeNette: 'I',
+  txMarge: 'J',
+  ecartMarge: 'K',
+  cumulEcartMarge: 'L',
+  ecartCA: 'M',
+  cumulEcartCA: 'N',
+  rlv: 'O',
+  nbSal: 'P',
+  nbClients: 'Q',
+  nbAchats: 'R',
+  nbVentes: 'S',
+  txTransfo: 'T',
+  notes: 'U'
+};
 
 function fmt(n, decimals=0) {
   if (n === null || n === undefined || n === '') return '—';
@@ -210,9 +222,10 @@ function fmtEuro(n) {
   return s === '—' ? '—' : s + ' €';
 }
 
-function parseNum(s) {
-  if (!s) return null;
-  return parseFloat(String(s).replace(',','.').replace(/\s/g,''));
+function parseNum(v) {
+  if (v === null || v === undefined || v === '') return null;
+  const n = parseFloat(String(v).replace(',','.').replace(/\s/g,''));
+  return isNaN(n) ? null : n;
 }
 
 async function loadData() {
@@ -221,39 +234,56 @@ async function loadData() {
     const res = await fetch(url);
     const text = await res.text();
     const json = JSON.parse(text.substring(47, text.length - 2));
-    
-    const cols = json.table.cols.map(c => c.label);
-    const rows = json.table.rows.map(r => {
+
+    // On mappe par ID de colonne (A, B, C...) pas par label — immunisé aux \n
+    const colIds = json.table.cols.map(c => c.id);
+
+    allRows = json.table.rows.map(r => {
       const obj = {};
       r.c.forEach((cell, i) => {
-        obj[cols[i]] = cell ? cell.v : null;
+        obj[colIds[i]] = cell ? cell.v : null;
       });
       return obj;
-    }).filter(r => r['Date']);
+    }).filter(r => r['A']); // filtre les lignes sans date
 
-    allRows = rows;
-
-    // Populate date selector with days that have CA réel
+    // Peuple le sélecteur avec les jours ayant un CA réel (col G)
     const picker = document.getElementById('datePicker');
-    const daysWithData = rows.filter(r => r['CA réel (€)']);
-    daysWithData.reverse().forEach(r => {
+    const daysWithCA = allRows
+      .map((r, i) => ({r, i}))
+      .filter(({r}) => r['G'] !== null && r['G'] !== undefined);
+
+    daysWithCA.reverse().forEach(({r, i}) => {
       const opt = document.createElement('option');
-      const d = new Date(r['Date']);
-      opt.value = rows.indexOf(rows.find(x => x['Date'] === r['Date']));
-      opt.text = d.toLocaleDateString('fr-FR', {weekday:'short', day:'2-digit', month:'short', year:'numeric'});
+      const d = gvizDateToJS(r['A']);
+      opt.value = i;
+      opt.text = d ? d.toLocaleDateString('fr-FR', {weekday:'short', day:'2-digit', month:'short', year:'numeric'}) : String(r['A']);
       picker.appendChild(opt);
     });
 
     document.getElementById('loader').style.display = 'none';
     document.getElementById('dashboard').style.display = 'block';
     document.getElementById('lastUpdate').textContent = 'Actualisé ' + new Date().toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
-    
+
     renderDay();
   } catch(e) {
     document.getElementById('loader').style.display = 'none';
     document.getElementById('error-msg').style.display = 'block';
-    document.getElementById('error-msg').innerHTML = `<div class="error">Impossible de charger les données. Vérifiez que le Google Sheets est bien partagé en accès public.<br><small>${e.message}</small></div>`;
+    document.getElementById('error-msg').innerHTML = `<div class="error">Impossible de charger les données.<br><small>${e.message}</small></div>`;
   }
+}
+
+function gvizDateToJS(raw) {
+  if (!raw) return null;
+  // gviz cell.v pour les dates = "Date(YYYY,M,D)" où M est 0-indexé
+  if (typeof raw === 'string' && raw.startsWith('Date(')) {
+    const parts = raw.replace('Date(','').replace(')','').split(',').map(Number);
+    return new Date(parts[0], parts[1], parts[2]);
+  }
+  // Déjà un objet Date JS natif
+  if (raw instanceof Date) return raw;
+  // Timestamp numérique ms
+  if (typeof raw === 'number') return new Date(raw);
+  return null;
 }
 
 function renderDay() {
@@ -262,27 +292,26 @@ function renderDay() {
   const row = allRows[idx];
   if (!row) return;
 
-  const margeNette = parseNum(row['Marge nette (€)']);
-  const margeCible = parseNum(row['Marge cible (€)']);
-  const caReel = parseNum(row['CA réel (€)']);
-  const caCible = parseNum(row['CA cible (€)']);
-  const ecartMarge = parseNum(row['Écart marge (€)']);
-  const cumulMarge = parseNum(row['Cumul écart marge (€)']);
-  const ecartCA = parseNum(row['Écart CA (€)']);
-  const cumulCA = parseNum(row['Cumul écart CA (€)']);
-  const rlv = parseNum(row['RLV compteur']);
-  const nbSal = parseNum(row['NB salariés']);
-  const nbVentes = parseNum(row['NB ventes']);
-  const nbAchats = parseNum(row['NB achats']);
-  const txMarge = caReel ? (margeNette / caReel * 100) : null;
-  const nbClients = rlv && nbSal ? (rlv - nbSal) / 2 : null;
-  const txTransfo = nbClients && nbVentes ? (nbVentes / nbClients * 100) : null;
+  const margeNette  = parseNum(row['I']);
+  const margeCible  = parseNum(row['F']);
+  const caReel      = parseNum(row['G']);
+  const caCible     = parseNum(row['E']);
+  const ecartMarge  = parseNum(row['K']);
+  const cumulMarge  = parseNum(row['L']);
+  const ecartCA     = parseNum(row['M']);
+  const cumulCA     = parseNum(row['N']);
+  const rlv         = parseNum(row['O']);
+  const nbSal       = parseNum(row['P']);
+  const nbClients   = parseNum(row['Q']);
+  const nbAchats    = parseNum(row['R']);
+  const nbVentes    = parseNum(row['S']);
+  const txTransfo   = parseNum(row['T']);
+  const txMarge     = caReel && margeNette ? (margeNette / caReel * 100) : null;
 
   // KPIs
   document.getElementById('kpi-marge').textContent = fmtEuro(margeNette);
-  const ecartM = ecartMarge;
-  document.getElementById('kpi-marge-delta').innerHTML = ecartM !== null
-    ? `<span class="${ecartM >= 0 ? 'delta-pos' : 'delta-neg'}">${ecartM >= 0 ? '↑' : '↓'} ${fmtEuro(Math.abs(ecartM))} vs objectif (${fmtEuro(margeCible)})</span>`
+  document.getElementById('kpi-marge-delta').innerHTML = ecartMarge !== null
+    ? `<span class="${ecartMarge >= 0 ? 'delta-pos' : 'delta-neg'}">${ecartMarge >= 0 ? '↑' : '↓'} ${fmtEuro(Math.abs(ecartMarge))} vs objectif (${fmtEuro(margeCible)})</span>`
     : '<span class="delta-neu">—</span>';
 
   document.getElementById('kpi-txmarge').textContent = txMarge !== null ? fmt(txMarge, 1) + ' %' : '—';
@@ -294,29 +323,28 @@ function renderDay() {
 
   document.getElementById('kpi-cumul').textContent = fmtEuro(cumulMarge);
 
-  // Marge chart — 10 derniers jours avec données
-  const daysWithData = allRows.filter(r => r['Marge nette (€)']).slice(-10);
-  const maxMarge = Math.max(...daysWithData.map(r => Math.abs(parseNum(r['Marge nette (€)']) || 0)));
-  const colors = ['#3FB950','#58A6FF','#E3B341','#F85149','#BC8CFF','#3FB950','#58A6FF','#E3B341','#F85149','#BC8CFF'];
-  document.getElementById('marge-chart').innerHTML = daysWithData.map((r, i) => {
-    const m = parseNum(r['Marge nette (€)']);
-    const mc = parseNum(r['Marge cible (€)']);
-    const d = new Date(r['Date']);
-    const label = d.toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'});
+  // Graphique marge — 10 derniers jours avec CA réel
+  const daysWithData = allRows.filter(r => r['G'] !== null && r['I'] !== null).slice(-10);
+  const maxMarge = Math.max(...daysWithData.map(r => Math.abs(parseNum(r['I']) || 0)));
+
+  document.getElementById('marge-chart').innerHTML = daysWithData.map(r => {
+    const m  = parseNum(r['I']);
+    const mc = parseNum(r['F']);
+    const d  = gvizDateToJS(r['A']);
+    const label = d ? d.toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'}) : '—';
     const pct = maxMarge ? Math.round(Math.abs(m) / maxMarge * 100) : 0;
     const isSelected = allRows.indexOf(r) === idx;
     return `<div class="bar-row">
-      <span class="bar-name" style="${isSelected ? 'color:var(--text);font-weight:500' : ''}">${label}</span>
+      <span class="bar-name" style="${isSelected ? 'color:var(--text);font-weight:600' : ''}">${label}</span>
       <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${m >= mc ? 'var(--green)' : 'var(--red)'}"></div></div>
       <span class="bar-val">${fmtEuro(m)}</span>
     </div>`;
   }).join('');
 
   // CODIR
-  const margeYTD = allRows.reduce((s, r) => s + (parseNum(r['Marge nette (€)']) || 0), 0);
-  const caYTD = allRows.reduce((s, r) => s + (parseNum(r['CA réel (€)']) || 0), 0);
+  const margeYTD = allRows.reduce((s, r) => s + (parseNum(r['I']) || 0), 0);
+  const caYTD    = allRows.reduce((s, r) => s + (parseNum(r['G']) || 0), 0);
   const objMarge = 481000;
-  const objCA = 1300000;
   const pctMarge = Math.min(100, margeYTD / objMarge * 100);
   document.getElementById('progress-fill').style.width = pctMarge + '%';
   document.getElementById('codir-list').innerHTML = `
@@ -327,14 +355,15 @@ function renderDay() {
     <div class="cumul-row" style="margin-bottom:10px"><span class="cumul-label">Taux marge moyen</span><span class="cumul-val val-amber">${caYTD ? fmt(margeYTD/caYTD*100,1) : '—'} %</span></div>
   `;
 
-  // Transfo
-  document.getElementById('tx-transfo').textContent = txTransfo !== null ? fmt(txTransfo, 1) + ' %' : '—';
-  document.getElementById('tx-transfo-sub').textContent = nbClients ? `${fmt(nbVentes)} ventes / ${fmt(Math.round(nbClients))} clients` : 'taux de transformation';
+  // Transformation
+  const txPct = txTransfo !== null ? fmt(txTransfo * 100, 1) + ' %' : (nbClients && nbVentes ? fmt(nbVentes / nbClients * 100, 1) + ' %' : '—');
+  document.getElementById('tx-transfo').textContent = txPct;
+  document.getElementById('tx-transfo-sub').textContent = (nbVentes && nbClients) ? `${fmt(nbVentes)} ventes / ${fmt(Math.round(nbClients))} clients` : 'taux de transformation';
   document.getElementById('activite-list').innerHTML = `
     <div class="cumul-row"><span class="cumul-label">NB passages (net)</span><span class="cumul-val">${nbClients ? fmt(Math.round(nbClients)) : '—'}</span></div>
     <div class="cumul-row"><span class="cumul-label">NB ventes</span><span class="cumul-val">${fmt(nbVentes)}</span></div>
     <div class="cumul-row"><span class="cumul-label">NB achats (HA)</span><span class="cumul-val">${fmt(nbAchats)}</span></div>
-    <div class="cumul-row"><span class="cumul-label">Panier moyen</span><span class="cumul-val">${nbVentes && caReel ? fmtEuro(caReel/nbVentes) : '—'}</span></div>
+    <div class="cumul-row"><span class="cumul-label">Panier moyen</span><span class="cumul-val">${nbVentes && caReel ? fmtEuro(caReel / nbVentes) : '—'}</span></div>
   `;
 
   // Écarts cumulés
@@ -343,7 +372,7 @@ function renderDay() {
     <div class="cumul-row"><span class="cumul-label">Cumul écart marge</span><span class="cumul-val ${cumulMarge >= 0 ? 'val-green' : 'val-red'}">${fmtEuro(cumulMarge)}</span></div>
     <div class="cumul-row"><span class="cumul-label">Écart CA du jour</span><span class="cumul-val ${ecartCA >= 0 ? 'val-green' : 'val-red'}">${fmtEuro(ecartCA)}</span></div>
     <div class="cumul-row"><span class="cumul-label">Cumul écart CA</span><span class="cumul-val ${cumulCA >= 0 ? 'val-green' : 'val-red'}">${fmtEuro(cumulCA)}</span></div>
-    <div class="cumul-row"><span class="cumul-label">Coeff. saisonnalité</span><span class="cumul-val val-amber">×${row['Coeff sais.'] || '—'}</span></div>
+    <div class="cumul-row"><span class="cumul-label">Coeff. saisonnalité</span><span class="cumul-val val-amber">×${row['D'] || '—'}</span></div>
   `;
 }
 
