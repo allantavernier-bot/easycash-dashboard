@@ -189,15 +189,6 @@
     <div class="kpi blue"><div class="kpi-label">Semaines réalisées</div><div class="kpi-value val-blue" id="ann-sems">—</div><div class="kpi-delta delta-neu" id="ann-sems-sub">—</div></div>
   </div>
 
-  <div class="annual-kpis" style="grid-template-columns:1fr">
-    <div class="kpi green" style="border-left-color:var(--green)">
-      <div class="kpi-label">Taux de transformation moyen — Cible : 13 % à 18 %</div>
-      <div class="kpi-value" id="ann-tx-transfo" style="margin-bottom:8px">—</div>
-      <div id="ann-tx-bar"></div>
-      <div class="kpi-delta delta-neu" id="ann-tx-sub" style="margin-top:6px">—</div>
-    </div>
-  </div>
-
   <div class="row1">
     <div class="card">
       <div class="card-title">Progression annuelle — Marge cumulée vs Objectif</div>
@@ -213,11 +204,17 @@
   <div class="row2">
     <div class="card">
       <div class="card-title">CA & Marge par semaine</div>
-      <div style="position:relative"><canvas id="weekChart" height="200"></canvas></div>
-      <div class="chart-legend" style="margin-top:10px">
+      <div style="position:relative"><canvas id="weekChart" height="130"></canvas></div>
+      <div class="chart-legend" style="margin-top:8px">
         <div class="legend-item"><div style="width:12px;height:8px;background:rgba(248,81,73,0.6);border-radius:2px"></div>CA semaine</div>
         <div class="legend-item"><div style="width:12px;height:8px;background:rgba(63,185,80,0.7);border-radius:2px"></div>Marge semaine</div>
         <div class="legend-item"><div style="width:12px;height:8px;background:rgba(88,166,255,0.2);border-radius:2px;border:1px dashed var(--blue)"></div>Objectif marge</div>
+      </div>
+      <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px">
+        <div class="card-title">Taux de transformation moyen — Cible : 13 % à 18 %</div>
+        <div class="kpi-value" id="ann-tx-transfo" style="margin-bottom:8px;font-size:28px">—</div>
+        <div id="ann-tx-bar"></div>
+        <div class="kpi-delta delta-neu" id="ann-tx-sub" style="margin-top:6px">—</div>
       </div>
     </div>
     <div class="card" style="overflow:auto">
