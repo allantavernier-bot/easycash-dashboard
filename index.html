@@ -127,7 +127,18 @@ let allRows = [];
 function fmt(n,d=0){if(n===null||n===undefined||n==='')return'—';const x=parseFloat(String(n).replace(',','.').replace(/\s/g,''));if(isNaN(x))return'—';return x.toLocaleString('fr-FR',{minimumFractionDigits:d,maximumFractionDigits:d});}
 function fmtE(n){const s=fmt(n);return s==='—'?'—':s+' €';}
 function parseNum(v){if(v===null||v===undefined||v==='')return null;const n=parseFloat(String(v).replace(',','.').replace(/\s/g,''));return isNaN(n)?null:n;}
-function gdate(raw){if(!raw)return null;if(typeof raw==='string'&&raw.startsWith('Date(')){const p=raw.replace('Date(','').replace(')','').split(',').map(Number);return new Date(p[0],p[1],p[2]);}if(raw instanceof Date)return raw;if(typeof raw==='number')return new Date(raw);return null;}
+function gdate(raw){
+  if(!raw)return null;
+  // Format gviz "Date(2026,4,29)"
+  if(typeof raw==='string'&&raw.startsWith('Date(')){const p=raw.replace('Date(','').replace(')','').split(',').map(Number);return new Date(p[0],p[1],p[2]);}
+  // Format texte "29/05/2026"
+  if(typeof raw==='string'&&raw.match(/^\d{2}\/\d{2}\/\d{4}$/)){const p=raw.split('/');return new Date(parseInt(p[2]),parseInt(p[1])-1,parseInt(p[0]));}
+  // Format ISO "2026-05-29"
+  if(typeof raw==='string'&&raw.match(/^\d{4}-\d{2}-\d{2}/)){return new Date(raw.substring(0,10));}
+  if(raw instanceof Date)return raw;
+  if(typeof raw==='number')return new Date(raw);
+  return null;
+}
 function dshort(raw){const d=gdate(raw);return d?d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}):'?';}
 function dlabel(raw){const d=gdate(raw);return d?d.toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'short',year:'numeric'}):'?';}
 
