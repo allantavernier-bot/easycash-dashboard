@@ -466,14 +466,14 @@ function renderAnnual() {
   const doneWeeks = weeks.filter(w=>w.hasData);
   const ytdM = doneWeeks.reduce((s,w)=>s+w.marge,0);
   const ytdCA = doneWeeks.reduce((s,w)=>s+w.ca,0);
-  const txMoyen = ytdCA ? ytdM/ytdCA*100 : null;
+  const txMargeAnn = ytdCA ? ytdM/ytdCA*100 : null;
 
   // KPIs annuels
   document.getElementById('ann-marge').textContent = fmtE(ytdM);
   document.getElementById('ann-marge-pct').innerHTML = `<span class="delta-neu">${fmt(ytdM/OBJ_ANNUEL*100,1)} % de l'objectif</span>`;
   document.getElementById('ann-ca').textContent = fmtE(ytdCA);
   document.getElementById('ann-ca-sub').textContent = doneWeeks.length + ' semaines réalisées';
-  document.getElementById('ann-taux').textContent = txMoyen ? fmt(txMoyen,1)+' %' : '—';
+  document.getElementById('ann-taux').textContent = txMargeAnn ? fmt(txMargeAnn,1)+' %' : '—';
   document.getElementById('ann-sems').textContent = doneWeeks.length;
   document.getElementById('ann-sems-sub').textContent = (weeks.length - doneWeeks.length) + ' semaines restantes';
 
