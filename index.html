@@ -345,8 +345,7 @@ function renderDay() {
   document.getElementById('activite-list').innerHTML = `
     <div class="cumul-row"><span class="cumul-label">NB passages</span><span class="cumul-val">${nbCli?fmt(Math.round(nbCli)):'—'}</span></div>
     <div class="cumul-row"><span class="cumul-label">NB ventes</span><span class="cumul-val">${nbVte!==null?fmt(nbVte):'—'}</span></div>
-    <div class="cumul-row"><span class="cumul-label">NB achats (HA)</span><span class="cumul-val">${nbAch!==null?fmt(nbAch):'—'}</span></div>
-    <div class="cumul-row"><span class="cumul-label">Panier moyen</span><span class="cumul-val">${nbVte&&ca?fmtE(ca/nbVte):'—'}</span></div>`;
+    <div class="cumul-row"><span class="cumul-label">NB achats (HA)</span><span class="cumul-val">${nbAch!==null?fmt(nbAch):'—'}</span></div>`;
 
   document.getElementById('ecarts-list').innerHTML = `
     <div class="cumul-row"><span class="cumul-label">Écart marge du jour</span><span class="cumul-val" style="color:${ecartM>=0?'var(--green)':'var(--red)'}">${fmtE(ecartM)}</span></div>
@@ -520,84 +519,166 @@ function drawAnnualChart(weeks, ytdM) {
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio||1;
   const W = canvas.parentElement.offsetWidth - 2;
-  const H = 180;
+  const H = 220;
   canvas.width=W*dpr; canvas.height=H*dpr;
   canvas.style.width=W+'px'; canvas.style.height=H+'px';
   ctx.scale(dpr,dpr);
-  ctx.fillStyle='#161B22';ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#161B22'; ctx.fillRect(0,0,W,H);
 
-  const PAD={t:16,r:80,b:30,l:70};
-  const cw=W-PAD.l-PAD.r, ch=H-PAD.t-PAD.b;
-  const n=weeks.length;
-  if(n<2) return;
+  // Étendre jusqu'à fin février 2027
+  // Ajouter les semaines futures avec objectifs
+  const allWeeks = [...weeks];
+  const lastSem = weeks.length > 0 ? weeks[weeks.length-1].sem : 0;
+  // Semaines 1-9 de 2027 (jan-fev)
+  const extraWeeks = [
+    {sem:'S1'27',ca:0,marge:0,caObj:3795,margeObj:1404,hasData:false},
+    {sem:'S2'27',ca:0,marge:0,caObj:3795,margeObj:1404,hasData:false},
+    {sem:'S3'27',ca:0,marge:0,caObj:3795,margeObj:1404,hasData:false},
+    {sem:'S4'27',ca:0,marge:0,caObj:3795,margeObj:1404,hasData:false},
+    {sem:'S5'27',ca:0,marge:0,caObj:3795,margeObj:1404,hasData:false},
+    {sem:'S6'27',ca:0,marge:0,caObj:3795,margeObj:1404,hasData:false},
+    {sem:'S7'27',ca:0,marge:0,caObj:3795,margeObj:1404,hasData:false},
+    {sem:'S8'27',ca:0,marge:0,caObj:3795,margeObj:1404,hasData:false},
+    {sem:'S9'27',ca:0,marge:0,caObj:3795,margeObj:1404,hasData:false},
+  ];
+  const extWeeks = [...allWeeks, ...extraWeeks];
+  const n = extWeeks.length;
+  if(n < 2) return;
 
-  // Cumuler la marge réalisée
-  let cumMarge=0;
-  const cumulData = weeks.map(w=>{
-    if(w.hasData) cumMarge+=w.marge;
-    return {sem:w.sem, cumul:w.hasData?cumMarge:null};
+  // Cumuler la marge réalisée et l'objectif
+  let cumMarge=0, cumObj=0;
+  const cumulData = extWeeks.map(w => {
+    cumObj += (w.margeObj||0);
+    if(w.hasData) cumMarge += w.marge;
+    return {
+      sem: typeof w.sem === 'number' ? 'S'+w.sem : w.sem,
+      cumReal: w.hasData ? cumMarge : null,
+      cumObj: cumObj,
+      isExtra: typeof w.sem === 'string' && w.sem.includes("'27")
+    };
   });
 
-  const maxV = OBJ_ANNUEL * 1.05;
-  function xp(i){return PAD.l+i*(cw/(n-1));}
-  function yp(v){return PAD.t+ch*(1-v/maxV);}
+  // Projection depuis dernier point réalisé
+  const lastDoneIdx = cumulData.reduce((last,d,i) => d.cumReal!==null?i:last, -1);
+  const projData = cumulData.map((d,i) => {
+    if(i < lastDoneIdx) return null;
+    if(i === lastDoneIdx) return ytdM;
+    if(lastDoneIdx < 0) return null;
+    const rate = ytdM / (lastDoneIdx+1);
+    return ytdM + rate * (i - lastDoneIdx);
+  });
 
-  // Grille
+  const maxV = Math.max(...cumulData.map(d=>d.cumObj), ytdM*1.1, OBJ_ANNUEL) * 1.05;
+  const minV = 0;
+
+  const PAD={t:16,r:16,b:32,l:68};
+  const cw=W-PAD.l-PAD.r, ch=H-PAD.t-PAD.b;
+  const step=cw/(n-1);
+
+  function xp(i){return PAD.l+i*step;}
+  function yp(v){return PAD.t+ch*(1-(v-minV)/(maxV-minV));}
+
+  // Séparateur année 2026/2027
+  const sepIdx = allWeeks.length;
+  ctx.strokeStyle='rgba(255,255,255,0.1)';ctx.lineWidth=1;ctx.setLineDash([4,4]);
+  ctx.beginPath();ctx.moveTo(xp(sepIdx),PAD.t);ctx.lineTo(xp(sepIdx),H-PAD.b);ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='rgba(255,255,255,0.2)';ctx.font='10px DM Sans';ctx.textAlign='left';
+  ctx.fillText('2027',xp(sepIdx)+4,PAD.t+12);
+
+  // Ligne objectif annuel 481k
+  const yObj = yp(OBJ_ANNUEL);
+  ctx.strokeStyle='rgba(88,166,255,0.3)';ctx.lineWidth=1;ctx.setLineDash([4,3]);
+  ctx.beginPath();ctx.moveTo(PAD.l,yObj);ctx.lineTo(W-PAD.r,yObj);ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='rgba(88,166,255,0.5)';ctx.font='10px DM Sans';ctx.textAlign='right';
+  ctx.fillText('Obj 481k€',PAD.l-2,yObj-3);
+
+  // Grille horizontale
   [0,.25,.5,.75,1].forEach(p=>{
-    const v=OBJ_ANNUEL*p, y=yp(v);
-    ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=1;ctx.setLineDash([]);
+    const v=minV+(maxV-minV)*p, y=yp(v);
+    ctx.strokeStyle='rgba(255,255,255,0.05)';ctx.lineWidth=1;ctx.setLineDash([]);
     ctx.beginPath();ctx.moveTo(PAD.l,y);ctx.lineTo(W-PAD.r,y);ctx.stroke();
     ctx.fillStyle='#7D8590';ctx.font='10px DM Sans';ctx.textAlign='right';
     ctx.fillText(Math.round(v/1000)+'k€',PAD.l-4,y+3);
   });
 
-  // Ligne objectif linéaire (tirets)
-  ctx.strokeStyle='rgba(125,133,144,0.4)';ctx.lineWidth=1.5;ctx.setLineDash([6,4]);
-  ctx.beginPath();ctx.moveTo(xp(0),yp(0));ctx.lineTo(xp(n-1),yp(OBJ_ANNUEL));ctx.stroke();ctx.setLineDash([]);
+  // Barres écart (réalisé - objectif) comme vue journalière
+  cumulData.forEach((d,i)=>{
+    if(d.cumReal===null) return;
+    const ecart = d.cumReal - d.cumObj;
+    const y0=yp(d.cumObj), yR=yp(d.cumReal);
+    const bw = Math.max(3, step*0.3);
+    ctx.fillStyle = ecart>=0 ? 'rgba(63,185,80,0.4)' : 'rgba(248,81,73,0.4)';
+    ctx.fillRect(xp(i)-bw/2, Math.min(y0,yR), bw, Math.abs(y0-yR));
+  });
 
-  // Zone réalisée
-  const lastDoneIdx = cumulData.reduce((last,d,i)=>d.cumul!==null?i:last,-1);
-  if(lastDoneIdx>=0){
+  // Zone remplie sous la courbe réalisée
+  if(lastDoneIdx >= 0){
     ctx.beginPath();
-    ctx.moveTo(xp(0),yp(0));
-    cumulData.slice(0,lastDoneIdx+1).forEach((d,i)=>{if(d.cumul!==null)ctx.lineTo(xp(i),yp(d.cumul));});
-    ctx.lineTo(xp(lastDoneIdx),H-PAD.b);ctx.lineTo(xp(0),H-PAD.b);ctx.closePath();
-    ctx.fillStyle='rgba(63,185,80,0.08)';ctx.fill();
-
-    // Courbe marge réalisée
-    ctx.strokeStyle='#3FB950';ctx.lineWidth=2.5;
-    ctx.beginPath();
-    let first=true;
-    cumulData.forEach((d,i)=>{if(d.cumul!==null){first?ctx.moveTo(xp(i),yp(d.cumul)):ctx.lineTo(xp(i),yp(d.cumul));first=false;}});
-    ctx.stroke();
-
-    // Projection fin d'année
-    if(lastDoneIdx < n-1 && ytdM > 0){
-      const ratePerWeek = ytdM / (lastDoneIdx+1);
-      const projected = ytdM + ratePerWeek * (n-1-lastDoneIdx);
-      ctx.strokeStyle='rgba(227,179,65,0.6)';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);
-      ctx.beginPath();
-      ctx.moveTo(xp(lastDoneIdx),yp(ytdM));
-      ctx.lineTo(xp(n-1),yp(projected));
-      ctx.stroke();ctx.setLineDash([]);
-
-      // Point projection
-      ctx.beginPath();ctx.arc(xp(n-1),yp(projected),4,0,Math.PI*2);
-      ctx.fillStyle='#E3B341';ctx.fill();
-      ctx.fillStyle='#E3B341';ctx.font='11px DM Sans';ctx.textAlign='left';
-      ctx.fillText(Math.round(projected/1000)+'k€',xp(n-1)+6,yp(projected)+4);
+    ctx.moveTo(xp(0), H-PAD.b);
+    for(let i=0;i<=lastDoneIdx;i++){
+      if(cumulData[i].cumReal!==null) ctx.lineTo(xp(i), yp(cumulData[i].cumReal));
     }
-
-    // Point actuel
-    ctx.beginPath();ctx.arc(xp(lastDoneIdx),yp(ytdM),5,0,Math.PI*2);
-    ctx.fillStyle='#3FB950';ctx.fill();
-    ctx.fillStyle='#3FB950';ctx.font='11px DM Sans';ctx.textAlign='left';
-    ctx.fillText(Math.round(ytdM/1000)+'k€',xp(lastDoneIdx)+7,yp(ytdM)+4);
+    ctx.lineTo(xp(lastDoneIdx), H-PAD.b);
+    ctx.closePath();
+    ctx.fillStyle='rgba(63,185,80,0.07)';
+    ctx.fill();
   }
 
-  // Labels X (semaines)
+  // Courbe objectif (tirets)
+  ctx.strokeStyle='rgba(125,133,144,0.5)';ctx.lineWidth=1.5;ctx.setLineDash([5,4]);
+  ctx.beginPath();
+  cumulData.forEach((d,i)=>{i===0?ctx.moveTo(xp(i),yp(d.cumObj)):ctx.lineTo(xp(i),yp(d.cumObj));});
+  ctx.stroke();ctx.setLineDash([]);
+
+  // Courbe projection (tirets ambrés)
+  ctx.strokeStyle='rgba(227,179,65,0.7)';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);
+  ctx.beginPath();
+  let projStarted=false;
+  projData.forEach((v,i)=>{
+    if(v===null) return;
+    if(!projStarted){ctx.moveTo(xp(i),yp(v));projStarted=true;}
+    else ctx.lineTo(xp(i),yp(v));
+  });
+  ctx.stroke();ctx.setLineDash([]);
+
+  // Courbe marge réalisée
+  ctx.strokeStyle='#3FB950';ctx.lineWidth=2.5;
+  ctx.beginPath();
+  let first=true;
+  cumulData.forEach((d,i)=>{
+    if(d.cumReal===null) return;
+    first?ctx.moveTo(xp(i),yp(d.cumReal)):ctx.lineTo(xp(i),yp(d.cumReal));
+    first=false;
+  });
+  ctx.stroke();
+
+  // Points marge réalisée
+  cumulData.forEach((d,i)=>{
+    if(d.cumReal===null) return;
+    ctx.beginPath();ctx.arc(xp(i),yp(d.cumReal),3,0,Math.PI*2);
+    ctx.fillStyle='#161B22';ctx.strokeStyle='#3FB950';ctx.lineWidth=1.5;
+    ctx.fill();ctx.stroke();
+  });
+
+  // Point final projeté
+  if(lastDoneIdx >= 0 && lastDoneIdx < n-1){
+    const projFinal = projData[n-1];
+    if(projFinal){
+      ctx.beginPath();ctx.arc(xp(n-1),yp(projFinal),5,0,Math.PI*2);
+      ctx.fillStyle='#E3B341';ctx.fill();
+      ctx.fillStyle='#E3B341';ctx.font='11px DM Sans';ctx.textAlign='left';
+      ctx.fillText(Math.round(projFinal/1000)+'k€',xp(n-1)-30,yp(projFinal)-8);
+    }
+  }
+
+  // Labels X (semaines, 1 sur 4)
   ctx.fillStyle='#7D8590';ctx.font='10px DM Sans';ctx.textAlign='center';ctx.setLineDash([]);
-  weeks.forEach((w,i)=>{if(i%4===0||i===n-1)ctx.fillText('S'+w.sem,xp(i),H-PAD.b+14);});
+  extWeeks.forEach((w,i)=>{
+    const label = typeof w.sem === 'number' ? 'S'+w.sem : w.sem;
+    if(i%4===0||i===n-1) ctx.fillText(label,xp(i),H-PAD.b+14);
+  });
 }
 
 function drawWeekChart(doneWeeks) {
