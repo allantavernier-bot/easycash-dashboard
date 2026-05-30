@@ -7,162 +7,100 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0D1117;
-    --bg2: #161B22;
-    --bg3: #21262D;
-    --border: rgba(255,255,255,0.08);
-    --text: #E6EDF3;
-    --muted: #7D8590;
-    --green: #3FB950;
-    --green-bg: rgba(63,185,80,0.1);
-    --red: #F85149;
-    --red-bg: rgba(248,81,73,0.1);
-    --blue: #58A6FF;
-    --blue-bg: rgba(88,166,255,0.1);
-    --amber: #E3B341;
-    --amber-bg: rgba(227,179,65,0.1);
+    --bg: #0D1117; --bg2: #161B22; --bg3: #21262D;
+    --border: rgba(255,255,255,0.08); --text: #E6EDF3; --muted: #7D8590;
+    --green: #3FB950; --red: #F85149; --blue: #58A6FF; --amber: #E3B341; --purple: #BC8CFF;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
-  
-  .header { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
-  .header-left { display: flex; align-items: center; gap: 12px; }
-  .logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 2s infinite; }
+  .header { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+  .logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 2s infinite; display:inline-block; margin-right:10px; vertical-align:middle; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-  .header-title { font-size: 15px; font-weight: 600; color: var(--text); }
-  .header-sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .header-title { font-size: 15px; font-weight: 600; }
+  .header-sub { font-size: 12px; color: var(--muted); margin-top:1px; }
   .header-date { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); background: var(--bg3); padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); }
-  
-  .main { padding: 24px; max-width: 1100px; margin: 0 auto; }
-  
-  .loader { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh; gap: 16px; }
-  .loader-spinner { width: 32px; height: 32px; border: 2px solid var(--border); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  .main { padding: 20px 24px; max-width: 1200px; margin: 0 auto; }
+  .loader { display:flex; flex-direction:column; align-items:center; justify-content:center; height:60vh; gap:16px; }
+  .loader-spinner { width:32px; height:32px; border:2px solid var(--border); border-top-color:var(--blue); border-radius:50%; animation:spin .8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .loader-text { font-size: 13px; color: var(--muted); }
-
-  .date-selector { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; }
-  .date-selector label { font-size: 12px; color: var(--muted); }
-  .date-selector select { background: var(--bg3); border: 1px solid var(--border); color: var(--text); padding: 6px 10px; border-radius: 6px; font-size: 13px; font-family: 'DM Sans', sans-serif; cursor: pointer; }
-  .date-selector select:focus { outline: none; border-color: var(--blue); }
-
-  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
-  .kpi { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 16px; transition: border-color 0.2s; }
-  .kpi:hover { border-color: rgba(255,255,255,0.15); }
-  .kpi-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
-  .kpi-value { font-size: 24px; font-weight: 600; line-height: 1; margin-bottom: 6px; font-family: 'DM Mono', monospace; }
-  .kpi-delta { font-size: 12px; }
-  .kpi.green { border-left: 3px solid var(--green); }
-  .kpi.red { border-left: 3px solid var(--red); }
-  .kpi.blue { border-left: 3px solid var(--blue); }
-  .kpi.amber { border-left: 3px solid var(--amber); }
-  .val-green { color: var(--green); }
-  .val-red { color: var(--red); }
-  .val-blue { color: var(--blue); }
-  .val-amber { color: var(--amber); }
-  .delta-pos { color: var(--green); }
-  .delta-neg { color: var(--red); }
-  .delta-neu { color: var(--muted); }
-
-  .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
-  .card-title { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 14px; }
-
-  .bar-chart { display: flex; flex-direction: column; gap: 8px; }
-  .bar-row { display: flex; align-items: center; gap: 8px; font-size: 12px; }
-  .bar-name { width: 110px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
-  .bar-track { flex: 1; background: var(--bg3); border-radius: 3px; height: 6px; overflow: hidden; }
-  .bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
-  .bar-val { width: 50px; text-align: right; color: var(--text); font-weight: 500; font-family: 'DM Mono', monospace; font-size: 11px; }
-
-  .cumul-list { display: flex; flex-direction: column; gap: 0; }
-  .cumul-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
-  .cumul-row:last-child { border-bottom: none; }
-  .cumul-label { color: var(--muted); }
-  .cumul-val { font-family: 'DM Mono', monospace; font-weight: 500; }
-
-  .progress-bar-wrap { margin-top: 8px; }
-  .progress-bar-track { background: var(--bg3); border-radius: 4px; height: 6px; overflow: hidden; }
-  .progress-bar-fill { height: 100%; border-radius: 4px; background: var(--blue); transition: width 0.8s ease; }
-  .progress-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 4px; }
-
-  .bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-  .tx-big { font-size: 40px; font-weight: 600; font-family: 'DM Mono', monospace; color: var(--blue); line-height: 1; margin-bottom: 4px; }
-  .tx-sub { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
-
-  .error { background: var(--red-bg); border: 1px solid var(--red); border-radius: 10px; padding: 16px; color: var(--red); font-size: 13px; text-align: center; }
-
-  @media (max-width: 768px) {
-    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
-    .charts-row, .bottom-row { grid-template-columns: 1fr; }
-    .main { padding: 16px; }
-  }
+  .date-selector { display:flex; align-items:center; gap:8px; margin-bottom:16px; }
+  .date-selector label { font-size:12px; color:var(--muted); }
+  .date-selector select { background:var(--bg3); border:1px solid var(--border); color:var(--text); padding:6px 10px; border-radius:6px; font-size:13px; font-family:'DM Sans',sans-serif; cursor:pointer; }
+  .kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:16px; }
+  .kpi { background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:14px; }
+  .kpi-label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px; }
+  .kpi-value { font-size:22px; font-weight:600; line-height:1; margin-bottom:4px; font-family:'DM Mono',monospace; }
+  .kpi-delta { font-size:11px; }
+  .kpi.green { border-left:3px solid var(--green); } .kpi.red { border-left:3px solid var(--red); }
+  .kpi.blue { border-left:3px solid var(--blue); } .kpi.amber { border-left:3px solid var(--amber); }
+  .val-green{color:var(--green)} .val-red{color:var(--red)} .val-blue{color:var(--blue)} .val-amber{color:var(--amber)}
+  .delta-pos{color:var(--green)} .delta-neg{color:var(--red)} .delta-neu{color:var(--muted)}
+  .row2 { display:grid; grid-template-columns:2fr 1fr; gap:12px; margin-bottom:16px; }
+  .row3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+  .card { background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:16px; }
+  .card-title { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:14px; }
+  /* Chart SVG */
+  .chart-wrap { position:relative; width:100%; }
+  svg.chart { width:100%; overflow:visible; }
+  .chart-legend { display:flex; gap:16px; margin-top:10px; flex-wrap:wrap; }
+  .legend-item { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--muted); }
+  .legend-dot { width:8px; height:8px; border-radius:50%; }
+  .legend-line { width:16px; height:2px; border-radius:2px; }
+  /* Cumul list */
+  .cumul-list { display:flex; flex-direction:column; }
+  .cumul-row { display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-bottom:1px solid var(--border); font-size:13px; }
+  .cumul-row:last-child { border-bottom:none; }
+  .cumul-label { color:var(--muted); }
+  .cumul-val { font-family:'DM Mono',monospace; font-weight:500; }
+  .progress-track { background:var(--bg3); border-radius:4px; height:5px; overflow:hidden; margin:8px 0 4px; }
+  .progress-fill { height:100%; border-radius:4px; background:var(--blue); transition:width .8s ease; }
+  .progress-labels { display:flex; justify-content:space-between; font-size:10px; color:var(--muted); }
+  .tx-big { font-size:38px; font-weight:600; font-family:'DM Mono',monospace; color:var(--blue); line-height:1; margin-bottom:3px; }
+  .tx-sub { font-size:11px; color:var(--muted); margin-bottom:12px; }
+  .error { background:rgba(248,81,73,.1); border:1px solid var(--red); border-radius:10px; padding:16px; color:var(--red); font-size:13px; text-align:center; }
+  @media(max-width:768px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.row2,.row3{grid-template-columns:1fr}.main{padding:14px}}
 </style>
 </head>
 <body>
-
 <div class="header">
-  <div class="header-left">
-    <div class="logo-dot"></div>
-    <div>
-      <div class="header-title">EasyCash 206 — Berck-sur-Mer</div>
-      <div class="header-sub">Pilotage marge journalier</div>
-    </div>
+  <div style="display:flex;align-items:center">
+    <span class="logo-dot"></span>
+    <div><div class="header-title">EasyCash 206 — Berck-sur-Mer</div><div class="header-sub">Pilotage marge journalier</div></div>
   </div>
   <div class="header-date" id="lastUpdate">Chargement...</div>
 </div>
-
 <div class="main">
-  <div id="loader" class="loader">
-    <div class="loader-spinner"></div>
-    <div class="loader-text">Chargement des données...</div>
-  </div>
+  <div id="loader" class="loader"><div class="loader-spinner"></div><div style="font-size:13px;color:var(--muted)">Chargement...</div></div>
   <div id="dashboard" style="display:none">
-    
     <div class="date-selector">
       <label for="datePicker">Journée :</label>
       <select id="datePicker" onchange="renderDay()"></select>
     </div>
-
     <div class="kpi-grid">
-      <div class="kpi green">
-        <div class="kpi-label">Marge nette</div>
-        <div class="kpi-value val-green" id="kpi-marge">—</div>
-        <div class="kpi-delta" id="kpi-marge-delta">—</div>
-      </div>
-      <div class="kpi amber">
-        <div class="kpi-label">Taux de marge</div>
-        <div class="kpi-value val-amber" id="kpi-txmarge">—</div>
-        <div class="kpi-delta delta-neu">Objectif : 37 %</div>
-      </div>
-      <div class="kpi red">
-        <div class="kpi-label">CA du jour</div>
-        <div class="kpi-value val-red" id="kpi-ca">—</div>
-        <div class="kpi-delta" id="kpi-ca-delta">—</div>
-      </div>
-      <div class="kpi blue">
-        <div class="kpi-label">Cumul écart marge</div>
-        <div class="kpi-value val-blue" id="kpi-cumul">—</div>
-        <div class="kpi-delta delta-neu">Depuis le 1er avril</div>
-      </div>
+      <div class="kpi green"><div class="kpi-label">Marge nette</div><div class="kpi-value val-green" id="kpi-marge">—</div><div class="kpi-delta" id="kpi-marge-delta">—</div></div>
+      <div class="kpi amber"><div class="kpi-label">Taux de marge</div><div class="kpi-value val-amber" id="kpi-txmarge">—</div><div class="kpi-delta delta-neu">Objectif : 37 %</div></div>
+      <div class="kpi red"><div class="kpi-label">CA du jour</div><div class="kpi-value val-red" id="kpi-ca">—</div><div class="kpi-delta" id="kpi-ca-delta">—</div></div>
+      <div class="kpi blue"><div class="kpi-label">Cumul écart marge</div><div class="kpi-value val-blue" id="kpi-cumul">—</div><div class="kpi-delta delta-neu" id="kpi-cumul-sub">Depuis le 1er avril</div></div>
     </div>
-
-    <div class="charts-row">
+    <div class="row2">
       <div class="card">
-        <div class="card-title">Évolution marge nette — 10 derniers jours</div>
-        <div id="marge-chart" class="bar-chart"></div>
-      </div>
-      <div class="card">
-        <div class="card-title">Synthèse CODIR — progression annuelle</div>
-        <div class="cumul-list" id="codir-list"></div>
-        <div class="progress-bar-wrap">
-          <div class="progress-bar-track"><div class="progress-bar-fill" id="progress-fill" style="width:0%"></div></div>
-          <div class="progress-labels"><span>0 €</span><span>Obj. 481 000 €</span></div>
+        <div class="card-title">Évolution marge — 15 derniers jours</div>
+        <div class="chart-wrap"><canvas id="margeChart" height="160"></canvas></div>
+        <div class="chart-legend">
+          <div class="legend-item"><div class="legend-line" style="background:var(--green)"></div>Marge réelle</div>
+          <div class="legend-item"><div class="legend-line" style="background:var(--muted);border-top:2px dashed var(--muted);height:0"></div>Objectif</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>Cumul écart</div>
+          <div class="legend-item"><div style="width:8px;height:8px;background:var(--amber);opacity:.7"></div>Écart journalier</div>
         </div>
       </div>
+      <div class="card">
+        <div class="card-title">Synthèse CODIR</div>
+        <div class="cumul-list" id="codir-list"></div>
+        <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+        <div class="progress-labels"><span>0 €</span><span>Obj. 481 000 €</span></div>
+      </div>
     </div>
-
-    <div class="bottom-row">
+    <div class="row3">
       <div class="card">
         <div class="card-title">Transformation & activité</div>
         <div class="tx-big" id="tx-transfo">—</div>
@@ -173,207 +111,218 @@
         <div class="card-title">Écarts cumulés</div>
         <div class="cumul-list" id="ecarts-list"></div>
       </div>
+      <div class="card">
+        <div class="card-title">Semaine en cours</div>
+        <div class="cumul-list" id="semaine-list"></div>
+      </div>
     </div>
-
   </div>
   <div id="error-msg" style="display:none"></div>
 </div>
-
 <script>
 const SHEET_ID = '1wBm0SyeqC-4HBKZ7J7KefcNfdLiJ7cL2KIf3VEgcp1M';
-const SHEET_NAME = 'Données journalières';
-
+const SHEET_TAB = 'Données journalières';
 let allRows = [];
 
-// Mapping des colonnes par ID (A, B, C...) — indépendant des labels avec sauts de ligne
-const COL = {
-  date: 'A',
-  jour: 'B',
-  sem: 'C',
-  coeff: 'D',
-  caCible: 'E',
-  margeCible: 'F',
-  caReel: 'G',
-  margeBrute: 'H',
-  margeNette: 'I',
-  txMarge: 'J',
-  ecartMarge: 'K',
-  cumulEcartMarge: 'L',
-  ecartCA: 'M',
-  cumulEcartCA: 'N',
-  rlv: 'O',
-  nbSal: 'P',
-  nbClients: 'Q',
-  nbAchats: 'R',
-  nbVentes: 'S',
-  txTransfo: 'T',
-  notes: 'U'
-};
+function fmt(n,d=0){if(n===null||n===undefined||n==='')return'—';const x=parseFloat(String(n).replace(',','.').replace(/\s/g,''));if(isNaN(x))return'—';return x.toLocaleString('fr-FR',{minimumFractionDigits:d,maximumFractionDigits:d});}
+function fmtE(n){const s=fmt(n);return s==='—'?'—':s+' €';}
+function parseNum(v){if(v===null||v===undefined||v==='')return null;const n=parseFloat(String(v).replace(',','.').replace(/\s/g,''));return isNaN(n)?null:n;}
+function gdate(raw){if(!raw)return null;if(typeof raw==='string'&&raw.startsWith('Date(')){const p=raw.replace('Date(','').replace(')','').split(',').map(Number);return new Date(p[0],p[1],p[2]);}if(raw instanceof Date)return raw;if(typeof raw==='number')return new Date(raw);return null;}
+function dshort(raw){const d=gdate(raw);return d?d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}):'?';}
+function dlabel(raw){const d=gdate(raw);return d?d.toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'short',year:'numeric'}):'?';}
 
-function fmt(n, decimals=0) {
-  if (n === null || n === undefined || n === '') return '—';
-  const num = parseFloat(String(n).replace(',','.').replace(/\s/g,''));
-  if (isNaN(num)) return '—';
-  return num.toLocaleString('fr-FR', {minimumFractionDigits: decimals, maximumFractionDigits: decimals});
-}
-
-function fmtEuro(n) {
-  const s = fmt(n);
-  return s === '—' ? '—' : s + ' €';
-}
-
-function parseNum(v) {
-  if (v === null || v === undefined || v === '') return null;
-  const n = parseFloat(String(v).replace(',','.').replace(/\s/g,''));
-  return isNaN(n) ? null : n;
-}
-
-async function loadData() {
-  try {
-    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
-    const res = await fetch(url);
-    const text = await res.text();
-    const json = JSON.parse(text.substring(47, text.length - 2));
-
-    // On mappe par ID de colonne (A, B, C...) pas par label — immunisé aux \n
-    const colIds = json.table.cols.map(c => c.id);
-
-    allRows = json.table.rows.map(r => {
-      const obj = {};
-      r.c.forEach((cell, i) => {
-        obj[colIds[i]] = cell ? cell.v : null;
-      });
-      return obj;
-    }).filter(r => r['A']); // filtre les lignes sans date
-
-    // Peuple le sélecteur avec les jours ayant un CA réel (col G)
-    const picker = document.getElementById('datePicker');
-    const daysWithCA = allRows
-      .map((r, i) => ({r, i}))
-      .filter(({r}) => r['G'] !== null && r['G'] !== undefined);
-
-    daysWithCA.reverse().forEach(({r, i}) => {
-      const opt = document.createElement('option');
-      const d = gvizDateToJS(r['A']);
-      opt.value = i;
-      opt.text = d ? d.toLocaleDateString('fr-FR', {weekday:'short', day:'2-digit', month:'short', year:'numeric'}) : String(r['A']);
-      picker.appendChild(opt);
-    });
-
-    document.getElementById('loader').style.display = 'none';
-    document.getElementById('dashboard').style.display = 'block';
-    document.getElementById('lastUpdate').textContent = 'Actualisé ' + new Date().toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
-
+async function loadData(){
+  try{
+    const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_TAB)}`;
+    const res=await fetch(url);
+    const txt=await res.text();
+    const js=JSON.parse(txt.substring(47,txt.length-2));
+    const ids=js.table.cols.map(c=>c.id);
+    allRows=js.table.rows.map(r=>{const o={};r.c.forEach((cell,i)=>{o[ids[i]]=cell?cell.v:null;});return o;}).filter(r=>r['A']);
+    const picker=document.getElementById('datePicker');
+    const withCA=[...allRows.map((r,i)=>({r,i})).filter(({r})=>r['G']!==null&&r['G']!==undefined)].reverse();
+    withCA.forEach(({r,i})=>{const opt=document.createElement('option');opt.value=i;opt.text=dlabel(r['A']);picker.appendChild(opt);});
+    document.getElementById('loader').style.display='none';
+    document.getElementById('dashboard').style.display='block';
+    document.getElementById('lastUpdate').textContent='Actualisé '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
     renderDay();
-  } catch(e) {
-    document.getElementById('loader').style.display = 'none';
-    document.getElementById('error-msg').style.display = 'block';
-    document.getElementById('error-msg').innerHTML = `<div class="error">Impossible de charger les données.<br><small>${e.message}</small></div>`;
+  }catch(e){
+    document.getElementById('loader').style.display='none';
+    document.getElementById('error-msg').style.display='block';
+    document.getElementById('error-msg').innerHTML=`<div class="error">Erreur chargement<br><small>${e.message}</small></div>`;
   }
 }
 
-function gvizDateToJS(raw) {
-  if (!raw) return null;
-  // gviz cell.v pour les dates = "Date(YYYY,M,D)" où M est 0-indexé
-  if (typeof raw === 'string' && raw.startsWith('Date(')) {
-    const parts = raw.replace('Date(','').replace(')','').split(',').map(Number);
-    return new Date(parts[0], parts[1], parts[2]);
-  }
-  // Déjà un objet Date JS natif
-  if (raw instanceof Date) return raw;
-  // Timestamp numérique ms
-  if (typeof raw === 'number') return new Date(raw);
-  return null;
-}
+function renderDay(){
+  const idx=parseInt(document.getElementById('datePicker').value);
+  const row=allRows[idx];
+  if(!row)return;
 
-function renderDay() {
-  const picker = document.getElementById('datePicker');
-  const idx = parseInt(picker.value);
-  const row = allRows[idx];
-  if (!row) return;
-
-  const margeNette  = parseNum(row['I']);
-  const margeCible  = parseNum(row['F']);
-  const caReel      = parseNum(row['G']);
-  const caCible     = parseNum(row['E']);
-  const ecartMarge  = parseNum(row['K']);
-  const cumulMarge  = parseNum(row['L']);
-  const ecartCA     = parseNum(row['M']);
-  const cumulCA     = parseNum(row['N']);
-  const rlv         = parseNum(row['O']);
-  const nbSal       = parseNum(row['P']);
-  const nbClients   = parseNum(row['Q']);
-  const nbAchats    = parseNum(row['R']);
-  const nbVentes    = parseNum(row['S']);
-  const txTransfo   = parseNum(row['T']);
-  const txMarge     = caReel && margeNette ? (margeNette / caReel * 100) : null;
+  const marge=parseNum(row['I']),margeCible=parseNum(row['F']),
+        ca=parseNum(row['G']),caCible=parseNum(row['E']),
+        ecartM=parseNum(row['K']),cumulM=parseNum(row['L']),
+        ecartCA=parseNum(row['M']),cumulCA=parseNum(row['N']),
+        nbCli=parseNum(row['Q']),nbAch=parseNum(row['R']),
+        nbVte=parseNum(row['S']),txT=parseNum(row['T']),
+        coeff=parseNum(row['D']),sem=parseNum(row['C']);
+  const txMarge=ca&&marge?marge/ca*100:null;
 
   // KPIs
-  document.getElementById('kpi-marge').textContent = fmtEuro(margeNette);
-  document.getElementById('kpi-marge-delta').innerHTML = ecartMarge !== null
-    ? `<span class="${ecartMarge >= 0 ? 'delta-pos' : 'delta-neg'}">${ecartMarge >= 0 ? '↑' : '↓'} ${fmtEuro(Math.abs(ecartMarge))} vs objectif (${fmtEuro(margeCible)})</span>`
-    : '<span class="delta-neu">—</span>';
+  document.getElementById('kpi-marge').textContent=fmtE(marge);
+  document.getElementById('kpi-marge-delta').innerHTML=ecartM!==null
+    ?`<span class="${ecartM>=0?'delta-pos':'delta-neg'}">${ecartM>=0?'↑':'↓'} ${fmtE(Math.abs(ecartM))} vs obj (${fmtE(margeCible)})</span>`
+    :'<span class="delta-neu">—</span>';
+  document.getElementById('kpi-txmarge').textContent=txMarge!==null?fmt(txMarge,1)+' %':'—';
+  document.getElementById('kpi-ca').textContent=fmtE(ca);
+  document.getElementById('kpi-ca-delta').innerHTML=ecartCA!==null
+    ?`<span class="${ecartCA>=0?'delta-pos':'delta-neg'}">${ecartCA>=0?'↑':'↓'} ${fmtE(Math.abs(ecartCA))} vs obj (${fmtE(caCible)})</span>`
+    :'<span class="delta-neu">—</span>';
+  document.getElementById('kpi-cumul').textContent=fmtE(cumulM);
+  document.getElementById('kpi-cumul-sub').textContent=cumulM!==null?(cumulM>=0?'✓ En avance':'✗ En retard')+' sur objectif':'Depuis le 1er avril';
 
-  document.getElementById('kpi-txmarge').textContent = txMarge !== null ? fmt(txMarge, 1) + ' %' : '—';
-
-  document.getElementById('kpi-ca').textContent = fmtEuro(caReel);
-  document.getElementById('kpi-ca-delta').innerHTML = ecartCA !== null
-    ? `<span class="${ecartCA >= 0 ? 'delta-pos' : 'delta-neg'}">${ecartCA >= 0 ? '↑' : '↓'} ${fmtEuro(Math.abs(ecartCA))} vs objectif (${fmtEuro(caCible)})</span>`
-    : '<span class="delta-neu">—</span>';
-
-  document.getElementById('kpi-cumul').textContent = fmtEuro(cumulMarge);
-
-  // Graphique marge — 10 derniers jours avec CA réel
-  const daysWithData = allRows.filter(r => r['G'] !== null && r['I'] !== null).slice(-10);
-  const maxMarge = Math.max(...daysWithData.map(r => Math.abs(parseNum(r['I']) || 0)));
-
-  document.getElementById('marge-chart').innerHTML = daysWithData.map(r => {
-    const m  = parseNum(r['I']);
-    const mc = parseNum(r['F']);
-    const d  = gvizDateToJS(r['A']);
-    const label = d ? d.toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'}) : '—';
-    const pct = maxMarge ? Math.round(Math.abs(m) / maxMarge * 100) : 0;
-    const isSelected = allRows.indexOf(r) === idx;
-    return `<div class="bar-row">
-      <span class="bar-name" style="${isSelected ? 'color:var(--text);font-weight:600' : ''}">${label}</span>
-      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${m >= mc ? 'var(--green)' : 'var(--red)'}"></div></div>
-      <span class="bar-val">${fmtEuro(m)}</span>
-    </div>`;
-  }).join('');
+  // Graphique canvas — 15 derniers jours
+  drawChart(idx);
 
   // CODIR
-  const margeYTD = allRows.reduce((s, r) => s + (parseNum(r['I']) || 0), 0);
-  const caYTD    = allRows.reduce((s, r) => s + (parseNum(r['G']) || 0), 0);
-  const objMarge = 481000;
-  const pctMarge = Math.min(100, margeYTD / objMarge * 100);
-  document.getElementById('progress-fill').style.width = pctMarge + '%';
-  document.getElementById('codir-list').innerHTML = `
-    <div class="cumul-row"><span class="cumul-label">Marge nette YTD</span><span class="cumul-val val-green">${fmtEuro(margeYTD)}</span></div>
-    <div class="cumul-row"><span class="cumul-label">Objectif annuel</span><span class="cumul-val">${fmtEuro(objMarge)}</span></div>
-    <div class="cumul-row"><span class="cumul-label">Atteinte marge</span><span class="cumul-val val-amber">${fmt(pctMarge, 1)} %</span></div>
-    <div class="cumul-row"><span class="cumul-label">CA réalisé YTD</span><span class="cumul-val">${fmtEuro(caYTD)}</span></div>
-    <div class="cumul-row" style="margin-bottom:10px"><span class="cumul-label">Taux marge moyen</span><span class="cumul-val val-amber">${caYTD ? fmt(margeYTD/caYTD*100,1) : '—'} %</span></div>
-  `;
+  const ytdM=allRows.reduce((s,r)=>s+(parseNum(r['I'])||0),0);
+  const ytdCA=allRows.reduce((s,r)=>s+(parseNum(r['G'])||0),0);
+  const obj=481000,pct=Math.min(100,ytdM/obj*100);
+  document.getElementById('progress-fill').style.width=pct+'%';
+  document.getElementById('codir-list').innerHTML=`
+    <div class="cumul-row"><span class="cumul-label">Marge nette YTD</span><span class="cumul-val val-green">${fmtE(ytdM)}</span></div>
+    <div class="cumul-row"><span class="cumul-label">Objectif annuel</span><span class="cumul-val">${fmtE(obj)}</span></div>
+    <div class="cumul-row"><span class="cumul-label">Atteinte</span><span class="cumul-val val-amber">${fmt(pct,1)} %</span></div>
+    <div class="cumul-row"><span class="cumul-label">CA réalisé YTD</span><span class="cumul-val">${fmtE(ytdCA)}</span></div>
+    <div class="cumul-row"><span class="cumul-label">Taux marge moyen</span><span class="cumul-val val-amber">${ytdCA?fmt(ytdM/ytdCA*100,1):'—'} %</span></div>`;
 
-  // Transformation
-  const txPct = txTransfo !== null ? fmt(txTransfo * 100, 1) + ' %' : (nbClients && nbVentes ? fmt(nbVentes / nbClients * 100, 1) + ' %' : '—');
-  document.getElementById('tx-transfo').textContent = txPct;
-  document.getElementById('tx-transfo-sub').textContent = (nbVentes && nbClients) ? `${fmt(nbVentes)} ventes / ${fmt(Math.round(nbClients))} clients` : 'taux de transformation';
-  document.getElementById('activite-list').innerHTML = `
-    <div class="cumul-row"><span class="cumul-label">NB passages (net)</span><span class="cumul-val">${nbClients ? fmt(Math.round(nbClients)) : '—'}</span></div>
-    <div class="cumul-row"><span class="cumul-label">NB ventes</span><span class="cumul-val">${fmt(nbVentes)}</span></div>
-    <div class="cumul-row"><span class="cumul-label">NB achats (HA)</span><span class="cumul-val">${fmt(nbAchats)}</span></div>
-    <div class="cumul-row"><span class="cumul-label">Panier moyen</span><span class="cumul-val">${nbVentes && caReel ? fmtEuro(caReel / nbVentes) : '—'}</span></div>
-  `;
+  // Transfo
+  const txPct=txT!==null?fmt(txT*100,1)+'%':(nbCli&&nbVte?fmt(nbVte/nbCli*100,1)+'%':'—');
+  document.getElementById('tx-transfo').textContent=txPct;
+  document.getElementById('tx-transfo-sub').textContent=(nbVte&&nbCli)?`${fmt(nbVte)} ventes / ${fmt(Math.round(nbCli))} clients`:'données non saisies';
+  document.getElementById('activite-list').innerHTML=`
+    <div class="cumul-row"><span class="cumul-label">NB passages</span><span class="cumul-val">${nbCli?fmt(Math.round(nbCli)):'—'}</span></div>
+    <div class="cumul-row"><span class="cumul-label">NB ventes</span><span class="cumul-val">${nbVte!==null?fmt(nbVte):'—'}</span></div>
+    <div class="cumul-row"><span class="cumul-label">NB achats (HA)</span><span class="cumul-val">${nbAch!==null?fmt(nbAch):'—'}</span></div>
+    <div class="cumul-row"><span class="cumul-label">Panier moyen</span><span class="cumul-val">${nbVte&&ca?fmtE(ca/nbVte):'—'}</span></div>`;
 
-  // Écarts cumulés
-  document.getElementById('ecarts-list').innerHTML = `
-    <div class="cumul-row"><span class="cumul-label">Écart marge du jour</span><span class="cumul-val ${ecartMarge >= 0 ? 'val-green' : 'val-red'}">${fmtEuro(ecartMarge)}</span></div>
-    <div class="cumul-row"><span class="cumul-label">Cumul écart marge</span><span class="cumul-val ${cumulMarge >= 0 ? 'val-green' : 'val-red'}">${fmtEuro(cumulMarge)}</span></div>
-    <div class="cumul-row"><span class="cumul-label">Écart CA du jour</span><span class="cumul-val ${ecartCA >= 0 ? 'val-green' : 'val-red'}">${fmtEuro(ecartCA)}</span></div>
-    <div class="cumul-row"><span class="cumul-label">Cumul écart CA</span><span class="cumul-val ${cumulCA >= 0 ? 'val-green' : 'val-red'}">${fmtEuro(cumulCA)}</span></div>
-    <div class="cumul-row"><span class="cumul-label">Coeff. saisonnalité</span><span class="cumul-val val-amber">×${row['D'] || '—'}</span></div>
-  `;
+  // Écarts
+  document.getElementById('ecarts-list').innerHTML=`
+    <div class="cumul-row"><span class="cumul-label">Écart marge du jour</span><span class="cumul-val" style="color:${ecartM>=0?'var(--green)':'var(--red)'}">${fmtE(ecartM)}</span></div>
+    <div class="cumul-row"><span class="cumul-label">Cumul écart marge</span><span class="cumul-val" style="color:${cumulM>=0?'var(--green)':'var(--red)'}">${fmtE(cumulM)}</span></div>
+    <div class="cumul-row"><span class="cumul-label">Écart CA du jour</span><span class="cumul-val" style="color:${ecartCA>=0?'var(--green)':'var(--red)'}">${fmtE(ecartCA)}</span></div>
+    <div class="cumul-row"><span class="cumul-label">Cumul écart CA</span><span class="cumul-val" style="color:${cumulCA>=0?'var(--green)':'var(--red)'}">${fmtE(cumulCA)}</span></div>
+    <div class="cumul-row"><span class="cumul-label">Coeff. saisonnalité</span><span class="cumul-val val-amber">×${coeff||'—'}</span></div>`;
+
+  // Semaine en cours
+  const semRows=allRows.filter(r=>parseNum(r['C'])===sem&&r['G']!==null);
+  const semCA=semRows.reduce((s,r)=>s+(parseNum(r['G'])||0),0);
+  const semMarge=semRows.reduce((s,r)=>s+(parseNum(r['I'])||0),0);
+  const semCAcible=semRows.reduce((s,r)=>s+(parseNum(r['E'])||0),0);
+  const semMargeCible=semRows.reduce((s,r)=>s+(parseNum(r['F'])||0),0);
+  document.getElementById('semaine-list').innerHTML=`
+    <div class="cumul-row"><span class="cumul-label">Semaine ${sem||'—'}</span><span class="cumul-val" style="color:var(--muted)">${semRows.length} jours</span></div>
+    <div class="cumul-row"><span class="cumul-label">CA semaine</span><span class="cumul-val">${fmtE(semCA)}</span></div>
+    <div class="cumul-row"><span class="cumul-label">Obj CA semaine</span><span class="cumul-val">${fmtE(semCAcible)}</span></div>
+    <div class="cumul-row"><span class="cumul-label">Marge semaine</span><span class="cumul-val val-green">${fmtE(semMarge)}</span></div>
+    <div class="cumul-row"><span class="cumul-label">Obj marge semaine</span><span class="cumul-val">${fmtE(semMargeCible)}</span></div>`;
+}
+
+function drawChart(selectedIdx){
+  const canvas=document.getElementById('margeChart');
+  const ctx=canvas.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  const W=canvas.parentElement.offsetWidth-2;
+  const H=160;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,W,H);
+
+  const days=allRows.filter(r=>r['G']!==null&&r['I']!==null).slice(-15);
+  if(days.length<2)return;
+
+  const marges=days.map(r=>parseNum(r['I'])||0);
+  const cibles=days.map(r=>parseNum(r['F'])||0);
+  const cumuls=days.map(r=>parseNum(r['L'])||0);
+  const ecarts=days.map(r=>parseNum(r['K'])||0);
+
+  const allVals=[...marges,...cibles,...cumuls.map(Math.abs),...ecarts.map(Math.abs)].filter(v=>v!==null);
+  const maxVal=Math.max(...allVals)*1.15||1;
+  const minVal=Math.min(...cumuls,0)*1.15;
+
+  const PAD={t:10,r:10,b:28,l:60};
+  const cw=W-PAD.l-PAD.r;
+  const ch=H-PAD.t-PAD.b;
+  const n=days.length;
+  const barW=Math.max(4,cw/n*0.35);
+  const step=cw/(n-1);
+
+  function xp(i){return PAD.l+i*step;}
+  function yp(v){return PAD.t+ch*(1-(v-minVal)/(maxVal-minVal));}
+
+  // Fond
+  ctx.fillStyle='#161B22'; ctx.fillRect(0,0,W,H);
+
+  // Ligne zéro
+  const y0=yp(0);
+  ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=1; ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(PAD.l,y0); ctx.lineTo(W-PAD.r,y0); ctx.stroke();
+
+  // Axes Y labels
+  ctx.fillStyle='#7D8590'; ctx.font='10px DM Sans'; ctx.textAlign='right';
+  [0,0.25,0.5,0.75,1].forEach(p=>{
+    const v=minVal+(maxVal-minVal)*p;
+    const y=yp(v);
+    ctx.strokeStyle='rgba(255,255,255,0.04)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(PAD.l,y); ctx.lineTo(W-PAD.r,y); ctx.stroke();
+    ctx.fillStyle='#7D8590';
+    ctx.fillText((v/1000).toFixed(0)+'k€', PAD.l-4, y+3);
+  });
+
+  // Barres écart journalier
+  ecarts.forEach((e,i)=>{
+    const x=xp(i)-barW/2;
+    const yTop=e>=0?yp(e):y0;
+    const yBot=e>=0?y0:yp(e);
+    ctx.fillStyle=e>=0?'rgba(63,185,80,0.5)':'rgba(248,81,73,0.5)';
+    ctx.fillRect(x,yTop,barW,Math.abs(yBot-yTop));
+  });
+
+  // Courbe cumul écart
+  ctx.strokeStyle='#58A6FF'; ctx.lineWidth=1.5; ctx.setLineDash([4,3]);
+  ctx.beginPath();
+  cumuls.forEach((v,i)=>{i===0?ctx.moveTo(xp(i),yp(v)):ctx.lineTo(xp(i),yp(v));});
+  ctx.stroke(); ctx.setLineDash([]);
+
+  // Courbe objectif (tirets)
+  ctx.strokeStyle='rgba(125,133,144,0.5)'; ctx.lineWidth=1; ctx.setLineDash([5,4]);
+  ctx.beginPath();
+  cibles.forEach((v,i)=>{i===0?ctx.moveTo(xp(i),yp(v)):ctx.lineTo(xp(i),yp(v));});
+  ctx.stroke(); ctx.setLineDash([]);
+
+  // Courbe marge réelle
+  ctx.strokeStyle='#3FB950'; ctx.lineWidth=2.5;
+  ctx.beginPath();
+  marges.forEach((v,i)=>{i===0?ctx.moveTo(xp(i),yp(v)):ctx.lineTo(xp(i),yp(v));});
+  ctx.stroke();
+
+  // Points marge
+  marges.forEach((v,i)=>{
+    const isSel=allRows.indexOf(days[i])===selectedIdx;
+    ctx.beginPath();
+    ctx.arc(xp(i),yp(v),isSel?5:3,0,Math.PI*2);
+    ctx.fillStyle=isSel?'#3FB950':'#161B22';
+    ctx.strokeStyle='#3FB950'; ctx.lineWidth=isSel?2:1.5;
+    ctx.fill(); ctx.stroke();
+  });
+
+  // Labels X
+  ctx.fillStyle='#7D8590'; ctx.font='10px DM Sans'; ctx.textAlign='center'; ctx.setLineDash([]);
+  days.forEach((r,i)=>{
+    if(i%3===0||i===days.length-1){
+      ctx.fillText(dshort(r['A']),xp(i),H-PAD.b+14);
+    }
+  });
 }
 
 loadData();
