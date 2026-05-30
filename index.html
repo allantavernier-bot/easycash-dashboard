@@ -189,6 +189,15 @@
     <div class="kpi blue"><div class="kpi-label">Semaines réalisées</div><div class="kpi-value val-blue" id="ann-sems">—</div><div class="kpi-delta delta-neu" id="ann-sems-sub">—</div></div>
   </div>
 
+  <div class="annual-kpis" style="grid-template-columns:1fr">
+    <div class="kpi green" style="border-left-color:var(--green)">
+      <div class="kpi-label">Taux de transformation moyen — Cible : 13 % à 18 %</div>
+      <div class="kpi-value" id="ann-tx-transfo" style="margin-bottom:8px">—</div>
+      <div id="ann-tx-bar"></div>
+      <div class="kpi-delta delta-neu" id="ann-tx-sub" style="margin-top:6px">—</div>
+    </div>
+  </div>
+
   <div class="row1">
     <div class="card">
       <div class="card-title">Progression annuelle — Marge cumulée vs Objectif</div>
@@ -368,7 +377,12 @@ function drawDailyChart(selectedIdx) {
   ctx.scale(dpr,dpr);
   ctx.clearRect(0,0,W,H);
 
-  const days = allRows.filter(r=>r['G']!==null&&r['I']!==null).slice(-14);
+  // Centrer sur la date sélectionnée : 7 jours avant et 7 après
+  const withData = allRows.map((r,i)=>({r,i})).filter(({r})=>r['G']!==null&&r['I']!==null);
+  const selPosInData = withData.findIndex(({i})=>i===selectedIdx);
+  const start = Math.max(0, selPosInData - 7);
+  const end = Math.min(withData.length, selPosInData + 8);
+  const days = withData.slice(start, end).map(({r})=>r);
   if (days.length < 2) return;
 
   const marges = days.map(r=>parseNum(r['I'])||0);
@@ -462,6 +476,39 @@ function renderAnnual() {
   document.getElementById('ann-taux').textContent = txMoyen ? fmt(txMoyen,1)+' %' : '—';
   document.getElementById('ann-sems').textContent = doneWeeks.length;
   document.getElementById('ann-sems-sub').textContent = (weeks.length - doneWeeks.length) + ' semaines restantes';
+
+  // Taux de transformation moyen
+  const rowsWithTx = allRows.filter(r=>parseNum(r['T'])!==null&&parseNum(r['Q'])!==null&&parseNum(r['S'])!==null);
+  let txMoyen = null;
+  if(rowsWithTx.length > 0){
+    const sumTx = rowsWithTx.reduce((s,r)=>{
+      const q=parseNum(r['Q']), v=parseNum(r['S']);
+      return q>0 ? s + v/q : s;
+    }, 0);
+    txMoyen = sumTx / rowsWithTx.length * 100;
+  }
+  const txEl = document.getElementById('ann-tx-transfo');
+  const txBarEl = document.getElementById('ann-tx-bar');
+  const txSubEl = document.getElementById('ann-tx-sub');
+  if(txEl && txMoyen!==null){
+    txEl.textContent = fmt(txMoyen,1)+' %';
+    txEl.style.color = txMoyen>=13&&txMoyen<=18 ? 'var(--green)' : txMoyen<13 ? 'var(--red)' : 'var(--amber)';
+    if(txSubEl) txSubEl.textContent = rowsWithTx.length + ' jours avec données';
+    // Barre de progression dans la fourchette 0-25%
+    if(txBarEl){
+      const pct = Math.min(100, txMoyen/25*100);
+      const target13 = 13/25*100;
+      const target18 = 18/25*100;
+      txBarEl.innerHTML = \`
+        <div style="position:relative;background:var(--bg3);border-radius:4px;height:8px;overflow:hidden">
+          <div style="position:absolute;left:\${target13}%;width:\${target18-target13}%;height:100%;background:rgba(63,185,80,0.2);border-left:1px solid var(--green);border-right:1px solid var(--green)"></div>
+          <div style="position:absolute;left:0;width:\${pct}%;height:100%;background:\${txMoyen>=13&&txMoyen<=18?'var(--green)':txMoyen<13?'var(--red)':'var(--amber)'};border-radius:4px;transition:width .8s"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:4px">
+          <span>0%</span><span style="color:var(--green)">↑13%</span><span style="color:var(--green)">18%↑</span><span>25%</span>
+        </div>\`;
+    }
+  }
 
   drawAnnualChart(weeks, ytdM);
   drawWeekChart(doneWeeks);
