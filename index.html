@@ -499,14 +499,14 @@ function renderAnnual() {
       const pct = Math.min(100, txMoyen/25*100);
       const target13 = 13/25*100;
       const target18 = 18/25*100;
-      txBarEl.innerHTML = \`
-        <div style="position:relative;background:var(--bg3);border-radius:4px;height:8px;overflow:hidden">
-          <div style="position:absolute;left:\${target13}%;width:\${target18-target13}%;height:100%;background:rgba(63,185,80,0.2);border-left:1px solid var(--green);border-right:1px solid var(--green)"></div>
-          <div style="position:absolute;left:0;width:\${pct}%;height:100%;background:\${txMoyen>=13&&txMoyen<=18?'var(--green)':txMoyen<13?'var(--red)':'var(--amber)'};border-radius:4px;transition:width .8s"></div>
-        </div>
-        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:4px">
-          <span>0%</span><span style="color:var(--green)">↑13%</span><span style="color:var(--green)">18%↑</span><span>25%</span>
-        </div>\`;
+      const col = txMoyen>=13&&txMoyen<=18?'var(--green)':txMoyen<13?'var(--red)':'var(--amber)';
+      txBarEl.innerHTML = '<div style="position:relative;background:var(--bg3);border-radius:4px;height:8px;overflow:hidden">'
+        + '<div style="position:absolute;left:'+target13+'%;width:'+(target18-target13)+'%;height:100%;background:rgba(63,185,80,0.2);border-left:1px solid var(--green);border-right:1px solid var(--green)"></div>'
+        + '<div style="position:absolute;left:0;width:'+pct+'%;height:100%;background:'+col+';border-radius:4px;transition:width .8s"></div>'
+        + '</div>'
+        + '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:4px">'
+        + '<span>0%</span><span style="color:var(--green)">&#8593;13%</span><span style="color:var(--green)">18%&#8593;</span><span>25%</span>'
+        + '</div>';
     }
   }
 
