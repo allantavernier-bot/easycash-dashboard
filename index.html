@@ -13,127 +13,231 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+  
+  /* Header */
   .header { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
   .logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 2s infinite; display:inline-block; margin-right:10px; vertical-align:middle; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
   .header-title { font-size: 15px; font-weight: 600; }
   .header-sub { font-size: 12px; color: var(--muted); margin-top:1px; }
   .header-date { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); background: var(--bg3); padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); }
+
+  /* Tabs */
+  .tabs { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; gap: 0; }
+  .tab { padding: 12px 20px; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all .2s; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+  /* Pages */
+  .page { display: none; }
+  .page.active { display: block; }
   .main { padding: 20px 24px; max-width: 1200px; margin: 0 auto; }
+
+  /* Loader */
   .loader { display:flex; flex-direction:column; align-items:center; justify-content:center; height:60vh; gap:16px; }
   .loader-spinner { width:32px; height:32px; border:2px solid var(--border); border-top-color:var(--blue); border-radius:50%; animation:spin .8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Date selector */
   .date-selector { display:flex; align-items:center; gap:8px; margin-bottom:16px; }
   .date-selector label { font-size:12px; color:var(--muted); }
-  .date-selector select { background:var(--bg3); border:1px solid var(--border); color:var(--text); padding:6px 10px; border-radius:6px; font-size:13px; font-family:'DM Sans',sans-serif; cursor:pointer; }
+  .date-selector select { background:var(--bg3); border:1px solid var(--border); color:var(--text); padding:6px 10px; border-radius:6px; font-size:13px; cursor:pointer; }
+
+  /* KPI grid */
   .kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:16px; }
   .kpi { background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:14px; }
   .kpi-label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px; }
   .kpi-value { font-size:22px; font-weight:600; line-height:1; margin-bottom:4px; font-family:'DM Mono',monospace; }
   .kpi-delta { font-size:11px; }
-  .kpi.green { border-left:3px solid var(--green); } .kpi.red { border-left:3px solid var(--red); }
-  .kpi.blue { border-left:3px solid var(--blue); } .kpi.amber { border-left:3px solid var(--amber); }
+  .kpi.green{border-left:3px solid var(--green)} .kpi.red{border-left:3px solid var(--red)}
+  .kpi.blue{border-left:3px solid var(--blue)} .kpi.amber{border-left:3px solid var(--amber)}
   .val-green{color:var(--green)} .val-red{color:var(--red)} .val-blue{color:var(--blue)} .val-amber{color:var(--amber)}
   .delta-pos{color:var(--green)} .delta-neg{color:var(--red)} .delta-neu{color:var(--muted)}
+
+  /* Cards */
   .row2 { display:grid; grid-template-columns:2fr 1fr; gap:12px; margin-bottom:16px; }
-  .row3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+  .row3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:16px; }
+  .row1 { margin-bottom:16px; }
   .card { background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:16px; }
   .card-title { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:14px; }
-  /* Chart SVG */
-  .chart-wrap { position:relative; width:100%; }
-  svg.chart { width:100%; overflow:visible; }
-  .chart-legend { display:flex; gap:16px; margin-top:10px; flex-wrap:wrap; }
-  .legend-item { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--muted); }
-  .legend-dot { width:8px; height:8px; border-radius:50%; }
-  .legend-line { width:16px; height:2px; border-radius:2px; }
+
   /* Cumul list */
   .cumul-list { display:flex; flex-direction:column; }
   .cumul-row { display:flex; justify-content:space-between; align-items:center; padding:7px 0; border-bottom:1px solid var(--border); font-size:13px; }
-  .cumul-row:last-child { border-bottom:none; }
-  .cumul-label { color:var(--muted); }
-  .cumul-val { font-family:'DM Mono',monospace; font-weight:500; }
-  .progress-track { background:var(--bg3); border-radius:4px; height:5px; overflow:hidden; margin:8px 0 4px; }
-  .progress-fill { height:100%; border-radius:4px; background:var(--blue); transition:width .8s ease; }
-  .progress-labels { display:flex; justify-content:space-between; font-size:10px; color:var(--muted); }
-  .tx-big { font-size:38px; font-weight:600; font-family:'DM Mono',monospace; color:var(--blue); line-height:1; margin-bottom:3px; }
-  .tx-sub { font-size:11px; color:var(--muted); margin-bottom:12px; }
-  .error { background:rgba(248,81,73,.1); border:1px solid var(--red); border-radius:10px; padding:16px; color:var(--red); font-size:13px; text-align:center; }
-  @media(max-width:768px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.row2,.row3{grid-template-columns:1fr}.main{padding:14px}}
+  .cumul-row:last-child{border-bottom:none}
+  .cumul-label{color:var(--muted)} .cumul-val{font-family:'DM Mono',monospace;font-weight:500}
+
+  /* Progress */
+  .progress-track{background:var(--bg3);border-radius:4px;height:6px;overflow:hidden;margin:8px 0 4px}
+  .progress-fill{height:100%;border-radius:4px;background:var(--blue);transition:width .8s ease}
+  .progress-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--muted)}
+
+  /* Tx big */
+  .tx-big{font-size:38px;font-weight:600;font-family:'DM Mono',monospace;color:var(--blue);line-height:1;margin-bottom:3px}
+  .tx-sub{font-size:11px;color:var(--muted);margin-bottom:12px}
+
+  /* Chart legend */
+  .chart-legend{display:flex;gap:16px;margin-top:10px;flex-wrap:wrap}
+  .legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)}
+  .legend-dot{width:8px;height:8px;border-radius:50%}
+  .legend-line{width:16px;height:2px;border-radius:2px}
+
+  /* Semaine table */
+  .week-table{width:100%;border-collapse:collapse;font-size:12px}
+  .week-table th{color:var(--muted);font-weight:500;text-align:right;padding:6px 8px;border-bottom:1px solid var(--border);font-size:10px;text-transform:uppercase;letter-spacing:.05em}
+  .week-table th:first-child{text-align:left}
+  .week-table td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.04);text-align:right;font-family:'DM Mono',monospace}
+  .week-table td:first-child{text-align:left;color:var(--muted);font-family:'DM Sans',sans-serif}
+  .week-table tr.current-week td{background:rgba(88,166,255,0.05)}
+  .week-table tr:last-child td{border-bottom:none}
+
+  /* Annual KPIs */
+  .annual-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+
+  /* Badges */
+  .badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:500}
+  .badge-green{background:rgba(63,185,80,0.15);color:var(--green)}
+  .badge-red{background:rgba(248,81,73,0.15);color:var(--red)}
+  .badge-muted{background:var(--bg3);color:var(--muted)}
+
+  @media(max-width:768px){
+    .kpi-grid,.annual-kpis{grid-template-columns:repeat(2,1fr)}
+    .row2,.row3{grid-template-columns:1fr}
+    .main{padding:14px}
+    .tab{padding:10px 12px;font-size:12px}
+  }
 </style>
 </head>
 <body>
+
 <div class="header">
   <div style="display:flex;align-items:center">
     <span class="logo-dot"></span>
-    <div><div class="header-title">EasyCash 206 — Berck-sur-Mer</div><div class="header-sub">Pilotage marge journalier</div></div>
+    <div><div class="header-title">EasyCash 206 — Berck-sur-Mer</div><div class="header-sub">Pilotage marge</div></div>
   </div>
   <div class="header-date" id="lastUpdate">Chargement...</div>
 </div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('daily')">📅 Vue journalière</div>
+  <div class="tab" onclick="switchTab('annual')">📊 Vue annuelle</div>
+</div>
+
+<!-- LOADER -->
+<div id="loader" class="loader" style="margin-top:60px">
+  <div class="loader-spinner"></div>
+  <div style="font-size:13px;color:var(--muted)">Chargement des données...</div>
+</div>
+
+<!-- PAGE JOURNALIÈRE -->
+<div id="page-daily" class="page active" style="display:none">
 <div class="main">
-  <div id="loader" class="loader"><div class="loader-spinner"></div><div style="font-size:13px;color:var(--muted)">Chargement...</div></div>
-  <div id="dashboard" style="display:none">
-    <div class="date-selector">
-      <label for="datePicker">Journée :</label>
-      <select id="datePicker" onchange="renderDay()"></select>
-    </div>
-    <div class="kpi-grid">
-      <div class="kpi green"><div class="kpi-label">Marge nette</div><div class="kpi-value val-green" id="kpi-marge">—</div><div class="kpi-delta" id="kpi-marge-delta">—</div></div>
-      <div class="kpi amber"><div class="kpi-label">Taux de marge</div><div class="kpi-value val-amber" id="kpi-txmarge">—</div><div class="kpi-delta delta-neu">Objectif : 37 %</div></div>
-      <div class="kpi red"><div class="kpi-label">CA du jour</div><div class="kpi-value val-red" id="kpi-ca">—</div><div class="kpi-delta" id="kpi-ca-delta">—</div></div>
-      <div class="kpi blue"><div class="kpi-label">Cumul écart marge</div><div class="kpi-value val-blue" id="kpi-cumul">—</div><div class="kpi-delta delta-neu" id="kpi-cumul-sub">Depuis le 1er avril</div></div>
-    </div>
-    <div class="row2">
-      <div class="card">
-        <div class="card-title">Évolution marge — 15 derniers jours</div>
-        <div class="chart-wrap"><canvas id="margeChart" height="160"></canvas></div>
-        <div class="chart-legend">
-          <div class="legend-item"><div class="legend-line" style="background:var(--green)"></div>Marge réelle</div>
-          <div class="legend-item"><div class="legend-line" style="background:var(--muted);border-top:2px dashed var(--muted);height:0"></div>Objectif</div>
-          <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>Cumul écart</div>
-          <div class="legend-item"><div style="width:8px;height:8px;background:var(--amber);opacity:.7"></div>Écart journalier</div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-title">Synthèse CODIR</div>
-        <div class="cumul-list" id="codir-list"></div>
-        <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
-        <div class="progress-labels"><span>0 €</span><span>Obj. 481 000 €</span></div>
+  <div class="date-selector">
+    <label>Journée :</label>
+    <select id="datePicker" onchange="renderDay()"></select>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi green"><div class="kpi-label">Marge nette</div><div class="kpi-value val-green" id="kpi-marge">—</div><div class="kpi-delta" id="kpi-marge-delta">—</div></div>
+    <div class="kpi amber"><div class="kpi-label">Taux de marge</div><div class="kpi-value val-amber" id="kpi-txmarge">—</div><div class="kpi-delta delta-neu">Objectif : 37 %</div></div>
+    <div class="kpi red"><div class="kpi-label">CA du jour</div><div class="kpi-value val-red" id="kpi-ca">—</div><div class="kpi-delta" id="kpi-ca-delta">—</div></div>
+    <div class="kpi blue"><div class="kpi-label">Cumul écart marge</div><div class="kpi-value val-blue" id="kpi-cumul">—</div><div class="kpi-delta" id="kpi-cumul-sub">Depuis le 1er avril</div></div>
+  </div>
+  <div class="row2">
+    <div class="card">
+      <div class="card-title">Évolution marge — 14 derniers jours</div>
+      <div style="position:relative"><canvas id="margeChart" height="160"></canvas></div>
+      <div class="chart-legend">
+        <div class="legend-item"><div class="legend-line" style="background:var(--green)"></div>Marge réelle</div>
+        <div class="legend-item"><div class="legend-line" style="background:var(--muted);border-top:2px dashed var(--muted);height:0"></div>Objectif</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>Cumul écart</div>
+        <div class="legend-item"><div style="width:8px;height:8px;background:var(--amber);opacity:.7"></div>Écart journalier</div>
       </div>
     </div>
-    <div class="row3">
-      <div class="card">
-        <div class="card-title">Transformation & activité</div>
-        <div class="tx-big" id="tx-transfo">—</div>
-        <div class="tx-sub" id="tx-transfo-sub">taux de transformation</div>
-        <div class="cumul-list" id="activite-list"></div>
-      </div>
-      <div class="card">
-        <div class="card-title">Écarts cumulés</div>
-        <div class="cumul-list" id="ecarts-list"></div>
-      </div>
-      <div class="card">
-        <div class="card-title">Semaine en cours</div>
-        <div class="cumul-list" id="semaine-list"></div>
+    <div class="card">
+      <div class="card-title">Semaine en cours</div>
+      <div class="cumul-list" id="semaine-list"></div>
+    </div>
+  </div>
+  <div class="row3">
+    <div class="card">
+      <div class="card-title">Transformation & activité</div>
+      <div class="tx-big" id="tx-transfo">—</div>
+      <div class="tx-sub" id="tx-transfo-sub">taux de transformation</div>
+      <div class="cumul-list" id="activite-list"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Écarts cumulés</div>
+      <div class="cumul-list" id="ecarts-list"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Synthèse CODIR</div>
+      <div class="cumul-list" id="codir-mini"></div>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill-mini" style="width:0%"></div></div>
+      <div class="progress-labels"><span>0 €</span><span>481 000 €</span></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- PAGE ANNUELLE -->
+<div id="page-annual" class="page" style="display:none">
+<div class="main">
+  <div class="annual-kpis">
+    <div class="kpi green"><div class="kpi-label">Marge YTD</div><div class="kpi-value val-green" id="ann-marge">—</div><div class="kpi-delta" id="ann-marge-pct">—</div></div>
+    <div class="kpi red"><div class="kpi-label">CA YTD</div><div class="kpi-value val-red" id="ann-ca">—</div><div class="kpi-delta delta-neu" id="ann-ca-sub">—</div></div>
+    <div class="kpi amber"><div class="kpi-label">Taux marge moyen</div><div class="kpi-value val-amber" id="ann-taux">—</div><div class="kpi-delta delta-neu">Objectif : 37 %</div></div>
+    <div class="kpi blue"><div class="kpi-label">Semaines réalisées</div><div class="kpi-value val-blue" id="ann-sems">—</div><div class="kpi-delta delta-neu" id="ann-sems-sub">—</div></div>
+  </div>
+
+  <div class="row1">
+    <div class="card">
+      <div class="card-title">Progression annuelle — Marge cumulée vs Objectif</div>
+      <div style="position:relative"><canvas id="annualChart" height="180"></canvas></div>
+      <div class="chart-legend" style="margin-top:10px">
+        <div class="legend-item"><div class="legend-line" style="background:var(--green)"></div>Marge cumulée réalisée</div>
+        <div class="legend-item"><div class="legend-line" style="background:var(--muted);border-top:2px dashed var(--muted);height:0"></div>Objectif linéaire</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>Projection fin d'année</div>
       </div>
     </div>
   </div>
-  <div id="error-msg" style="display:none"></div>
+
+  <div class="row2">
+    <div class="card">
+      <div class="card-title">CA & Marge par semaine</div>
+      <div style="position:relative"><canvas id="weekChart" height="200"></canvas></div>
+      <div class="chart-legend" style="margin-top:10px">
+        <div class="legend-item"><div style="width:12px;height:8px;background:rgba(248,81,73,0.6);border-radius:2px"></div>CA semaine</div>
+        <div class="legend-item"><div style="width:12px;height:8px;background:rgba(63,185,80,0.7);border-radius:2px"></div>Marge semaine</div>
+        <div class="legend-item"><div style="width:12px;height:8px;background:rgba(88,166,255,0.2);border-radius:2px;border:1px dashed var(--blue)"></div>Objectif marge</div>
+      </div>
+    </div>
+    <div class="card" style="overflow:auto">
+      <div class="card-title">Détail par semaine</div>
+      <table class="week-table">
+        <thead><tr>
+          <th>Sem.</th><th>CA</th><th>Marge</th><th>Obj.</th><th>Écart</th><th>Tx%</th>
+        </tr></thead>
+        <tbody id="week-table-body"></tbody>
+      </table>
+    </div>
+  </div>
 </div>
+</div>
+
 <script>
 const SHEET_ID = '1wBm0SyeqC-4HBKZ7J7KefcNfdLiJ7cL2KIf3VEgcp1M';
 const SHEET_TAB = 'Données journalières';
+const OBJ_ANNUEL = 481000;
 let allRows = [];
+let currentTab = 'daily';
 
 function fmt(n,d=0){if(n===null||n===undefined||n==='')return'—';const x=parseFloat(String(n).replace(',','.').replace(/\s/g,''));if(isNaN(x))return'—';return x.toLocaleString('fr-FR',{minimumFractionDigits:d,maximumFractionDigits:d});}
 function fmtE(n){const s=fmt(n);return s==='—'?'—':s+' €';}
 function parseNum(v){if(v===null||v===undefined||v==='')return null;const n=parseFloat(String(v).replace(',','.').replace(/\s/g,''));return isNaN(n)?null:n;}
 function gdate(raw){
   if(!raw)return null;
-  // Format gviz "Date(2026,4,29)"
   if(typeof raw==='string'&&raw.startsWith('Date(')){const p=raw.replace('Date(','').replace(')','').split(',').map(Number);return new Date(p[0],p[1],p[2]);}
-  // Format texte "29/05/2026"
   if(typeof raw==='string'&&raw.match(/^\d{2}\/\d{2}\/\d{4}$/)){const p=raw.split('/');return new Date(parseInt(p[2]),parseInt(p[1])-1,parseInt(p[0]));}
-  // Format ISO "2026-05-29"
   if(typeof raw==='string'&&raw.match(/^\d{4}-\d{2}-\d{2}/)){return new Date(raw.substring(0,10));}
   if(raw instanceof Date)return raw;
   if(typeof raw==='number')return new Date(raw);
@@ -142,198 +246,386 @@ function gdate(raw){
 function dshort(raw){const d=gdate(raw);return d?d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}):'?';}
 function dlabel(raw){const d=gdate(raw);return d?d.toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'short',year:'numeric'}):'?';}
 
-async function loadData(){
-  try{
-    const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_TAB)}`;
-    const res=await fetch(url);
-    const txt=await res.text();
-    const js=JSON.parse(txt.substring(47,txt.length-2));
-    const ids=js.table.cols.map(c=>c.id);
-    allRows=js.table.rows.map(r=>{const o={};r.c.forEach((cell,i)=>{o[ids[i]]=cell?cell.v:null;});return o;}).filter(r=>r['A']);
-    const picker=document.getElementById('datePicker');
-    const withCA=[...allRows.map((r,i)=>({r,i})).filter(({r})=>r['G']!==null&&r['G']!==undefined)].reverse();
-    withCA.forEach(({r,i})=>{const opt=document.createElement('option');opt.value=i;opt.text=dlabel(r['A']);picker.appendChild(opt);});
-    document.getElementById('loader').style.display='none';
-    document.getElementById('dashboard').style.display='block';
-    document.getElementById('lastUpdate').textContent='Actualisé '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => { p.style.display='none'; p.classList.remove('active'); });
+  event.target.classList.add('active');
+  const page = document.getElementById('page-' + tab);
+  page.style.display = 'block';
+  page.classList.add('active');
+  if (tab === 'annual' && allRows.length > 0) renderAnnual();
+}
+
+async function loadData() {
+  try {
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_TAB)}`;
+    const res = await fetch(url);
+    const txt = await res.text();
+    const js = JSON.parse(txt.substring(47, txt.length-2));
+    const ids = js.table.cols.map(c => c.id);
+    allRows = js.table.rows.map(r => {
+      const o = {};
+      r.c.forEach((cell, i) => { o[ids[i]] = cell ? cell.v : null; });
+      return o;
+    }).filter(r => r['A']);
+
+    const picker = document.getElementById('datePicker');
+    const withCA = [...allRows.map((r,i) => ({r,i})).filter(({r}) => r['G']!==null && r['G']!==undefined)].reverse();
+    withCA.forEach(({r,i}) => {
+      const opt = document.createElement('option');
+      opt.value = i; opt.text = dlabel(r['A']);
+      picker.appendChild(opt);
+    });
+
+    document.getElementById('loader').style.display = 'none';
+    document.getElementById('page-daily').style.display = 'block';
+    document.getElementById('lastUpdate').textContent = 'Actualisé ' + new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
     renderDay();
-  }catch(e){
-    document.getElementById('loader').style.display='none';
-    document.getElementById('error-msg').style.display='block';
-    document.getElementById('error-msg').innerHTML=`<div class="error">Erreur chargement<br><small>${e.message}</small></div>`;
+  } catch(e) {
+    document.getElementById('loader').innerHTML = `<div style="color:var(--red);font-size:13px">Erreur chargement<br><small>${e.message}</small></div>`;
   }
 }
 
-function renderDay(){
-  const idx=parseInt(document.getElementById('datePicker').value);
-  const row=allRows[idx];
-  if(!row)return;
+function renderDay() {
+  const idx = parseInt(document.getElementById('datePicker').value);
+  const row = allRows[idx];
+  if (!row) return;
 
-  const marge=parseNum(row['I']),margeCible=parseNum(row['F']),
-        ca=parseNum(row['G']),caCible=parseNum(row['E']),
-        ecartM=parseNum(row['K']),cumulM=parseNum(row['L']),
-        ecartCA=parseNum(row['M']),cumulCA=parseNum(row['N']),
-        nbCli=parseNum(row['Q']),nbAch=parseNum(row['R']),
-        nbVte=parseNum(row['S']),txT=parseNum(row['T']),
-        coeff=parseNum(row['D']),sem=parseNum(row['C']);
-  const txMarge=ca&&marge?marge/ca*100:null;
+  const marge=parseNum(row['I']), margeCible=parseNum(row['F']),
+        ca=parseNum(row['G']), caCible=parseNum(row['E']),
+        ecartM=parseNum(row['K']), cumulM=parseNum(row['L']),
+        ecartCA=parseNum(row['M']), cumulCA=parseNum(row['N']),
+        nbCli=parseNum(row['Q']), nbAch=parseNum(row['R']),
+        nbVte=parseNum(row['S']), txT=parseNum(row['T']),
+        coeff=parseNum(row['D']), sem=parseNum(row['C']);
+  const txMarge = ca && marge ? marge/ca*100 : null;
 
-  // KPIs
-  document.getElementById('kpi-marge').textContent=fmtE(marge);
-  document.getElementById('kpi-marge-delta').innerHTML=ecartM!==null
-    ?`<span class="${ecartM>=0?'delta-pos':'delta-neg'}">${ecartM>=0?'↑':'↓'} ${fmtE(Math.abs(ecartM))} vs obj (${fmtE(margeCible)})</span>`
-    :'<span class="delta-neu">—</span>';
-  document.getElementById('kpi-txmarge').textContent=txMarge!==null?fmt(txMarge,1)+' %':'—';
-  document.getElementById('kpi-ca').textContent=fmtE(ca);
-  document.getElementById('kpi-ca-delta').innerHTML=ecartCA!==null
-    ?`<span class="${ecartCA>=0?'delta-pos':'delta-neg'}">${ecartCA>=0?'↑':'↓'} ${fmtE(Math.abs(ecartCA))} vs obj (${fmtE(caCible)})</span>`
-    :'<span class="delta-neu">—</span>';
-  document.getElementById('kpi-cumul').textContent=fmtE(cumulM);
-  document.getElementById('kpi-cumul-sub').textContent=cumulM!==null?(cumulM>=0?'✓ En avance':'✗ En retard')+' sur objectif':'Depuis le 1er avril';
+  document.getElementById('kpi-marge').textContent = fmtE(marge);
+  document.getElementById('kpi-marge-delta').innerHTML = ecartM!==null
+    ? `<span class="${ecartM>=0?'delta-pos':'delta-neg'}">${ecartM>=0?'↑':'↓'} ${fmtE(Math.abs(ecartM))} vs obj (${fmtE(margeCible)})</span>`
+    : '<span class="delta-neu">—</span>';
+  document.getElementById('kpi-txmarge').textContent = txMarge!==null ? fmt(txMarge,1)+' %' : '—';
+  document.getElementById('kpi-ca').textContent = fmtE(ca);
+  document.getElementById('kpi-ca-delta').innerHTML = ecartCA!==null
+    ? `<span class="${ecartCA>=0?'delta-pos':'delta-neg'}">${ecartCA>=0?'↑':'↓'} ${fmtE(Math.abs(ecartCA))} vs obj (${fmtE(caCible)})</span>`
+    : '<span class="delta-neu">—</span>';
+  document.getElementById('kpi-cumul').textContent = fmtE(cumulM);
+  document.getElementById('kpi-cumul-sub').textContent = cumulM!==null ? (cumulM>=0?'✓ En avance':'✗ En retard')+' sur objectif' : 'Depuis le 1er avril';
 
-  // Graphique canvas — 15 derniers jours
-  drawChart(idx);
+  drawDailyChart(idx);
 
-  // CODIR
-  const ytdM=allRows.reduce((s,r)=>s+(parseNum(r['I'])||0),0);
-  const ytdCA=allRows.reduce((s,r)=>s+(parseNum(r['G'])||0),0);
-  const obj=481000,pct=Math.min(100,ytdM/obj*100);
-  document.getElementById('progress-fill').style.width=pct+'%';
-  document.getElementById('codir-list').innerHTML=`
-    <div class="cumul-row"><span class="cumul-label">Marge nette YTD</span><span class="cumul-val val-green">${fmtE(ytdM)}</span></div>
-    <div class="cumul-row"><span class="cumul-label">Objectif annuel</span><span class="cumul-val">${fmtE(obj)}</span></div>
-    <div class="cumul-row"><span class="cumul-label">Atteinte</span><span class="cumul-val val-amber">${fmt(pct,1)} %</span></div>
-    <div class="cumul-row"><span class="cumul-label">CA réalisé YTD</span><span class="cumul-val">${fmtE(ytdCA)}</span></div>
-    <div class="cumul-row"><span class="cumul-label">Taux marge moyen</span><span class="cumul-val val-amber">${ytdCA?fmt(ytdM/ytdCA*100,1):'—'} %</span></div>`;
+  // Semaine en cours
+  const semRows = allRows.filter(r => parseNum(r['C'])===sem && r['G']!==null);
+  const semCA = semRows.reduce((s,r)=>s+(parseNum(r['G'])||0),0);
+  const semMarge = semRows.reduce((s,r)=>s+(parseNum(r['I'])||0),0);
+  const semCAcible = semRows.reduce((s,r)=>s+(parseNum(r['E'])||0),0);
+  const semMargeCible = semRows.reduce((s,r)=>s+(parseNum(r['F'])||0),0);
+  const semEcart = semMarge - semMargeCible;
+  document.getElementById('semaine-list').innerHTML = `
+    <div class="cumul-row"><span class="cumul-label">Semaine ${sem||'—'} — ${semRows.length} jours</span><span class="cumul-val badge ${semEcart>=0?'badge-green':'badge-red'}">${semEcart>=0?'+':''}${fmt(semEcart)} €</span></div>
+    <div class="cumul-row"><span class="cumul-label">CA semaine</span><span class="cumul-val">${fmtE(semCA)}</span></div>
+    <div class="cumul-row"><span class="cumul-label">Objectif CA</span><span class="cumul-val">${fmtE(semCAcible)}</span></div>
+    <div class="cumul-row"><span class="cumul-label">Marge semaine</span><span class="cumul-val val-green">${fmtE(semMarge)}</span></div>
+    <div class="cumul-row"><span class="cumul-label">Objectif marge</span><span class="cumul-val">${fmtE(semMargeCible)}</span></div>`;
 
   // Transfo
-  const txPct=txT!==null?fmt(txT*100,1)+'%':(nbCli&&nbVte?fmt(nbVte/nbCli*100,1)+'%':'—');
-  document.getElementById('tx-transfo').textContent=txPct;
-  document.getElementById('tx-transfo-sub').textContent=(nbVte&&nbCli)?`${fmt(nbVte)} ventes / ${fmt(Math.round(nbCli))} clients`:'données non saisies';
-  document.getElementById('activite-list').innerHTML=`
+  const txPct = txT!==null ? fmt(txT*100,1)+'%' : (nbCli&&nbVte ? fmt(nbVte/nbCli*100,1)+'%' : '—');
+  document.getElementById('tx-transfo').textContent = txPct;
+  document.getElementById('tx-transfo-sub').textContent = (nbVte&&nbCli) ? `${fmt(nbVte)} ventes / ${fmt(Math.round(nbCli))} clients` : 'données non saisies';
+  document.getElementById('activite-list').innerHTML = `
     <div class="cumul-row"><span class="cumul-label">NB passages</span><span class="cumul-val">${nbCli?fmt(Math.round(nbCli)):'—'}</span></div>
     <div class="cumul-row"><span class="cumul-label">NB ventes</span><span class="cumul-val">${nbVte!==null?fmt(nbVte):'—'}</span></div>
     <div class="cumul-row"><span class="cumul-label">NB achats (HA)</span><span class="cumul-val">${nbAch!==null?fmt(nbAch):'—'}</span></div>
     <div class="cumul-row"><span class="cumul-label">Panier moyen</span><span class="cumul-val">${nbVte&&ca?fmtE(ca/nbVte):'—'}</span></div>`;
 
-  // Écarts
-  document.getElementById('ecarts-list').innerHTML=`
+  document.getElementById('ecarts-list').innerHTML = `
     <div class="cumul-row"><span class="cumul-label">Écart marge du jour</span><span class="cumul-val" style="color:${ecartM>=0?'var(--green)':'var(--red)'}">${fmtE(ecartM)}</span></div>
     <div class="cumul-row"><span class="cumul-label">Cumul écart marge</span><span class="cumul-val" style="color:${cumulM>=0?'var(--green)':'var(--red)'}">${fmtE(cumulM)}</span></div>
     <div class="cumul-row"><span class="cumul-label">Écart CA du jour</span><span class="cumul-val" style="color:${ecartCA>=0?'var(--green)':'var(--red)'}">${fmtE(ecartCA)}</span></div>
     <div class="cumul-row"><span class="cumul-label">Cumul écart CA</span><span class="cumul-val" style="color:${cumulCA>=0?'var(--green)':'var(--red)'}">${fmtE(cumulCA)}</span></div>
     <div class="cumul-row"><span class="cumul-label">Coeff. saisonnalité</span><span class="cumul-val val-amber">×${coeff||'—'}</span></div>`;
 
-  // Semaine en cours
-  const semRows=allRows.filter(r=>parseNum(r['C'])===sem&&r['G']!==null);
-  const semCA=semRows.reduce((s,r)=>s+(parseNum(r['G'])||0),0);
-  const semMarge=semRows.reduce((s,r)=>s+(parseNum(r['I'])||0),0);
-  const semCAcible=semRows.reduce((s,r)=>s+(parseNum(r['E'])||0),0);
-  const semMargeCible=semRows.reduce((s,r)=>s+(parseNum(r['F'])||0),0);
-  document.getElementById('semaine-list').innerHTML=`
-    <div class="cumul-row"><span class="cumul-label">Semaine ${sem||'—'}</span><span class="cumul-val" style="color:var(--muted)">${semRows.length} jours</span></div>
-    <div class="cumul-row"><span class="cumul-label">CA semaine</span><span class="cumul-val">${fmtE(semCA)}</span></div>
-    <div class="cumul-row"><span class="cumul-label">Obj CA semaine</span><span class="cumul-val">${fmtE(semCAcible)}</span></div>
-    <div class="cumul-row"><span class="cumul-label">Marge semaine</span><span class="cumul-val val-green">${fmtE(semMarge)}</span></div>
-    <div class="cumul-row"><span class="cumul-label">Obj marge semaine</span><span class="cumul-val">${fmtE(semMargeCible)}</span></div>`;
+  const ytdM = allRows.reduce((s,r)=>s+(parseNum(r['I'])||0),0);
+  const ytdCA = allRows.reduce((s,r)=>s+(parseNum(r['G'])||0),0);
+  const pct = Math.min(100, ytdM/OBJ_ANNUEL*100);
+  document.getElementById('progress-fill-mini').style.width = pct+'%';
+  document.getElementById('codir-mini').innerHTML = `
+    <div class="cumul-row"><span class="cumul-label">Marge YTD</span><span class="cumul-val val-green">${fmtE(ytdM)}</span></div>
+    <div class="cumul-row"><span class="cumul-label">Atteinte</span><span class="cumul-val val-amber">${fmt(pct,1)} %</span></div>
+    <div class="cumul-row"><span class="cumul-label">CA YTD</span><span class="cumul-val">${fmtE(ytdCA)}</span></div>
+    <div class="cumul-row"><span class="cumul-label">Taux moyen</span><span class="cumul-val val-amber">${ytdCA?fmt(ytdM/ytdCA*100,1):'—'} %</span></div>`;
 }
 
-function drawChart(selectedIdx){
-  const canvas=document.getElementById('margeChart');
-  const ctx=canvas.getContext('2d');
-  const dpr=window.devicePixelRatio||1;
-  const W=canvas.parentElement.offsetWidth-2;
-  const H=160;
+function drawDailyChart(selectedIdx) {
+  const canvas = document.getElementById('margeChart');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio||1;
+  const W = canvas.parentElement.offsetWidth - 2;
+  const H = 160;
   canvas.width=W*dpr; canvas.height=H*dpr;
   canvas.style.width=W+'px'; canvas.style.height=H+'px';
   ctx.scale(dpr,dpr);
   ctx.clearRect(0,0,W,H);
 
-  const days=allRows.filter(r=>r['G']!==null&&r['I']!==null).slice(-15);
-  if(days.length<2)return;
+  const days = allRows.filter(r=>r['G']!==null&&r['I']!==null).slice(-14);
+  if (days.length < 2) return;
 
-  const marges=days.map(r=>parseNum(r['I'])||0);
-  const cibles=days.map(r=>parseNum(r['F'])||0);
-  const cumuls=days.map(r=>parseNum(r['L'])||0);
-  const ecarts=days.map(r=>parseNum(r['K'])||0);
+  const marges = days.map(r=>parseNum(r['I'])||0);
+  const cibles = days.map(r=>parseNum(r['F'])||0);
+  const cumuls = days.map(r=>parseNum(r['L'])||0);
+  const ecarts = days.map(r=>parseNum(r['K'])||0);
 
-  const allVals=[...marges,...cibles,...cumuls.map(Math.abs),...ecarts.map(Math.abs)].filter(v=>v!==null);
-  const maxVal=Math.max(...allVals)*1.15||1;
-  const minVal=Math.min(...cumuls,0)*1.15;
+  const allV = [...marges,...cibles,...cumuls.map(Math.abs),...ecarts.map(Math.abs)].filter(v=>v!==null);
+  const maxV = Math.max(...allV)*1.15||1;
+  const minV = Math.min(...cumuls,0)*1.15;
 
   const PAD={t:10,r:10,b:28,l:60};
-  const cw=W-PAD.l-PAD.r;
-  const ch=H-PAD.t-PAD.b;
-  const n=days.length;
-  const barW=Math.max(4,cw/n*0.35);
-  const step=cw/(n-1);
+  const cw=W-PAD.l-PAD.r, ch=H-PAD.t-PAD.b;
+  const n=days.length, step=cw/(n-1);
+  const barW=Math.max(4,cw/n*0.3);
 
   function xp(i){return PAD.l+i*step;}
-  function yp(v){return PAD.t+ch*(1-(v-minVal)/(maxVal-minVal));}
+  function yp(v){return PAD.t+ch*(1-(v-minV)/(maxV-minV));}
 
-  // Fond
   ctx.fillStyle='#161B22'; ctx.fillRect(0,0,W,H);
-
-  // Ligne zéro
   const y0=yp(0);
-  ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=1; ctx.setLineDash([]);
-  ctx.beginPath(); ctx.moveTo(PAD.l,y0); ctx.lineTo(W-PAD.r,y0); ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,0.08)';ctx.lineWidth=1;ctx.setLineDash([]);
+  ctx.beginPath();ctx.moveTo(PAD.l,y0);ctx.lineTo(W-PAD.r,y0);ctx.stroke();
 
-  // Axes Y labels
-  ctx.fillStyle='#7D8590'; ctx.font='10px DM Sans'; ctx.textAlign='right';
-  [0,0.25,0.5,0.75,1].forEach(p=>{
-    const v=minVal+(maxVal-minVal)*p;
-    const y=yp(v);
-    ctx.strokeStyle='rgba(255,255,255,0.04)'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.moveTo(PAD.l,y); ctx.lineTo(W-PAD.r,y); ctx.stroke();
+  ctx.fillStyle='#7D8590';ctx.font='10px DM Sans';ctx.textAlign='right';
+  [0,.25,.5,.75,1].forEach(p=>{
+    const v=minV+(maxV-minV)*p, y=yp(v);
+    ctx.strokeStyle='rgba(255,255,255,0.04)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(PAD.l,y);ctx.lineTo(W-PAD.r,y);ctx.stroke();
     ctx.fillStyle='#7D8590';
-    ctx.fillText((v/1000).toFixed(0)+'k€', PAD.l-4, y+3);
+    ctx.fillText((v/1000).toFixed(0)+'k€',PAD.l-4,y+3);
   });
 
-  // Barres écart journalier
   ecarts.forEach((e,i)=>{
-    const x=xp(i)-barW/2;
-    const yTop=e>=0?yp(e):y0;
-    const yBot=e>=0?y0:yp(e);
+    const x=xp(i)-barW/2, yTop=e>=0?yp(e):y0, yBot=e>=0?y0:yp(e);
     ctx.fillStyle=e>=0?'rgba(63,185,80,0.5)':'rgba(248,81,73,0.5)';
     ctx.fillRect(x,yTop,barW,Math.abs(yBot-yTop));
   });
 
-  // Courbe cumul écart
-  ctx.strokeStyle='#58A6FF'; ctx.lineWidth=1.5; ctx.setLineDash([4,3]);
-  ctx.beginPath();
-  cumuls.forEach((v,i)=>{i===0?ctx.moveTo(xp(i),yp(v)):ctx.lineTo(xp(i),yp(v));});
-  ctx.stroke(); ctx.setLineDash([]);
+  ctx.strokeStyle='#58A6FF';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);
+  ctx.beginPath();cumuls.forEach((v,i)=>{i===0?ctx.moveTo(xp(i),yp(v)):ctx.lineTo(xp(i),yp(v));});ctx.stroke();ctx.setLineDash([]);
 
-  // Courbe objectif (tirets)
-  ctx.strokeStyle='rgba(125,133,144,0.5)'; ctx.lineWidth=1; ctx.setLineDash([5,4]);
-  ctx.beginPath();
-  cibles.forEach((v,i)=>{i===0?ctx.moveTo(xp(i),yp(v)):ctx.lineTo(xp(i),yp(v));});
-  ctx.stroke(); ctx.setLineDash([]);
+  ctx.strokeStyle='rgba(125,133,144,0.5)';ctx.lineWidth=1;ctx.setLineDash([5,4]);
+  ctx.beginPath();cibles.forEach((v,i)=>{i===0?ctx.moveTo(xp(i),yp(v)):ctx.lineTo(xp(i),yp(v));});ctx.stroke();ctx.setLineDash([]);
 
-  // Courbe marge réelle
-  ctx.strokeStyle='#3FB950'; ctx.lineWidth=2.5;
-  ctx.beginPath();
-  marges.forEach((v,i)=>{i===0?ctx.moveTo(xp(i),yp(v)):ctx.lineTo(xp(i),yp(v));});
-  ctx.stroke();
+  ctx.strokeStyle='#3FB950';ctx.lineWidth=2.5;
+  ctx.beginPath();marges.forEach((v,i)=>{i===0?ctx.moveTo(xp(i),yp(v)):ctx.lineTo(xp(i),yp(v));});ctx.stroke();
 
-  // Points marge
   marges.forEach((v,i)=>{
     const isSel=allRows.indexOf(days[i])===selectedIdx;
-    ctx.beginPath();
-    ctx.arc(xp(i),yp(v),isSel?5:3,0,Math.PI*2);
+    ctx.beginPath();ctx.arc(xp(i),yp(v),isSel?5:3,0,Math.PI*2);
     ctx.fillStyle=isSel?'#3FB950':'#161B22';
-    ctx.strokeStyle='#3FB950'; ctx.lineWidth=isSel?2:1.5;
-    ctx.fill(); ctx.stroke();
+    ctx.strokeStyle='#3FB950';ctx.lineWidth=isSel?2:1.5;
+    ctx.fill();ctx.stroke();
   });
 
-  // Labels X
-  ctx.fillStyle='#7D8590'; ctx.font='10px DM Sans'; ctx.textAlign='center'; ctx.setLineDash([]);
-  days.forEach((r,i)=>{
-    if(i%3===0||i===days.length-1){
-      ctx.fillText(dshort(r['A']),xp(i),H-PAD.b+14);
+  ctx.fillStyle='#7D8590';ctx.font='10px DM Sans';ctx.textAlign='center';ctx.setLineDash([]);
+  days.forEach((r,i)=>{if(i%2===0||i===days.length-1)ctx.fillText(dshort(r['A']),xp(i),H-PAD.b+14);});
+}
+
+function renderAnnual() {
+  // Agréger par semaine
+  const weekMap = {};
+  for (const row of allRows) {
+    const sem = parseNum(row['C']);
+    if (!sem) continue;
+    if (!weekMap[sem]) weekMap[sem] = {sem, ca:0, marge:0, caObj:0, margeObj:0, jours:0, hasData:false};
+    const ca = parseNum(row['G']);
+    const marge = parseNum(row['I']);
+    weekMap[sem].caObj += parseNum(row['E'])||0;
+    weekMap[sem].margeObj += parseNum(row['F'])||0;
+    if (ca !== null) {
+      weekMap[sem].ca += ca;
+      weekMap[sem].marge += marge||0;
+      weekMap[sem].jours++;
+      weekMap[sem].hasData = true;
     }
+  }
+
+  const weeks = Object.values(weekMap).sort((a,b)=>a.sem-b.sem);
+  const doneWeeks = weeks.filter(w=>w.hasData);
+  const ytdM = doneWeeks.reduce((s,w)=>s+w.marge,0);
+  const ytdCA = doneWeeks.reduce((s,w)=>s+w.ca,0);
+  const txMoyen = ytdCA ? ytdM/ytdCA*100 : null;
+
+  // KPIs annuels
+  document.getElementById('ann-marge').textContent = fmtE(ytdM);
+  document.getElementById('ann-marge-pct').innerHTML = `<span class="delta-neu">${fmt(ytdM/OBJ_ANNUEL*100,1)} % de l'objectif</span>`;
+  document.getElementById('ann-ca').textContent = fmtE(ytdCA);
+  document.getElementById('ann-ca-sub').textContent = doneWeeks.length + ' semaines réalisées';
+  document.getElementById('ann-taux').textContent = txMoyen ? fmt(txMoyen,1)+' %' : '—';
+  document.getElementById('ann-sems').textContent = doneWeeks.length;
+  document.getElementById('ann-sems-sub').textContent = (weeks.length - doneWeeks.length) + ' semaines restantes';
+
+  drawAnnualChart(weeks, ytdM);
+  drawWeekChart(doneWeeks);
+  renderWeekTable(weeks, doneWeeks, ytdM);
+}
+
+function drawAnnualChart(weeks, ytdM) {
+  const canvas = document.getElementById('annualChart');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio||1;
+  const W = canvas.parentElement.offsetWidth - 2;
+  const H = 180;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  ctx.scale(dpr,dpr);
+  ctx.fillStyle='#161B22';ctx.fillRect(0,0,W,H);
+
+  const PAD={t:16,r:80,b:30,l:70};
+  const cw=W-PAD.l-PAD.r, ch=H-PAD.t-PAD.b;
+  const n=weeks.length;
+  if(n<2) return;
+
+  // Cumuler la marge réalisée
+  let cumMarge=0;
+  const cumulData = weeks.map(w=>{
+    if(w.hasData) cumMarge+=w.marge;
+    return {sem:w.sem, cumul:w.hasData?cumMarge:null};
   });
+
+  const maxV = OBJ_ANNUEL * 1.05;
+  function xp(i){return PAD.l+i*(cw/(n-1));}
+  function yp(v){return PAD.t+ch*(1-v/maxV);}
+
+  // Grille
+  [0,.25,.5,.75,1].forEach(p=>{
+    const v=OBJ_ANNUEL*p, y=yp(v);
+    ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=1;ctx.setLineDash([]);
+    ctx.beginPath();ctx.moveTo(PAD.l,y);ctx.lineTo(W-PAD.r,y);ctx.stroke();
+    ctx.fillStyle='#7D8590';ctx.font='10px DM Sans';ctx.textAlign='right';
+    ctx.fillText(Math.round(v/1000)+'k€',PAD.l-4,y+3);
+  });
+
+  // Ligne objectif linéaire (tirets)
+  ctx.strokeStyle='rgba(125,133,144,0.4)';ctx.lineWidth=1.5;ctx.setLineDash([6,4]);
+  ctx.beginPath();ctx.moveTo(xp(0),yp(0));ctx.lineTo(xp(n-1),yp(OBJ_ANNUEL));ctx.stroke();ctx.setLineDash([]);
+
+  // Zone réalisée
+  const lastDoneIdx = cumulData.reduce((last,d,i)=>d.cumul!==null?i:last,-1);
+  if(lastDoneIdx>=0){
+    ctx.beginPath();
+    ctx.moveTo(xp(0),yp(0));
+    cumulData.slice(0,lastDoneIdx+1).forEach((d,i)=>{if(d.cumul!==null)ctx.lineTo(xp(i),yp(d.cumul));});
+    ctx.lineTo(xp(lastDoneIdx),H-PAD.b);ctx.lineTo(xp(0),H-PAD.b);ctx.closePath();
+    ctx.fillStyle='rgba(63,185,80,0.08)';ctx.fill();
+
+    // Courbe marge réalisée
+    ctx.strokeStyle='#3FB950';ctx.lineWidth=2.5;
+    ctx.beginPath();
+    let first=true;
+    cumulData.forEach((d,i)=>{if(d.cumul!==null){first?ctx.moveTo(xp(i),yp(d.cumul)):ctx.lineTo(xp(i),yp(d.cumul));first=false;}});
+    ctx.stroke();
+
+    // Projection fin d'année
+    if(lastDoneIdx < n-1 && ytdM > 0){
+      const ratePerWeek = ytdM / (lastDoneIdx+1);
+      const projected = ytdM + ratePerWeek * (n-1-lastDoneIdx);
+      ctx.strokeStyle='rgba(227,179,65,0.6)';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);
+      ctx.beginPath();
+      ctx.moveTo(xp(lastDoneIdx),yp(ytdM));
+      ctx.lineTo(xp(n-1),yp(projected));
+      ctx.stroke();ctx.setLineDash([]);
+
+      // Point projection
+      ctx.beginPath();ctx.arc(xp(n-1),yp(projected),4,0,Math.PI*2);
+      ctx.fillStyle='#E3B341';ctx.fill();
+      ctx.fillStyle='#E3B341';ctx.font='11px DM Sans';ctx.textAlign='left';
+      ctx.fillText(Math.round(projected/1000)+'k€',xp(n-1)+6,yp(projected)+4);
+    }
+
+    // Point actuel
+    ctx.beginPath();ctx.arc(xp(lastDoneIdx),yp(ytdM),5,0,Math.PI*2);
+    ctx.fillStyle='#3FB950';ctx.fill();
+    ctx.fillStyle='#3FB950';ctx.font='11px DM Sans';ctx.textAlign='left';
+    ctx.fillText(Math.round(ytdM/1000)+'k€',xp(lastDoneIdx)+7,yp(ytdM)+4);
+  }
+
+  // Labels X (semaines)
+  ctx.fillStyle='#7D8590';ctx.font='10px DM Sans';ctx.textAlign='center';ctx.setLineDash([]);
+  weeks.forEach((w,i)=>{if(i%4===0||i===n-1)ctx.fillText('S'+w.sem,xp(i),H-PAD.b+14);});
+}
+
+function drawWeekChart(doneWeeks) {
+  const canvas = document.getElementById('weekChart');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio||1;
+  const W = canvas.parentElement.offsetWidth - 2;
+  const H = 200;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  ctx.scale(dpr,dpr);
+  ctx.fillStyle='#161B22';ctx.fillRect(0,0,W,H);
+
+  if(doneWeeks.length<1) return;
+
+  const PAD={t:10,r:10,b:28,l:60};
+  const cw=W-PAD.l-PAD.r, ch=H-PAD.t-PAD.b;
+  const n=doneWeeks.length;
+  const maxV=Math.max(...doneWeeks.map(w=>w.ca))*1.1||1;
+  const groupW=cw/n;
+  const barW=Math.max(3,groupW*0.35);
+
+  function xg(i){return PAD.l+i*groupW+groupW/2;}
+  function yp(v){return PAD.t+ch*(1-v/maxV);}
+
+  // Grille
+  [0,.25,.5,.75,1].forEach(p=>{
+    const v=maxV*p,y=yp(v);
+    ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(PAD.l,y);ctx.lineTo(W-PAD.r,y);ctx.stroke();
+    ctx.fillStyle='#7D8590';ctx.font='10px DM Sans';ctx.textAlign='right';
+    ctx.fillText(Math.round(v/1000)+'k€',PAD.l-4,y+3);
+  });
+
+  // Barres
+  doneWeeks.forEach((w,i)=>{
+    const x=xg(i);
+    const yCA=yp(w.ca), yM=yp(w.marge), yMo=yp(w.margeObj);
+    const h=H-PAD.b;
+
+    // CA barre (derrière)
+    ctx.fillStyle='rgba(248,81,73,0.4)';
+    ctx.fillRect(x-barW,yCA,barW,h-yCA);
+
+    // Marge barre
+    ctx.fillStyle=w.marge>=w.margeObj?'rgba(63,185,80,0.7)':'rgba(248,81,73,0.7)';
+    ctx.fillRect(x,yM,barW,h-yM);
+
+    // Objectif marge (ligne)
+    ctx.strokeStyle='rgba(88,166,255,0.5)';ctx.lineWidth=1.5;ctx.setLineDash([3,2]);
+    ctx.beginPath();ctx.moveTo(x-barW-2,yMo);ctx.lineTo(x+barW+2,yMo);ctx.stroke();ctx.setLineDash([]);
+  });
+
+  // Labels
+  ctx.fillStyle='#7D8590';ctx.font='10px DM Sans';ctx.textAlign='center';
+  doneWeeks.forEach((w,i)=>{ctx.fillText('S'+w.sem,xg(i),H-PAD.b+14);});
+}
+
+function renderWeekTable(weeks, doneWeeks, ytdM) {
+  const currentSem = doneWeeks.length > 0 ? doneWeeks[doneWeeks.length-1].sem : null;
+  const tbody = document.getElementById('week-table-body');
+  
+  tbody.innerHTML = weeks.map(w => {
+    const ecart = w.hasData ? w.marge - w.margeObj : null;
+    const tx = w.ca ? w.marge/w.ca*100 : null;
+    const isCurrent = w.sem === currentSem;
+    return `<tr class="${isCurrent?'current-week':''}">
+      <td>S${w.sem}${isCurrent?' 📍':''}</td>
+      <td>${w.hasData?fmt(w.ca):'<span style="color:var(--muted)">—</span>'}</td>
+      <td style="color:${w.hasData?(w.marge>=0?'var(--green)':'var(--red)'):'var(--muted)'}">${w.hasData?fmt(w.marge):'—'}</td>
+      <td style="color:var(--muted)">${fmt(w.margeObj)}</td>
+      <td style="color:${ecart===null?'var(--muted)':ecart>=0?'var(--green)':'var(--red)'}">${ecart!==null?(ecart>=0?'+':'')+fmt(ecart):'—'}</td>
+      <td style="color:var(--muted)">${tx!==null?fmt(tx,1)+'%':'—'}</td>
+    </tr>`;
+  }).join('');
 }
 
 loadData();
