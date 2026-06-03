@@ -339,10 +339,22 @@ function renderDay() {
   const txPct = txT!==null ? fmt(txT*100,1)+'%' : (nbCli&&nbVte ? fmt(nbVte/nbCli*100,1)+'%' : '—');
   document.getElementById('tx-transfo').textContent = txPct;
   document.getElementById('tx-transfo-sub').textContent = (nbVte&&nbCli) ? `${fmt(nbVte)} ventes / ${fmt(Math.round(nbCli))} clients` : 'données non saisies';
-  document.getElementById('activite-list').innerHTML = `
+      const selDate = (() => { const d = gdate(row['A']); return d ? (String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear()) : ''; })();
+
+    document.getElementById('activite-list').innerHTML = `
     <div class="cumul-row"><span class="cumul-label">NB passages</span><span class="cumul-val">${nbCli?fmt(Math.round(nbCli)):'—'}</span></div>
-    <div class="cumul-row"><span class="cumul-label">NB ventes</span><span class="cumul-val">${nbVte!==null?fmt(nbVte):'—'}</span></div>
-    <div class="cumul-row"><span class="cumul-label">NB achats (HA)</span><span class="cumul-val">${nbAch!==null?fmt(nbAch):'—'}</span></div>`;
+    <div class="cumul-row" style="align-items:center">
+      <span class="cumul-label">NB ventes magasin</span>
+      <input type="number" id="input-ventes" value="${nbVte!==null?nbVte:''}" placeholder="—" style="width:60px;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:4px;font-size:12px;text-align:right">
+    </div>
+    <div class="cumul-row" style="align-items:center">
+      <span class="cumul-label">NB achats HA magasin</span>
+      <input type="number" id="input-achats" value="${nbAch!==null?nbAch:''}" placeholder="—" style="width:60px;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:4px;font-size:12px;text-align:right">
+    </div>
+    <div style="display:flex;align-items:center;justify-content:flex-end;padding-top:8px;gap:8px">
+      <span id="save-status" style="font-size:11px;color:var(--muted)"></span>
+      <button onclick="saveSaisie('${selDate}')" style="background:var(--blue);color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-weight:500">Enregistrer</button>
+    </div>`;
 
   document.getElementById('ecarts-list').innerHTML = `
     <div class="cumul-row"><span class="cumul-label">Écart marge du jour</span><span class="cumul-val" style="color:${ecartM>=0?'var(--green)':'var(--red)'}">${fmtE(ecartM)}</span></div>
@@ -473,15 +485,14 @@ function renderAnnual() {
   document.getElementById('ann-sems').textContent = doneWeeks.length;
   document.getElementById('ann-sems-sub').textContent = (weeks.length - doneWeeks.length) + ' semaines restantes';
 
-  // Taux de transformation moyen
-  const rowsWithTx = allRows.filter(r=>parseNum(r['T'])!==null&&parseNum(r['Q'])!==null&&parseNum(r['S'])!==null);
+  // Taux de transformation moyen — lire directement colonne T du Sheets
+  const rowsWithTx = allRows.filter(r=>parseNum(r['T'])!==null&&parseNum(r['T'])>0);
   let txMoyen = null;
   if(rowsWithTx.length > 0){
-    const sumTx = rowsWithTx.reduce((s,r)=>{
-      const q=parseNum(r['Q']), v=parseNum(r['S']);
-      return q>0 ? s + v/q : s;
-    }, 0);
-    txMoyen = sumTx / rowsWithTx.length * 100;
+    const sumTx = rowsWithTx.reduce((s,r)=>s+(parseNum(r['T'])||0), 0);
+    // Colonne T est en décimal (0.14 = 14%) ou en % selon le Sheets
+    const avg = sumTx / rowsWithTx.length;
+    txMoyen = avg <= 1 ? avg * 100 : avg; // normaliser en %
   }
   const txEl = document.getElementById('ann-tx-transfo');
   const txBarEl = document.getElementById('ann-tx-bar');
@@ -751,6 +762,38 @@ function renderWeekTable(weeks, doneWeeks, ytdM) {
       <td style="color:var(--muted)">${tx!==null?fmt(tx,1)+'%':'—'}</td>
     </tr>`;
   }).join('');
+}
+
+async function saveSaisie(dateFR) {
+  const nbVentes = document.getElementById('input-ventes')?.value;
+  const nbAchats = document.getElementById('input-achats')?.value;
+  const status = document.getElementById('save-status');
+
+  if (!dateFR) { if(status) status.textContent = '❌ Date invalide'; return; }
+  if (!nbVentes && !nbAchats) { if(status) status.textContent = '⚠️ Aucune valeur'; return; }
+
+  if(status) status.textContent = 'Enregistrement...';
+
+  try {
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz_om6CHk3CvB4e8dyFqdj0O_rzcVrZvjk1c9Uub1ZAx34J6VsOI5H30IRgtV67iyq1Yw/exec';
+    const body = { dateFR };
+    if (nbVentes) body.nbVentes = parseInt(nbVentes);
+    if (nbAchats) body.nbHA = parseInt(nbAchats);
+
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (data.success) {
+      if(status) status.textContent = '✅ Enregistré !';
+      setTimeout(() => { if(status) status.textContent = ''; }, 3000);
+    } else {
+      if(status) status.textContent = '❌ ' + (data.error || 'Erreur');
+    }
+  } catch(e) {
+    if(status) status.textContent = '❌ ' + e.message;
+  }
 }
 
 loadData();
