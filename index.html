@@ -278,13 +278,24 @@ async function loadData() {
     window.txMoyenGlobal = null;
     window.formByDate = {};
     if(jsForm.table && jsForm.table.rows) {
-      // Ligne 0 = ligne 2 du sheet (ligne 1 = en-têtes)
-      const r0 = jsForm.table.rows[0];
-      if(r0 && r0.c && r0.c[6] && r0.c[6].v !== null) {
-        window.txMoyenGlobal = parseFloat(r0.c[6].v) * 100;
+      // Ligne 0 = ligne 2 du sheet = ligne MOYENNE (pas de timestamp)
+    // Ligne 1+ = lignes de données avec timestamp
+    // Chercher G2 = première ligne sans timestamp (c'est la ligne MOYENNE)
+    let moyenneLigne = null;
+    jsForm.table.rows.forEach((r, i) => {
+      if(!r || !r.c) return;
+      const hasTimestamp = r.c[0] && r.c[0].v;
+      if(!hasTimestamp && r.c[6] && r.c[6].v !== null && moyenneLigne === null) {
+        moyenneLigne = r;
       }
-      // Indexer par date les lignes du Form (col A=timestamp, G=taux)
-      jsForm.table.rows.slice(1).forEach(r => {
+    });
+    if(moyenneLigne && moyenneLigne.c[6]) {
+      const raw = parseFloat(moyenneLigne.c[6].v);
+      // Si < 1 c'est un décimal (0.1379), sinon déjà en %
+      window.txMoyenGlobal = raw < 1 ? raw * 100 : raw;
+    }
+    // Indexer par date les lignes du Form (col A=timestamp, G=taux)
+    jsForm.table.rows.slice(0).forEach(r => {
         if(!r || !r.c || !r.c[0]) return;
         const d = gdate(r.c[0].v);
         if(!d) return;
