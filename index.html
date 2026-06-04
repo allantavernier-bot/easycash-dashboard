@@ -291,7 +291,7 @@ async function loadData() {
     });
     if(moyenneLigne && moyenneLigne.c[6]) {
       const raw = parseFloat(moyenneLigne.c[6].v);
-      window.txMoyenGlobal = raw < 1 ? raw * 100 : raw;
+      window.txMoyenGlobal = raw < 2 ? raw * 100 : raw;
     } else {
       // Fallback : prendre la moyenne des taux des lignes avec timestamp
       const txVals = [];
@@ -299,7 +299,7 @@ async function loadData() {
         if(!r || !r.c || !r.c[0] || !r.c[0].v) return;
         if(r.c[6] && r.c[6].v !== null) {
           const v = parseFloat(r.c[6].v);
-          txVals.push(v < 1 ? v * 100 : v);
+          txVals.push(v < 2 ? v * 100 : v);
         }
       });
       if(txVals.length > 0) {
@@ -312,7 +312,8 @@ async function loadData() {
         const d = gdate(r.c[0].v);
         if(!d) return;
         const key = d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
-        const taux = r.c[6] ? parseFloat(r.c[6].v) * 100 : null;
+        const rawTaux = r.c[6] ? parseFloat(r.c[6].v) : null;
+        const taux = rawTaux !== null && !isNaN(rawTaux) ? (rawTaux < 2 ? rawTaux * 100 : rawTaux) : null;
         if(taux !== null) window.formByDate[key] = taux;
       });
     }
@@ -555,7 +556,8 @@ function renderAnnual() {
         lastFormDate = dates[0].toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit', year:'numeric'});
       }
     }
-    if(txSubEl) txSubEl.textContent = (lastFormDate ? 'Mise à jour : ' + lastFormDate : '—') + ' · ' + rowsWithTx.length + ' jours';
+    const nbJoursForm = window.formByDate ? Object.keys(window.formByDate).length : 0;
+    if(txSubEl) txSubEl.textContent = (lastFormDate ? 'Mise à jour : ' + lastFormDate : '—') + ' · ' + nbJoursForm + ' jours';
     // Barre de progression dans la fourchette 0-25%
     if(txBarEl){
       const pct = Math.min(100, txMoyen/25*100);
