@@ -284,8 +284,10 @@ async function loadData() {
     let moyenneLigne = null;
     jsForm.table.rows.forEach((r, i) => {
       if(!r || !r.c) return;
-      const hasTimestamp = r.c[0] && r.c[0].v;
-      if(!hasTimestamp && r.c[6] && r.c[6].v !== null && moyenneLigne === null) {
+      // La ligne MOYENNE n'a pas de timestamp valide (pas une date)
+      const ts = r.c[0] ? r.c[0].v : null;
+      const hasValidDate = ts && gdate(ts) !== null;
+      if(!hasValidDate && r.c[6] && r.c[6].v !== null && r.c[6].v !== undefined && moyenneLigne === null) {
         moyenneLigne = r;
       }
     });
@@ -392,9 +394,11 @@ function renderDay() {
     <div class="cumul-row"><span class="cumul-label">Objectif marge</span><span class="cumul-val">${fmtE(semMargeCible)}</span></div>`;
 
   // Transfo - source prioritaire : col T du Sheets (=S/Q), fallback formByDate
-    const txFromSheet = txT !== null ? txT * 100 : null;
+    // col T peut être décimal (0.155) ou déjà % (15.5) selon format gviz
+    const txRaw = txT !== null ? txT : null;
+    const txFromSheet = txRaw !== null ? (txRaw < 1 ? txRaw * 100 : txRaw) : null;
     const txFromForm = window.formByDate && selDate ? window.formByDate[selDate] : null;
-    const txDisplay = txFromSheet !== null ? txFromSheet : txFromForm;
+    const txDisplay = (txFromSheet !== null && txFromSheet > 0 && txFromSheet <= 100) ? txFromSheet : txFromForm;
     const txPct = txDisplay !== null ? fmt(txDisplay,1)+'%' : '—';
     document.getElementById('tx-transfo').textContent = txPct;
     document.getElementById('tx-transfo-sub').textContent = (nbVte!==null||nbCli!==null) ?
@@ -543,15 +547,9 @@ function renderAnnual() {
   document.getElementById('ann-sems').textContent = doneWeeks.length;
   document.getElementById('ann-sems-sub').textContent = (weeks.length - doneWeeks.length) + ' semaines restantes';
 
-  // Taux de transformation moyen — calculé depuis col T du Sheets (priorité) ou formByDate
-  const txValsSheet = allRows
-    .map(r => parseNum(r['T']))
-    .filter(v => v !== null && v > 0 && v <= 1); // col T = ratio décimal (S/Q)
-  const txMoyenSheet = txValsSheet.length > 0
-    ? txValsSheet.reduce((s,v)=>s+v,0) / txValsSheet.length * 100
-    : null;
-  const txMoyen = txMoyenSheet !== null ? txMoyenSheet : (window.txMoyenGlobal || null);
-  const nbJoursTx = txValsSheet.length;
+  // Taux de transformation moyen — source G2 du Form (MOYENNE officielle du sheet)
+  const txMoyen = window.txMoyenGlobal || null;
+  const nbJoursTx = window.formByDate ? Object.keys(window.formByDate).length : 0;
   const txEl = document.getElementById('ann-tx-transfo');
   const txBarEl = document.getElementById('ann-tx-bar');
   const txSubEl = document.getElementById('ann-tx-sub');
