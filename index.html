@@ -391,12 +391,13 @@ function renderDay() {
     <div class="cumul-row"><span class="cumul-label">Marge semaine</span><span class="cumul-val val-green">${fmtE(semMarge)}</span></div>
     <div class="cumul-row"><span class="cumul-label">Objectif marge</span><span class="cumul-val">${fmtE(semMargeCible)}</span></div>`;
 
-  // Transfo
-      // Taux journalier depuis le Form directement
+  // Transfo - source prioritaire : col T du Sheets (=S/Q), fallback formByDate
+    const txFromSheet = txT !== null ? txT * 100 : null;
     const txFromForm = window.formByDate && selDate ? window.formByDate[selDate] : null;
-    const txPct = txFromForm !== null && txFromForm !== undefined ? fmt(txFromForm,1)+'%' : '—';
+    const txDisplay = txFromSheet !== null ? txFromSheet : txFromForm;
+    const txPct = txDisplay !== null ? fmt(txDisplay,1)+'%' : '—';
     document.getElementById('tx-transfo').textContent = txPct;
-    document.getElementById('tx-transfo-sub').textContent = txFromForm !== null ?
+    document.getElementById('tx-transfo-sub').textContent = (nbVte!==null||nbCli!==null) ?
       (nbVte!==null?fmt(nbVte):'—')+' ventes / '+(nbCli?fmt(Math.round(nbCli)):'—')+' clients' : 'données non saisies';
       document.getElementById('activite-list').innerHTML = `
     <div class="cumul-row"><span class="cumul-label">NB passages</span><span class="cumul-val">${nbCli?fmt(Math.round(nbCli)):'—'}</span></div>
@@ -542,8 +543,15 @@ function renderAnnual() {
   document.getElementById('ann-sems').textContent = doneWeeks.length;
   document.getElementById('ann-sems-sub').textContent = (weeks.length - doneWeeks.length) + ' semaines restantes';
 
-  // Taux de transformation moyen — lu directement depuis G2 du Form
-  const txMoyen = window.txMoyenGlobal || null;
+  // Taux de transformation moyen — calculé depuis col T du Sheets (priorité) ou formByDate
+  const txValsSheet = allRows
+    .map(r => parseNum(r['T']))
+    .filter(v => v !== null && v > 0 && v <= 1); // col T = ratio décimal (S/Q)
+  const txMoyenSheet = txValsSheet.length > 0
+    ? txValsSheet.reduce((s,v)=>s+v,0) / txValsSheet.length * 100
+    : null;
+  const txMoyen = txMoyenSheet !== null ? txMoyenSheet : (window.txMoyenGlobal || null);
+  const nbJoursTx = txValsSheet.length;
   const txEl = document.getElementById('ann-tx-transfo');
   const txBarEl = document.getElementById('ann-tx-bar');
   const txSubEl = document.getElementById('ann-tx-sub');
@@ -562,8 +570,7 @@ function renderAnnual() {
         lastFormDate = dates[0].toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit', year:'numeric'});
       }
     }
-    const nbJoursForm = window.formByDate ? Object.keys(window.formByDate).length : 0;
-    if(txSubEl) txSubEl.textContent = (lastFormDate ? 'Mise à jour : ' + lastFormDate : '—') + ' · ' + nbJoursForm + ' jours';
+    if(txSubEl) txSubEl.textContent = (lastFormDate ? 'Mise à jour : ' + lastFormDate : '—') + ' · ' + nbJoursTx + ' jours';
     // Barre de progression dans la fourchette 0-25%
     if(txBarEl){
       const pct = Math.min(100, txMoyen/25*100);
