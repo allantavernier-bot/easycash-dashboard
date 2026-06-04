@@ -291,8 +291,20 @@ async function loadData() {
     });
     if(moyenneLigne && moyenneLigne.c[6]) {
       const raw = parseFloat(moyenneLigne.c[6].v);
-      // Si < 1 c'est un décimal (0.1379), sinon déjà en %
       window.txMoyenGlobal = raw < 1 ? raw * 100 : raw;
+    } else {
+      // Fallback : prendre la moyenne des taux des lignes avec timestamp
+      const txVals = [];
+      jsForm.table.rows.forEach(r => {
+        if(!r || !r.c || !r.c[0] || !r.c[0].v) return;
+        if(r.c[6] && r.c[6].v !== null) {
+          const v = parseFloat(r.c[6].v);
+          txVals.push(v < 1 ? v * 100 : v);
+        }
+      });
+      if(txVals.length > 0) {
+        window.txMoyenGlobal = txVals.reduce((s,v)=>s+v,0) / txVals.length;
+      }
     }
     // Indexer par date les lignes du Form (col A=timestamp, G=taux)
     jsForm.table.rows.slice(0).forEach(r => {
@@ -378,9 +390,7 @@ function renderDay() {
     document.getElementById('tx-transfo').textContent = txPct;
     document.getElementById('tx-transfo-sub').textContent = txFromForm !== null ?
       (nbVte!==null?fmt(nbVte):'—')+' ventes / '+(nbCli?fmt(Math.round(nbCli)):'—')+' clients' : 'données non saisies';
-      const selDate = (() => { const d = gdate(row['A']); return d ? (String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear()) : ''; })();
-
-    document.getElementById('activite-list').innerHTML = `
+      document.getElementById('activite-list').innerHTML = `
     <div class="cumul-row"><span class="cumul-label">NB passages</span><span class="cumul-val">${nbCli?fmt(Math.round(nbCli)):'—'}</span></div>
     <div class="cumul-row" style="align-items:center">
       <span class="cumul-label">NB ventes magasin</span>
