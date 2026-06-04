@@ -485,14 +485,20 @@ function renderAnnual() {
   document.getElementById('ann-sems').textContent = doneWeeks.length;
   document.getElementById('ann-sems-sub').textContent = (weeks.length - doneWeeks.length) + ' semaines restantes';
 
-  // Taux de transformation moyen — lire directement colonne T du Sheets
-  const rowsWithTx = allRows.filter(r=>parseNum(r['T'])!==null&&parseNum(r['T'])>0);
+  // Taux de transformation moyen — même calcul que le Form : MOYENNE des taux journaliers
+  // T est en décimal (0.14 = 14%)
+  const rowsWithTx = allRows.filter(r => {
+    const t = parseNum(r['T']);
+    return t !== null && t > 0;
+  });
   let txMoyen = null;
   if(rowsWithTx.length > 0){
-    const sumTx = rowsWithTx.reduce((s,r)=>s+(parseNum(r['T'])||0), 0);
-    // Colonne T est en décimal (0.14 = 14%) ou en % selon le Sheets
-    const avg = sumTx / rowsWithTx.length;
-    txMoyen = avg <= 1 ? avg * 100 : avg; // normaliser en %
+    const sumTx = rowsWithTx.reduce((s,r) => {
+      const t = parseNum(r['T']);
+      // Normaliser : si > 1 c'est déjà en %, sinon en décimal
+      return s + (t > 1 ? t : t * 100);
+    }, 0);
+    txMoyen = sumTx / rowsWithTx.length;
   }
   const txEl = document.getElementById('ann-tx-transfo');
   const txBarEl = document.getElementById('ann-tx-bar');
