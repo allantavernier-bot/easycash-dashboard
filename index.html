@@ -345,6 +345,8 @@ function renderDay() {
   const row = allRows[idx];
   if (!row) return;
 
+  const selDate = row['A'] ? (()=>{ const d=gdate(row['A']); return d?d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'}):null; })() : null;
+
   const marge=parseNum(row['I']), margeCible=parseNum(row['F']),
         ca=parseNum(row['G']), caCible=parseNum(row['E']),
         ecartM=parseNum(row['K']), cumulM=parseNum(row['L']),
@@ -384,8 +386,7 @@ function renderDay() {
 
   // Transfo
       // Taux journalier depuis le Form directement
-    const selDateKey = selDate;
-    const txFromForm = window.formByDate && selDateKey ? window.formByDate[selDateKey] : null;
+    const txFromForm = window.formByDate && selDate ? window.formByDate[selDate] : null;
     const txPct = txFromForm !== null && txFromForm !== undefined ? fmt(txFromForm,1)+'%' : '—';
     document.getElementById('tx-transfo').textContent = txPct;
     document.getElementById('tx-transfo-sub').textContent = txFromForm !== null ?
