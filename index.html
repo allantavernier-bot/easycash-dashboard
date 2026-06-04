@@ -289,17 +289,24 @@ async function loadData() {
         moyenneLigne = r;
       }
     });
+    // Normalise un taux brut gviz -> pourcentage plafonné à 100%
+    function normTaux(raw) {
+      const v = parseFloat(raw);
+      if(isNaN(v) || v <= 0) return null;
+      const pct = v < 2 ? v * 100 : v;
+      return pct > 100 ? null : pct; // valeur aberrante ignorée
+    }
     if(moyenneLigne && moyenneLigne.c[6]) {
-      const raw = parseFloat(moyenneLigne.c[6].v);
-      window.txMoyenGlobal = raw < 2 ? raw * 100 : raw;
-    } else {
-      // Fallback : prendre la moyenne des taux des lignes avec timestamp
+      window.txMoyenGlobal = normTaux(moyenneLigne.c[6].v);
+    }
+    // Si pas de ligne MOYENNE ou valeur aberrante -> fallback moyenne des lignes de données
+    if(window.txMoyenGlobal === null) {
       const txVals = [];
       jsForm.table.rows.forEach(r => {
         if(!r || !r.c || !r.c[0] || !r.c[0].v) return;
         if(r.c[6] && r.c[6].v !== null) {
-          const v = parseFloat(r.c[6].v);
-          txVals.push(v < 2 ? v * 100 : v);
+          const v = normTaux(r.c[6].v);
+          if(v !== null) txVals.push(v);
         }
       });
       if(txVals.length > 0) {
@@ -312,8 +319,7 @@ async function loadData() {
         const d = gdate(r.c[0].v);
         if(!d) return;
         const key = d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
-        const rawTaux = r.c[6] ? parseFloat(r.c[6].v) : null;
-        const taux = rawTaux !== null && !isNaN(rawTaux) ? (rawTaux < 2 ? rawTaux * 100 : rawTaux) : null;
+        const taux = r.c[6] ? normTaux(r.c[6].v) : null;
         if(taux !== null) window.formByDate[key] = taux;
       });
     }
