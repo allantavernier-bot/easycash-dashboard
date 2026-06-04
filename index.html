@@ -485,18 +485,19 @@ function renderAnnual() {
   document.getElementById('ann-sems').textContent = doneWeeks.length;
   document.getElementById('ann-sems-sub').textContent = (weeks.length - doneWeeks.length) + ' semaines restantes';
 
-  // Taux de transformation moyen — même calcul que le Form : MOYENNE des taux journaliers
-  // T est en décimal (0.14 = 14%)
+  // Taux de transformation moyen — calculé directement S/Q comme le Form (F/D)
+  // Évite les problèmes de valeurs T incorrectes dans le Sheets
   const rowsWithTx = allRows.filter(r => {
-    const t = parseNum(r['T']);
-    return t !== null && t > 0;
+    const q = parseNum(r['Q']);
+    const s = parseNum(r['S']);
+    return q !== null && q > 0 && s !== null && s > 0;
   });
   let txMoyen = null;
   if(rowsWithTx.length > 0){
     const sumTx = rowsWithTx.reduce((s,r) => {
-      const t = parseNum(r['T']);
-      // Normaliser : si > 1 c'est déjà en %, sinon en décimal
-      return s + (t > 1 ? t : t * 100);
+      const q = parseNum(r['Q']);
+      const v = parseNum(r['S']);
+      return s + (v / q * 100);
     }, 0);
     txMoyen = sumTx / rowsWithTx.length;
   }
