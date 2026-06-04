@@ -233,6 +233,7 @@
 <script>
 const SHEET_ID = '1wBm0SyeqC-4HBKZ7J7KefcNfdLiJ7cL2KIf3VEgcp1M';
 const SHEET_TAB = 'Données journalières';
+const FORM_TAB = 'Réponses au formulaire 1';
 const OBJ_ANNUEL = 481000;
 let allRows = [];
 let currentTab = 'daily';
@@ -266,9 +267,32 @@ function switchTab(tab) {
 async function loadData() {
   try {
     const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_TAB)}`;
-    const res = await fetch(url);
+    const urlForm = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(FORM_TAB)}`;
+    const [res, resForm] = await Promise.all([fetch(url), fetch(urlForm)]);
     const txt = await res.text();
     const js = JSON.parse(txt.substring(47, txt.length-2));
+    // Charger les données Form
+    const txtForm = await resForm.text();
+    const jsForm = JSON.parse(txtForm.substring(47, txtForm.length-2));
+    // G2 = taux moyen global (ligne index 1 = ligne 2, col G = index 6)
+    window.txMoyenGlobal = null;
+    window.formByDate = {};
+    if(jsForm.table && jsForm.table.rows) {
+      // Ligne 0 = ligne 2 du sheet (ligne 1 = en-têtes)
+      const r0 = jsForm.table.rows[0];
+      if(r0 && r0.c && r0.c[6] && r0.c[6].v !== null) {
+        window.txMoyenGlobal = parseFloat(r0.c[6].v) * 100;
+      }
+      // Indexer par date les lignes du Form (col A=timestamp, G=taux)
+      jsForm.table.rows.slice(1).forEach(r => {
+        if(!r || !r.c || !r.c[0]) return;
+        const d = gdate(r.c[0].v);
+        if(!d) return;
+        const key = d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
+        const taux = r.c[6] ? parseFloat(r.c[6].v) * 100 : null;
+        if(taux !== null) window.formByDate[key] = taux;
+      });
+    }
     const ids = js.table.cols.map(c => c.id);
     allRows = js.table.rows.map(r => {
       const o = {};
@@ -336,9 +360,13 @@ function renderDay() {
     <div class="cumul-row"><span class="cumul-label">Objectif marge</span><span class="cumul-val">${fmtE(semMargeCible)}</span></div>`;
 
   // Transfo
-  const txPct = txT!==null ? fmt(txT*100,1)+'%' : (nbCli&&nbVte ? fmt(nbVte/nbCli*100,1)+'%' : '—');
-  document.getElementById('tx-transfo').textContent = txPct;
-  document.getElementById('tx-transfo-sub').textContent = (nbVte&&nbCli) ? `${fmt(nbVte)} ventes / ${fmt(Math.round(nbCli))} clients` : 'données non saisies';
+      // Taux journalier depuis le Form directement
+    const selDateKey = selDate;
+    const txFromForm = window.formByDate && selDateKey ? window.formByDate[selDateKey] : null;
+    const txPct = txFromForm !== null && txFromForm !== undefined ? fmt(txFromForm,1)+'%' : '—';
+    document.getElementById('tx-transfo').textContent = txPct;
+    document.getElementById('tx-transfo-sub').textContent = txFromForm !== null ?
+      (nbVte!==null?fmt(nbVte):'—')+' ventes / '+(nbCli?fmt(Math.round(nbCli)):'—')+' clients' : 'données non saisies';
       const selDate = (() => { const d = gdate(row['A']); return d ? (String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear()) : ''; })();
 
     document.getElementById('activite-list').innerHTML = `
@@ -485,29 +513,27 @@ function renderAnnual() {
   document.getElementById('ann-sems').textContent = doneWeeks.length;
   document.getElementById('ann-sems-sub').textContent = (weeks.length - doneWeeks.length) + ' semaines restantes';
 
-  // Taux de transformation moyen — calculé directement S/Q comme le Form (F/D)
-  // Évite les problèmes de valeurs T incorrectes dans le Sheets
-  const rowsWithTx = allRows.filter(r => {
-    const q = parseNum(r['Q']);
-    const s = parseNum(r['S']);
-    return q !== null && q > 0 && s !== null && s > 0;
-  });
-  let txMoyen = null;
-  if(rowsWithTx.length > 0){
-    const sumTx = rowsWithTx.reduce((s,r) => {
-      const q = parseNum(r['Q']);
-      const v = parseNum(r['S']);
-      return s + (v / q * 100);
-    }, 0);
-    txMoyen = sumTx / rowsWithTx.length;
-  }
+  // Taux de transformation moyen — lu directement depuis G2 du Form
+  const txMoyen = window.txMoyenGlobal || null;
   const txEl = document.getElementById('ann-tx-transfo');
   const txBarEl = document.getElementById('ann-tx-bar');
   const txSubEl = document.getElementById('ann-tx-sub');
   if(txEl && txMoyen!==null){
     txEl.textContent = fmt(txMoyen,1)+' %';
     txEl.style.color = txMoyen>=13&&txMoyen<=18 ? 'var(--green)' : txMoyen<13 ? 'var(--red)' : 'var(--amber)';
-    if(txSubEl) txSubEl.textContent = rowsWithTx.length + ' jours avec données';
+    // Date de la dernière saisie Form = dernière ligne avec taux
+    let lastFormDate = null;
+    if(window.formByDate) {
+      const dates = Object.keys(window.formByDate).map(k => {
+        const p = k.split('/');
+        return new Date(parseInt(p[2]), parseInt(p[1])-1, parseInt(p[0]));
+      }).filter(d => !isNaN(d));
+      if(dates.length > 0) {
+        dates.sort((a,b) => b-a);
+        lastFormDate = dates[0].toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit', year:'numeric'});
+      }
+    }
+    if(txSubEl) txSubEl.textContent = (lastFormDate ? 'Mise à jour : ' + lastFormDate : '—') + ' · ' + rowsWithTx.length + ' jours';
     // Barre de progression dans la fourchette 0-25%
     if(txBarEl){
       const pct = Math.min(100, txMoyen/25*100);
