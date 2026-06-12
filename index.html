@@ -1002,6 +1002,15 @@ function toISODate(raw) {
 
 const CAT_MULTI_COLORS = ['#58A6FF', '#3FB950', '#E3B341', '#F85149', '#BC8CFF', '#39C5CF', '#FF9492', '#7D8590'];
 
+// Les selects "critère" exposent des noms lisibles, mais les lignes chargées
+// via gviz sont indexées par lettre de colonne (A..S). Table de correspondance :
+const CAT_METRIC_COL = {
+  'Montant_ventes': 'I',
+  'Marge': 'L',
+  'Valeur_stock': 'R',
+  'Qte_vendue': 'H'
+};
+
 async function loadCategories() {
   const wrap = document.getElementById('page-categories');
   wrap.querySelector('.main').insertAdjacentHTML('afterbegin',
@@ -1160,7 +1169,7 @@ function renderCategories() {
   });
 
   // Comparatif entre familles
-  const metric = document.getElementById('catMetricSelect').value;
+  const metric = CAT_METRIC_COL[document.getElementById('catMetricSelect').value];
   const compareRows = lastDate ? catRows.filter(r => r.DateISO === lastDate)
     .map(r => ({ label: r['C'], value: r[metric] || 0 }))
     .sort((a, b) => b.value - a.value) : [];
@@ -1185,8 +1194,9 @@ function renderCategories() {
 
   // Multi-familles
   const selectedCodes = [...document.getElementById('catMultiSelect').selectedOptions].map(o => o.value);
-  const multiMetric = document.getElementById('catMultiMetric').value;
-  const unit = multiMetric === 'Qte_vendue' ? '' : ' €';
+  const multiMetricKey = document.getElementById('catMultiMetric').value;
+  const multiMetric = CAT_METRIC_COL[multiMetricKey];
+  const unit = multiMetricKey === 'Qte_vendue' ? '' : ' €';
 
   const datasets = selectedCodes.map((c, i) => {
     const values = filteredDates.map(d => {
