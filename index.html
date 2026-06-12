@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pilotage — EasyCash 206 Berck</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
   :root {
     --bg: #0D1117; --bg2: #161B22; --bg3: #21262D;
@@ -106,6 +107,21 @@
     .main{padding:14px}
     .tab{padding:10px 12px;font-size:12px}
   }
+
+  /* Catégories tab */
+  .cat-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-bottom:16px}
+  .cat-controls label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em}
+  .cat-controls select, .cat-controls input[type=date]{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;font-family:'DM Sans',sans-serif;min-width:160px}
+  .cat-controls select[multiple]{height:104px;min-width:220px}
+  #catMultiSelect{background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;font-size:12px;font-family:'DM Sans',sans-serif;height:110px;padding:4px}
+  .cat-kpis{display:flex;gap:12px;margin-left:auto;flex-wrap:wrap}
+  .cat-kpis .kpi{min-width:120px;padding:10px 14px}
+  .cat-kpis .kpi-value{font-size:18px}
+
+  /* Sélecteur de période - graphique Evolution marge */
+  .marge-period{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin-bottom:12px}
+  .marge-period label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px}
+  .marge-period select, .marge-period input[type=date]{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:6px 9px;border-radius:6px;font-size:12px;font-family:'DM Sans',sans-serif}
 </style>
 </head>
 <body>
@@ -121,6 +137,7 @@
 <div class="tabs">
   <div class="tab active" onclick="switchTab('daily')">📅 Vue journalière</div>
   <div class="tab" onclick="switchTab('annual')">📊 Vue annuelle</div>
+  <div class="tab" onclick="switchTab('categories')">🏷️ Catégories</div>
 </div>
 
 <!-- LOADER -->
@@ -144,7 +161,29 @@
   </div>
   <div class="row2">
     <div class="card">
-      <div class="card-title">Évolution marge — 14 derniers jours</div>
+      <div class="card-title" id="margeChartTitle">Évolution marge — 14 derniers jours</div>
+      <div class="marge-period">
+        <div>
+          <label>Période</label>
+          <select id="margePeriodType" onchange="onMargePeriodChange()">
+            <option value="recent" selected>14 derniers jours</option>
+            <option value="week">Semaine</option>
+            <option value="month">Mois</option>
+            <option value="custom">Personnalisée</option>
+            <option value="all">Toutes les données</option>
+          </select>
+        </div>
+        <div id="margeCustomRangeWrap" style="display:none;gap:8px">
+          <div>
+            <label>Du</label>
+            <input type="date" id="margeDateFrom" onchange="onMargePeriodChange()">
+          </div>
+          <div>
+            <label>Au</label>
+            <input type="date" id="margeDateTo" onchange="onMargePeriodChange()">
+          </div>
+        </div>
+      </div>
       <div style="position:relative"><canvas id="margeChart" height="160"></canvas></div>
       <div class="chart-legend">
         <div class="legend-item"><div class="legend-line" style="background:var(--green)"></div>Marge réelle</div>
@@ -230,13 +269,111 @@
 </div>
 </div>
 
+<!-- PAGE CATEGORIES -->
+<div id="page-categories" class="page" style="display:none">
+<div class="main">
+  <div class="cat-controls">
+    <div>
+      <label>Famille</label>
+      <select id="catFamilySelect" onchange="renderCategories()"></select>
+    </div>
+    <div>
+      <label>Période</label>
+      <select id="catPeriodType" onchange="onCatPeriodTypeChange()">
+        <option value="all">Toutes les dates</option>
+        <option value="week">Semaine</option>
+        <option value="month">Mois</option>
+        <option value="quarter">Trimestre</option>
+        <option value="custom">Personnalisée</option>
+      </select>
+    </div>
+    <div id="catPeriodValueWrap" style="display:none">
+      <label>Choix</label>
+      <select id="catPeriodValue" onchange="renderCategories()"></select>
+    </div>
+    <div id="catCustomRangeWrap" style="display:none;gap:10px">
+      <div>
+        <label>Du</label>
+        <input type="date" id="catDateFrom" onchange="renderCategories()">
+      </div>
+      <div>
+        <label>Au</label>
+        <input type="date" id="catDateTo" onchange="renderCategories()">
+      </div>
+    </div>
+    <div class="cat-kpis">
+      <div class="kpi blue"><div class="kpi-label" id="catKpiCALabel">CA total</div><div class="kpi-value val-blue" id="catKpiCA">—</div></div>
+      <div class="kpi green"><div class="kpi-label" id="catKpiMargeLabel">Marge totale</div><div class="kpi-value val-green" id="catKpiMarge">—</div></div>
+      <div class="kpi amber"><div class="kpi-label">Stock (fin période)</div><div class="kpi-value val-amber" id="catKpiStock">—</div></div>
+    </div>
+  </div>
+
+  <div class="row1">
+    <div class="card">
+      <div class="card-title" id="catEvolTitle">Évolution — CA, marge et taux de marge</div>
+      <div style="position:relative;height:260px"><canvas id="catEvolChart"></canvas></div>
+      <div class="chart-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>CA</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Marge</div>
+        <div class="legend-item"><div class="legend-line" style="background:var(--amber);border-top:2px dashed var(--amber);height:0"></div>Taux de marge (%)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row1">
+    <div class="card">
+      <div class="card-title" id="catCompareTitle">Comparatif entre familles</div>
+      <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:10px">
+        <div>
+          <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px">Critère</label>
+          <select id="catMetricSelect" onchange="renderCategories()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;font-family:'DM Sans',sans-serif">
+            <option value="Montant_ventes">CA</option>
+            <option value="Marge">Marge</option>
+            <option value="Valeur_stock">Valeur du stock</option>
+          </select>
+        </div>
+      </div>
+      <div style="position:relative;height:560px"><canvas id="catCompareChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="row1">
+    <div class="card">
+      <div class="card-title">Comparer plusieurs familles</div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:10px">
+        <div style="flex:1;min-width:240px">
+          <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px">Familles (Ctrl/Cmd + clic)</label>
+          <select id="catMultiSelect" multiple onchange="renderCategories()" style="width:100%"></select>
+        </div>
+        <div style="min-width:200px">
+          <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px">Critère</label>
+          <select id="catMultiMetric" onchange="renderCategories()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;font-family:'DM Sans',sans-serif;width:100%">
+            <option value="Montant_ventes">CA</option>
+            <option value="Marge">Marge</option>
+            <option value="Valeur_stock">Valeur du stock</option>
+            <option value="Qte_vendue">Quantité vendue</option>
+          </select>
+        </div>
+      </div>
+      <div id="catMultiLegend" class="chart-legend" style="margin-bottom:6px"></div>
+      <div style="position:relative;height:320px"><canvas id="catMultiChart"></canvas></div>
+    </div>
+  </div>
+</div>
+</div>
+
 <script>
 const SHEET_ID = '1wBm0SyeqC-4HBKZ7J7KefcNfdLiJ7cL2KIf3VEgcp1M';
 const SHEET_TAB = 'Données journalières';
 const FORM_TAB = 'Réponses au formulaire 1';
+const CAT_TAB = 'categories_206';
 const OBJ_ANNUEL = 481000;
 let allRows = [];
+let catRows = [];
+let catFamilies = {}; // code -> libelle
+let catEvolChart, catCompareChart, catMultiChart;
 let currentTab = 'daily';
+let currentDailyIdx = 0;
 
 function fmt(n,d=0){if(n===null||n===undefined||n==='')return'—';const x=parseFloat(String(n).replace(',','.').replace(/\s/g,''));if(isNaN(x))return'—';return x.toLocaleString('fr-FR',{minimumFractionDigits:d,maximumFractionDigits:d});}
 function fmtE(n){const s=fmt(n);return s==='—'?'—':s+' €';}
@@ -262,6 +399,13 @@ function switchTab(tab) {
   page.style.display = 'block';
   page.classList.add('active');
   if (tab === 'annual' && allRows.length > 0) renderAnnual();
+  if (tab === 'categories') {
+    if (catRows.length > 0) {
+      renderCategories();
+    } else {
+      loadCategories();
+    }
+  }
 }
 
 async function loadData() {
@@ -343,6 +487,18 @@ async function loadData() {
     document.getElementById('loader').style.display = 'none';
     document.getElementById('page-daily').style.display = 'block';
     document.getElementById('lastUpdate').textContent = 'Actualisé ' + new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+
+    // Bornes pour le sélecteur de période personnalisée (graphique Evolution marge)
+    const withDataDates = allRows.filter(r => r['G']!==null && r['I']!==null).map(r => gdate(r['A'])).filter(d => d);
+    if (withDataDates.length) {
+      const toISO = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+      const sorted = [...withDataDates].sort((a,b)=>a-b);
+      const minISO = toISO(sorted[0]), maxISO = toISO(sorted[sorted.length-1]);
+      const mdf = document.getElementById('margeDateFrom'), mdt = document.getElementById('margeDateTo');
+      mdf.min = minISO; mdf.max = maxISO; mdf.value = minISO;
+      mdt.min = minISO; mdt.max = maxISO; mdt.value = maxISO;
+    }
+
     renderDay();
   } catch(e) {
     document.getElementById('loader').innerHTML = `<div style="color:var(--red);font-size:13px">Erreur chargement<br><small>${e.message}</small></div>`;
@@ -351,6 +507,7 @@ async function loadData() {
 
 function renderDay() {
   const idx = parseInt(document.getElementById('datePicker').value);
+  currentDailyIdx = idx;
   const row = allRows[idx];
   if (!row) return;
 
@@ -436,6 +593,89 @@ function renderDay() {
     <div class="cumul-row"><span class="cumul-label">Taux moyen</span><span class="cumul-val val-amber">${ytdCA?fmt(ytdM/ytdCA*100,1):'—'} %</span></div>`;
 }
 
+function onMargePeriodChange() {
+  const type = document.getElementById('margePeriodType').value;
+  document.getElementById('margeCustomRangeWrap').style.display = (type === 'custom') ? 'flex' : 'none';
+  drawDailyChart(currentDailyIdx);
+}
+
+/**
+ * Renvoie les lignes (avec données) à afficher dans le graphique Evolution
+ * marge selon la période choisie. Retombe sur la fenêtre ±7 jours autour
+ * de la date sélectionnée si la période choisie n'a pas assez de données.
+ */
+function getMargePeriodRows(selectedIdx) {
+  const withData = allRows.map((r,i)=>({r,i})).filter(({r})=>r['G']!==null&&r['I']!==null);
+  const type = document.getElementById('margePeriodType').value;
+  const selRow = allRows[selectedIdx];
+
+  if (type === 'all') {
+    return withData.map(({r})=>r);
+  }
+
+  if (type === 'week' && selRow) {
+    const sem = parseNum(selRow['C']);
+    const selD = gdate(selRow['A']);
+    const year = selD ? selD.getFullYear() : null;
+    const filtered = withData.filter(({r}) => {
+      const rd = gdate(r['A']);
+      return parseNum(r['C']) === sem && rd && rd.getFullYear() === year;
+    }).map(({r})=>r);
+    if (filtered.length >= 2) return filtered;
+  }
+
+  if (type === 'month' && selRow) {
+    const selD = gdate(selRow['A']);
+    if (selD) {
+      const y = selD.getFullYear(), m = selD.getMonth();
+      const filtered = withData.filter(({r}) => {
+        const rd = gdate(r['A']);
+        return rd && rd.getFullYear() === y && rd.getMonth() === m;
+      }).map(({r})=>r);
+      if (filtered.length >= 2) return filtered;
+    }
+  }
+
+  if (type === 'custom') {
+    const from = document.getElementById('margeDateFrom').value;
+    const to = document.getElementById('margeDateTo').value;
+    if (from && to) {
+      const filtered = withData.filter(({r}) => {
+        const rd = gdate(r['A']);
+        if (!rd) return false;
+        const iso = rd.getFullYear() + '-' + String(rd.getMonth()+1).padStart(2,'0') + '-' + String(rd.getDate()).padStart(2,'0');
+        return iso >= from && iso <= to;
+      }).map(({r})=>r);
+      if (filtered.length >= 2) return filtered;
+    }
+  }
+
+  // 'recent' (par défaut) ou fallback si la période choisie n'a pas assez de données
+  const selPosInData = withData.findIndex(({i})=>i===selectedIdx);
+  const start = Math.max(0, selPosInData - 7);
+  const end = Math.min(withData.length, selPosInData + 8);
+  return withData.slice(start, end).map(({r})=>r);
+}
+
+function getMargeChartTitle(selectedIdx, days) {
+  const type = document.getElementById('margePeriodType').value;
+  if (!days.length) return 'Évolution marge';
+  const first = dshort(days[0]['A']), last = dshort(days[days.length-1]['A']);
+  const selRow = allRows[selectedIdx];
+
+  if (type === 'week' && selRow) {
+    return 'Évolution marge — Semaine S' + (parseNum(selRow['C']) || '?') + ' (' + first + ' - ' + last + ')';
+  }
+  if (type === 'month' && selRow) {
+    const d = gdate(selRow['A']);
+    const moisNom = d ? d.toLocaleDateString('fr-FR', {month:'long', year:'numeric'}) : '';
+    return 'Évolution marge — ' + moisNom;
+  }
+  if (type === 'custom') return 'Évolution marge — du ' + first + ' au ' + last;
+  if (type === 'all') return 'Évolution marge — toutes les données (' + days.length + ' jours)';
+  return 'Évolution marge — 14 derniers jours';
+}
+
 function drawDailyChart(selectedIdx) {
   const canvas = document.getElementById('margeChart');
   const ctx = canvas.getContext('2d');
@@ -447,12 +687,8 @@ function drawDailyChart(selectedIdx) {
   ctx.scale(dpr,dpr);
   ctx.clearRect(0,0,W,H);
 
-  // Centrer sur la date sélectionnée : 7 jours avant et 7 après
-  const withData = allRows.map((r,i)=>({r,i})).filter(({r})=>r['G']!==null&&r['I']!==null);
-  const selPosInData = withData.findIndex(({i})=>i===selectedIdx);
-  const start = Math.max(0, selPosInData - 7);
-  const end = Math.min(withData.length, selPosInData + 8);
-  const days = withData.slice(start, end).map(({r})=>r);
+  const days = getMargePeriodRows(selectedIdx);
+  document.getElementById('margeChartTitle').textContent = getMargeChartTitle(selectedIdx, days);
   if (days.length < 2) return;
 
   const marges = days.map(r=>parseNum(r['I'])||0);
@@ -510,7 +746,8 @@ function drawDailyChart(selectedIdx) {
   });
 
   ctx.fillStyle='#7D8590';ctx.font='10px DM Sans';ctx.textAlign='center';ctx.setLineDash([]);
-  days.forEach((r,i)=>{if(i%2===0||i===days.length-1)ctx.fillText(dshort(r['A']),xp(i),H-PAD.b+14);});
+  const labelEvery = Math.max(1, Math.ceil(days.length/8));
+  days.forEach((r,i)=>{if(i%labelEvery===0||i===days.length-1)ctx.fillText(dshort(r['A']),xp(i),H-PAD.b+14);});
 }
 
 function renderAnnual() {
@@ -856,6 +1093,263 @@ async function saveSaisie(dateFR) {
   } catch(e) {
     if(status) status.textContent = '❌ ' + e.message;
   }
+}
+
+/* ============================================================
+ *  ONGLET CATEGORIES
+ * ============================================================ */
+
+function isoWeekCat(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  const target = new Date(d.valueOf());
+  const dayNr = (d.getDay() + 6) % 7;
+  target.setDate(target.getDate() - dayNr + 3);
+  const firstThursday = new Date(target.getFullYear(), 0, 4);
+  const diff = (target - firstThursday) / 86400000;
+  const week = 1 + Math.round((diff - 3 + ((firstThursday.getDay() + 6) % 7)) / 7);
+  return target.getFullYear() + '-S' + String(week).padStart(2, '0');
+}
+function monthKeyCat(dateStr) { return dateStr.slice(0, 7); }
+function quarterKeyCat(dateStr) {
+  const [y, m] = dateStr.split('-');
+  const q = Math.ceil(parseInt(m, 10) / 3);
+  return y + '-T' + q;
+}
+function toISODate(raw) {
+  const d = gdate(raw);
+  if (!d) return null;
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+const CAT_MULTI_COLORS = ['#58A6FF', '#3FB950', '#E3B341', '#F85149', '#BC8CFF', '#39C5CF', '#FF9492', '#7D8590'];
+
+// Les selects "critère" exposent des noms lisibles, mais les lignes chargées
+// via gviz sont indexées par lettre de colonne (A..S). Table de correspondance :
+const CAT_METRIC_COL = {
+  'Montant_ventes': 'I',
+  'Marge': 'L',
+  'Valeur_stock': 'R',
+  'Qte_vendue': 'H'
+};
+
+async function loadCategories() {
+  const wrap = document.getElementById('page-categories');
+  wrap.querySelector('.main').insertAdjacentHTML('afterbegin',
+    '<div id="catLoader" style="text-align:center;padding:40px;color:var(--muted);font-size:13px">Chargement des catégories...</div>');
+  try {
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(CAT_TAB)}`;
+    const res = await fetch(url);
+    const txt = await res.text();
+    const js = JSON.parse(txt.substring(47, txt.length - 2));
+    const ids = js.table.cols.map(c => c.id);
+
+    catRows = js.table.rows.map(r => {
+      const o = {};
+      r.c.forEach((cell, i) => { o[ids[i]] = cell ? cell.v : null; });
+      o.DateISO = toISODate(o['A']);
+      return o;
+    }).filter(r => r.DateISO && r['B'] && r['B'] !== 'TOTAL');
+
+    catFamilies = {};
+    catRows.forEach(r => { if (!catFamilies[r['B']]) catFamilies[r['B']] = r['C']; });
+
+    const familyCodes = Object.keys(catFamilies).sort((a, b) => catFamilies[a].localeCompare(catFamilies[b]));
+
+    const famSel = document.getElementById('catFamilySelect');
+    famSel.innerHTML = '';
+    familyCodes.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c; opt.text = catFamilies[c] + ' (' + c + ')';
+      famSel.appendChild(opt);
+    });
+    if (familyCodes.includes('TLCE')) famSel.value = 'TLCE';
+
+    const multiSel = document.getElementById('catMultiSelect');
+    multiSel.innerHTML = '';
+    familyCodes.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c; opt.text = catFamilies[c] + ' (' + c + ')';
+      multiSel.appendChild(opt);
+    });
+    ['TLCE', 'JCDR', 'BMA'].forEach(c => {
+      const opt = [...multiSel.options].find(o => o.value === c);
+      if (opt) opt.selected = true;
+    });
+
+    const allDates = [...new Set(catRows.map(r => r.DateISO))].sort();
+    const minDate = allDates[0], maxDate = allDates[allDates.length - 1];
+    const dateFrom = document.getElementById('catDateFrom');
+    const dateTo = document.getElementById('catDateTo');
+    dateFrom.min = minDate; dateFrom.max = maxDate; dateFrom.value = minDate;
+    dateTo.min = minDate; dateTo.max = maxDate; dateTo.value = maxDate;
+
+    const loader = document.getElementById('catLoader');
+    if (loader) loader.remove();
+
+    renderCategories();
+  } catch (e) {
+    const loader = document.getElementById('catLoader');
+    if (loader) loader.innerHTML = `<div style="color:var(--red)">Erreur chargement catégories<br><small>${e.message}</small></div>`;
+  }
+}
+
+function onCatPeriodTypeChange() {
+  populateCatPeriodValues();
+  renderCategories();
+}
+
+function populateCatPeriodValues() {
+  const type = document.getElementById('catPeriodType').value;
+  const valSel = document.getElementById('catPeriodValue');
+  const valWrap = document.getElementById('catPeriodValueWrap');
+  const customWrap = document.getElementById('catCustomRangeWrap');
+  valSel.innerHTML = '';
+
+  const allDates = [...new Set(catRows.map(r => r.DateISO))].sort();
+
+  if (type === 'week' || type === 'month' || type === 'quarter') {
+    const keyFn = type === 'week' ? isoWeekCat : (type === 'month' ? monthKeyCat : quarterKeyCat);
+    const keys = [...new Set(allDates.map(keyFn))];
+    keys.forEach(k => {
+      const opt = document.createElement('option');
+      opt.value = k; opt.text = k;
+      valSel.appendChild(opt);
+    });
+    valSel.value = keys[keys.length - 1];
+    valWrap.style.display = '';
+    customWrap.style.display = 'none';
+  } else if (type === 'custom') {
+    valWrap.style.display = 'none';
+    customWrap.style.display = 'flex';
+  } else {
+    valWrap.style.display = 'none';
+    customWrap.style.display = 'none';
+  }
+}
+
+function getCatFilteredDates() {
+  const allDates = [...new Set(catRows.map(r => r.DateISO))].sort();
+  const type = document.getElementById('catPeriodType').value;
+  if (type === 'all') return allDates;
+  if (type === 'custom') {
+    const from = document.getElementById('catDateFrom').value || allDates[0];
+    const to = document.getElementById('catDateTo').value || allDates[allDates.length - 1];
+    return allDates.filter(d => d >= from && d <= to);
+  }
+  const keyFn = type === 'week' ? isoWeekCat : (type === 'month' ? monthKeyCat : quarterKeyCat);
+  const val = document.getElementById('catPeriodValue').value;
+  return allDates.filter(d => keyFn(d) === val);
+}
+
+function renderCategories() {
+  if (!catRows.length) return;
+  const filteredDates = getCatFilteredDates();
+  const nDays = filteredDates.length;
+  const lastDate = filteredDates.length ? filteredDates[filteredDates.length - 1] : null;
+  const suffix = nDays === 1 ? '(1 jour)' : '(' + nDays + ' jours)';
+
+  document.getElementById('catKpiCALabel').textContent = 'CA total ' + suffix;
+  document.getElementById('catKpiMargeLabel').textContent = 'Marge totale ' + suffix;
+
+  const dateLabels = filteredDates.map(d => { const p = d.split('-'); return p[2] + '/' + p[1]; });
+  const code = document.getElementById('catFamilySelect').value;
+
+  const rows = filteredDates.map(d => catRows.find(r => r.DateISO === d && r['B'] === code) || {});
+  const ca = rows.map(r => r['I'] || 0);
+  const marge = rows.map(r => r['L'] || 0);
+  const pct = rows.map(r => (r['M'] === null || r['M'] === undefined) ? null : r['M']);
+
+  document.getElementById('catKpiCA').textContent = fmtE(ca.reduce((a, b) => a + b, 0));
+  document.getElementById('catKpiMarge').textContent = fmtE(marge.reduce((a, b) => a + b, 0));
+  const lastRow = rows.length ? rows[rows.length - 1] : {};
+  document.getElementById('catKpiStock').textContent = (lastRow['R'] !== undefined && lastRow['R'] !== null) ? fmtE(lastRow['R']) : '—';
+
+  const famName = catFamilies[code] || code;
+  document.getElementById('catEvolTitle').textContent = 'Évolution — ' + famName;
+  document.getElementById('catCompareTitle').textContent = 'Comparatif entre familles' + (lastDate ? ' (' + lastDate.split('-').reverse().join('/') + ')' : '');
+
+  if (catEvolChart) catEvolChart.destroy();
+  catEvolChart = new Chart(document.getElementById('catEvolChart'), {
+    data: {
+      labels: dateLabels,
+      datasets: [
+        { type: 'bar', label: 'CA', data: ca, backgroundColor: 'rgba(88,166,255,0.6)', yAxisID: 'y' },
+        { type: 'bar', label: 'Marge', data: marge, backgroundColor: 'rgba(63,185,80,0.7)', yAxisID: 'y' },
+        { type: 'line', label: '% marge', data: pct, borderColor: '#E3B341', borderDash: [4, 3], yAxisID: 'y1', spanGaps: true, tension: 0.2, pointRadius: 3 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#7D8590', autoSkip: nDays > 14, maxRotation: 45 }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { position: 'left', beginAtZero: true, ticks: { color: '#7D8590', callback: v => v + ' €' }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y1: { position: 'right', beginAtZero: true, max: 100, grid: { drawOnChartArea: false }, ticks: { color: '#7D8590', callback: v => v + ' %' } }
+      }
+    }
+  });
+
+  // Comparatif entre familles
+  const metric = CAT_METRIC_COL[document.getElementById('catMetricSelect').value];
+  const compareRows = lastDate ? catRows.filter(r => r.DateISO === lastDate)
+    .map(r => ({ label: r['C'], value: r[metric] || 0 }))
+    .sort((a, b) => b.value - a.value) : [];
+
+  if (catCompareChart) catCompareChart.destroy();
+  catCompareChart = new Chart(document.getElementById('catCompareChart'), {
+    type: 'bar',
+    data: {
+      labels: compareRows.map(r => r.label),
+      datasets: [{ data: compareRows.map(r => Math.round(r.value * 100) / 100), backgroundColor: 'rgba(188,140,255,0.6)' }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { beginAtZero: true, ticks: { color: '#7D8590', callback: v => v.toLocaleString('fr-FR') + ' €' }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#7D8590' }, grid: { display: false } }
+      }
+    }
+  });
+
+  // Multi-familles
+  const selectedCodes = [...document.getElementById('catMultiSelect').selectedOptions].map(o => o.value);
+  const multiMetricKey = document.getElementById('catMultiMetric').value;
+  const multiMetric = CAT_METRIC_COL[multiMetricKey];
+  const unit = multiMetricKey === 'Qte_vendue' ? '' : ' €';
+
+  const datasets = selectedCodes.map((c, i) => {
+    const values = filteredDates.map(d => {
+      const row = catRows.find(r => r.DateISO === d && r['B'] === c);
+      return row ? (row[multiMetric] || 0) : null;
+    });
+    return {
+      label: catFamilies[c], data: values,
+      borderColor: CAT_MULTI_COLORS[i % CAT_MULTI_COLORS.length],
+      backgroundColor: CAT_MULTI_COLORS[i % CAT_MULTI_COLORS.length],
+      fill: false, tension: 0.2, pointRadius: 2, spanGaps: true
+    };
+  });
+
+  const legendEl = document.getElementById('catMultiLegend');
+  legendEl.innerHTML = selectedCodes.map((c, i) =>
+    `<div class="legend-item"><div class="legend-dot" style="background:${CAT_MULTI_COLORS[i % CAT_MULTI_COLORS.length]}"></div>${catFamilies[c]}</div>`
+  ).join('');
+
+  if (catMultiChart) catMultiChart.destroy();
+  catMultiChart = new Chart(document.getElementById('catMultiChart'), {
+    type: 'line',
+    data: { labels: dateLabels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#7D8590', autoSkip: dateLabels.length > 14, maxRotation: 45 }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { beginAtZero: true, ticks: { color: '#7D8590', callback: v => v + unit }, grid: { color: 'rgba(255,255,255,0.04)' } }
+      }
+    }
+  });
 }
 
 loadData();
