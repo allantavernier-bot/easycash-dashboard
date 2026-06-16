@@ -122,7 +122,38 @@
   .marge-period{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin-bottom:12px}
   .marge-period label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px}
   .marge-period select, .marge-period input[type=date]{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:6px 9px;border-radius:6px;font-size:12px;font-family:'DM Sans',sans-serif}
-</style>
+
+  /* Réalisé vs Objectif */
+  .rvo-period-bar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;align-items:center}
+  .rvo-period-btn{padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:var(--bg3);color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;transition:.15s;font-family:'DM Sans',sans-serif}
+  .rvo-period-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .rvo-custom{display:none;gap:8px;align-items:center;flex-wrap:wrap}
+  .rvo-custom input{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:5px 9px;border-radius:6px;font-size:12px;font-family:'DM Sans',sans-serif}
+  .rvo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:20px}
+  .rvo-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px}
+  .rvo-card-name{font-size:12px;font-weight:600;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .rvo-card-coef{font-size:10px;background:rgba(227,179,65,.15);color:var(--amber);border:1px solid rgba(227,179,65,.3);padding:2px 7px;border-radius:10px;font-family:'DM Mono',monospace}
+  .rvo-gauge-wrap{margin-bottom:10px}
+  .rvo-gauge-label{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:5px}
+  .rvo-gauge-track{height:8px;background:var(--bg3);border-radius:4px;overflow:hidden}
+  .rvo-gauge-fill{height:100%;border-radius:4px;transition:width .6s ease}
+  .rvo-gauge-fill.gn{background:var(--green)}
+  .rvo-gauge-fill.am{background:var(--amber)}
+  .rvo-gauge-fill.rd{background:var(--red)}
+  .rvo-nums{display:flex;justify-content:space-between;font-size:11px;margin-top:8px;align-items:center}
+  .rvo-real{font-family:'DM Mono',monospace;font-weight:600;font-size:15px;color:var(--green)}
+  .rvo-obj{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)}
+  .rvo-ecart.pos{color:var(--green)}
+  .rvo-ecart.neg{color:var(--red)}
+  .rvo-magasin-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:20px}
+  .rvo-big-gauge-track{height:14px;background:var(--bg3);border-radius:7px;overflow:hidden;margin-bottom:8px}
+  .rvo-big-gauge-fill{height:100%;border-radius:7px;transition:width .8s ease}
+  .rvo-stats-row{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px}
+  .rvo-stat{flex:1;min-width:100px}
+  .rvo-stat-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+  .rvo-stat-val{font-family:'DM Mono',monospace;font-size:16px;font-weight:600}
+  .rvo-no-data{color:var(--muted);font-size:13px;text-align:center;padding:40px 0}
+  @media(max-width:640px){.rvo-grid{grid-template-columns:1fr}.rvo-stats-row{gap:10px}}
 </head>
 <body>
 
@@ -138,6 +169,7 @@
   <div class="tab active" onclick="switchTab('daily')">📅 Vue journalière</div>
   <div class="tab" onclick="switchTab('annual')">📊 Vue annuelle</div>
   <div class="tab" onclick="switchTab('categories')">🏷️ Catégories</div>
+  <div class="tab" onclick="switchTab('realise')">🎯 Réalisé vs Objectif</div>
 </div>
 
 <!-- LOADER -->
@@ -362,6 +394,71 @@
 </div>
 </div>
 
+<!-- PAGE RÉALISÉ VS OBJECTIF -->
+<div id="page-realise" class="page" style="display:none">
+<div class="main">
+  <!-- Sélecteur de période -->
+  <div class="rvo-period-bar">
+    <button class="rvo-period-btn active" onclick="rvoSetPeriod('jour',this)">Aujourd'hui</button>
+    <button class="rvo-period-btn" onclick="rvoSetPeriod('semaine',this)">Cette semaine</button>
+    <button class="rvo-period-btn" onclick="rvoSetPeriod('mois',this)">Ce mois</button>
+    <button class="rvo-period-btn" onclick="rvoSetPeriod('annee',this)">Cette année</button>
+    <button class="rvo-period-btn" onclick="rvoSetPeriod('custom',this)">Personnalisé</button>
+    <div class="rvo-custom" id="rvo-custom-wrap">
+      <span style="font-size:12px;color:var(--muted)">Du</span>
+      <input type="date" id="rvo-from" onchange="rvoRender()">
+      <span style="font-size:12px;color:var(--muted)">au</span>
+      <input type="date" id="rvo-to" onchange="rvoRender()">
+    </div>
+  </div>
+
+  <!-- Jauge magasin -->
+  <div class="rvo-magasin-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+      <div style="font-size:13px;font-weight:600">🏪 Magasin — Marge réalisée vs objectif</div>
+      <div id="rvo-period-label" style="font-size:11px;color:var(--muted);background:var(--bg3);padding:4px 10px;border-radius:6px"></div>
+    </div>
+    <div class="rvo-big-gauge-track">
+      <div class="rvo-big-gauge-fill" id="rvo-mag-fill" style="width:0%;background:var(--green)"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:10px">
+      <span>0 €</span>
+      <span id="rvo-mag-pct" style="font-weight:600;color:var(--text)">—</span>
+      <span id="rvo-mag-obj-label">—</span>
+    </div>
+    <div class="rvo-stats-row">
+      <div class="rvo-stat">
+        <div class="rvo-stat-label">Réalisé</div>
+        <div class="rvo-stat-val" id="rvo-mag-real" style="color:var(--green)">—</div>
+      </div>
+      <div class="rvo-stat">
+        <div class="rvo-stat-label">Objectif</div>
+        <div class="rvo-stat-val" id="rvo-mag-obj">—</div>
+      </div>
+      <div class="rvo-stat">
+        <div class="rvo-stat-label">Écart</div>
+        <div class="rvo-stat-val" id="rvo-mag-ecart">—</div>
+      </div>
+      <div class="rvo-stat">
+        <div class="rvo-stat-label">Jours avec données</div>
+        <div class="rvo-stat-val" id="rvo-mag-jours" style="color:var(--muted)">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Jauges par collaborateur -->
+  <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">Réalisé par collaborateur</div>
+  <div class="rvo-grid" id="rvo-collabs-grid">
+    <div class="rvo-no-data">Chargement des données...</div>
+  </div>
+
+  <div style="font-size:10px;color:var(--muted);margin-top:8px;line-height:1.6">
+    ⚙️ Les objectifs individuels sont calculés au prorata de la présence × coefficient vente. 
+    La marge réalisée est extraite du PDF quotidien <em>CA_des-vendeurs.pdf</em> via le pipeline automatique.
+  </div>
+</div>
+</div>
+
 <script>
 const SHEET_ID = '1wBm0SyeqC-4HBKZ7J7KefcNfdLiJ7cL2KIf3VEgcp1M';
 const SHEET_TAB = 'Données journalières';
@@ -404,6 +501,12 @@ function switchTab(tab) {
       renderCategories();
     } else {
       loadCategories();
+    }
+  }
+  if (tab === 'realise') {
+    if (allRows.length > 0) {
+      if (!window.vendeurRows) loadVendeurData().then(()=>rvoRender());
+      else rvoRender();
     }
   }
 }
@@ -1350,6 +1453,192 @@ function renderCategories() {
       }
     }
   });
+}
+
+// ═══════════════════════════════════════════════════════
+//  RÉALISÉ VS OBJECTIF
+// ═══════════════════════════════════════════════════════
+const VENDEUR_TAB = 'Marge_par_vendeur';
+
+// Coefficients vente par collaborateur (idem planning)
+const COEFS = { anthony: 20, cathy: 50, hubert: 100, manon: 100, lucie: 100 };
+const COLLABS = [
+  { uid: 'anthony', nom: 'Anthony', coef: 20 },
+  { uid: 'cathy',   nom: 'Cathy',   coef: 50 },
+  { uid: 'hubert',  nom: 'Hubert',  coef: 100 },
+  { uid: 'manon',   nom: 'Manon',   coef: 100 },
+  { uid: 'lucie',   nom: 'Lucie',   coef: 100 },
+];
+
+window.vendeurRows = null;
+window.rvoPeriod = 'jour';
+
+async function loadVendeurData() {
+  try {
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(VENDEUR_TAB)}`;
+    const res = await fetch(url);
+    const txt = await res.text();
+    const js = JSON.parse(txt.substring(47, txt.length - 2));
+    window.vendeurRows = js.table.rows.map(r => {
+      if (!r || !r.c) return null;
+      const dateRaw = r.c[0] ? r.c[0].v : null;
+      const d = gdate(dateRaw);
+      return {
+        date: d,
+        dateISO: d ? d.toISOString().substring(0, 10) : null,
+        uid: r.c[1] ? String(r.c[1].v) : null,
+        ca: parseNum(r.c[3] ? r.c[3].v : null),
+        marge: parseNum(r.c[4] ? r.c[4].v : null),
+        taux: parseNum(r.c[5] ? r.c[5].v : null),
+      };
+    }).filter(r => r && r.date && r.uid);
+  } catch(e) {
+    console.error('Erreur loadVendeurData:', e);
+    window.vendeurRows = [];
+  }
+}
+
+function rvoGetDateRange(period) {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (period === 'jour') {
+    return { from: today, to: today };
+  }
+  if (period === 'semaine') {
+    const dow = today.getDay() === 0 ? 6 : today.getDay() - 1;
+    const mon = new Date(today); mon.setDate(today.getDate() - dow);
+    return { from: mon, to: today };
+  }
+  if (period === 'mois') {
+    return { from: new Date(today.getFullYear(), today.getMonth(), 1), to: today };
+  }
+  if (period === 'annee') {
+    return { from: new Date(today.getFullYear(), 0, 1), to: today };
+  }
+  if (period === 'custom') {
+    const f = document.getElementById('rvo-from').value;
+    const t = document.getElementById('rvo-to').value;
+    if (!f || !t) return { from: today, to: today };
+    const [fy,fm,fd] = f.split('-').map(Number);
+    const [ty,tm,td] = t.split('-').map(Number);
+    return { from: new Date(fy,fm-1,fd), to: new Date(ty,tm-1,td) };
+  }
+  return { from: today, to: today };
+}
+
+function rvoSetPeriod(period, btn) {
+  window.rvoPeriod = period;
+  document.querySelectorAll('.rvo-period-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const customWrap = document.getElementById('rvo-custom-wrap');
+  customWrap.style.display = period === 'custom' ? 'flex' : 'none';
+  if (period !== 'custom') rvoRender();
+}
+
+function rvoRender() {
+  if (!allRows.length) return;
+  const { from, to } = rvoGetDateRange(window.rvoPeriod);
+
+  // Label période
+  const toISO = d => d.toISOString().substring(0, 10);
+  const fmtDate = d => d.toLocaleDateString('fr-FR', { day:'2-digit', month:'short' });
+  const fromStr = from.toLocaleDateString('fr-FR'), toStr = to.toLocaleDateString('fr-FR');
+  const periodLabel = from.getTime() === to.getTime()
+    ? fmtDate(from)
+    : `${fmtDate(from)} → ${fmtDate(to)}`;
+  document.getElementById('rvo-period-label').textContent = periodLabel;
+
+  // Filtrer les lignes de données principales dans la période
+  const mainFiltered = allRows.filter(r => {
+    const d = gdate(r['A']);
+    if (!d) return false;
+    return d >= from && d <= to && r['I'] !== null;
+  });
+
+  // Total magasin
+  const totalMarge = mainFiltered.reduce((s, r) => s + (parseNum(r['I']) || 0), 0);
+  const totalObj = mainFiltered.reduce((s, r) => s + (parseNum(r['F']) || 0), 0);
+  const ecartMag = totalMarge - totalObj;
+  const pctMag = totalObj > 0 ? Math.min((totalMarge / totalObj) * 100, 100) : 0;
+
+  document.getElementById('rvo-mag-real').textContent = fmtE(totalMarge);
+  document.getElementById('rvo-mag-obj').textContent = fmtE(totalObj);
+  document.getElementById('rvo-mag-ecart').textContent = (ecartMag >= 0 ? '+' : '') + fmt(ecartMag) + ' €';
+  document.getElementById('rvo-mag-ecart').style.color = ecartMag >= 0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('rvo-mag-jours').textContent = mainFiltered.length;
+  document.getElementById('rvo-mag-pct').textContent = fmt(pctMag, 1) + '%';
+  document.getElementById('rvo-mag-obj-label').textContent = fmtE(totalObj);
+  const magFill = document.getElementById('rvo-mag-fill');
+  magFill.style.width = pctMag + '%';
+  magFill.style.background = pctMag >= 100 ? 'var(--green)' : pctMag >= 80 ? 'var(--amber)' : 'var(--red)';
+
+  // Par collaborateur
+  const grid = document.getElementById('rvo-collabs-grid');
+  if (!window.vendeurRows || !window.vendeurRows.length) {
+    grid.innerHTML = '<div class="rvo-no-data">Aucune donnée vendeur disponible.<br><small>Le pipeline CA_des-vendeurs.pdf doit avoir tourné au moins une fois.</small></div>';
+    return;
+  }
+
+  // Filtrer les données vendeurs dans la période
+  const vendFiltered = window.vendeurRows.filter(r => r.date >= from && r.date <= to);
+
+  grid.innerHTML = COLLABS.map(c => {
+    // Marge réalisée pour ce collaborateur sur la période
+    const rows = vendFiltered.filter(r => r.uid === c.uid);
+    const realMarge = rows.reduce((s, r) => s + (r.marge || 0), 0);
+
+    // Objectif : pour chaque jour avec données magasin, calculer la part pondérée
+    let objMarge = 0;
+    mainFiltered.forEach(dayRow => {
+      const dISO = toISO(gdate(dayRow['A']));
+      const dayObj = parseNum(dayRow['F']) || 0;
+      if (!dayObj) return;
+      // Calculer le total pondéré de tous les collabs présents ce jour
+      // On utilise le fait que si un vendeur a vendu ce jour-là, il était présent
+      const presentUIDs = vendFiltered
+        .filter(v => v.dateISO === dISO)
+        .map(v => v.uid);
+      const totalPart = presentUIDs.reduce((s, uid) => {
+        const coef = COEFS[uid] || 0;
+        return s + coef / 100;
+      }, 0);
+      const myCoef = c.coef / 100;
+      const wasThere = presentUIDs.includes(c.uid);
+      if (wasThere && totalPart > 0) {
+        objMarge += (myCoef / totalPart) * dayObj;
+      }
+    });
+
+    const ecart = realMarge - objMarge;
+    const pct = objMarge > 0 ? Math.min((realMarge / objMarge) * 100, 100) : 0;
+    const fillClass = pct >= 100 ? 'gn' : pct >= 75 ? 'am' : 'rd';
+
+    return `<div class="rvo-card">
+      <div class="rvo-card-name">
+        ${c.nom}
+        <span class="rvo-card-coef">${c.coef}% vente</span>
+      </div>
+      <div class="rvo-gauge-wrap">
+        <div class="rvo-gauge-label">
+          <span>Marge réalisée</span>
+          <span style="font-weight:600;color:var(--text)">${fmt(pct,1)} %</span>
+        </div>
+        <div class="rvo-gauge-track">
+          <div class="rvo-gauge-fill ${fillClass}" style="width:${pct}%"></div>
+        </div>
+      </div>
+      <div class="rvo-nums">
+        <div>
+          <div class="rvo-real">${fmtE(realMarge)}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">${rows.length} jour(s)</div>
+        </div>
+        <div style="text-align:right">
+          <div class="rvo-obj">Obj : ${fmtE(objMarge)}</div>
+          <div class="rvo-ecart ${ecart >= 0 ? 'pos' : 'neg'}" style="font-family:'DM Mono',monospace;font-size:11px">${ecart >= 0 ? '+' : ''}${fmt(ecart)} €</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 loadData();
