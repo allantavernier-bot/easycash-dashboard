@@ -434,7 +434,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
         <div class="hgrid" id="hgrid"></div>
         <div id="halert"></div>
       </div>
-      <div class="acard adm" id="covcard" style="display:none;margin-top:12px">
+      <div class="acard adm" id="covcard" style="display:none!important;margin-top:12px">
         <div style="font-size:12px;font-weight:500;margin-bottom:8px">Couverture des rôles clés</div>
         <div class="covgrid" id="covgrid"></div>
       </div>
@@ -1287,10 +1287,10 @@ function renderPlanning(){
       cH+=`<div class="cov-item ${status}"><div class="cov-lbl">${icon} ${DLBL[i]}</div><div class="cov-detail">Achat: ${buyNames.join(', ')||'—'}</div><div class="cov-detail">Bijoux: ${jewNames.join(', ')||'⚠'}</div></div>`;
     });
     document.getElementById('covgrid').innerHTML=cH;
-    document.getElementById('covcard').style.display='block';
+    
   } else {
     document.getElementById('hcard').style.display='none';
-    document.getElementById('covcard').style.display='none';
+    
   }
 }
 
