@@ -299,6 +299,50 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
   .sig-card{border:none;padding:0;}
   .sig-box{border:1px solid #ccc;page-break-inside:avoid;}
 }
+/* OBJECTIFS MARGE */
+.source-tag{display:inline-flex;align-items:center;gap:5px;background:var(--gn-l);border:1px solid var(--gn-b);color:var(--gn);padding:3px 8px;border-radius:5px;font-size:10px;font-weight:500;}
+.marge-table{width:100%;border-collapse:collapse;}
+.marge-table th{padding:8px 10px;background:var(--s2);font-size:10px;font-weight:600;color:var(--t2);text-align:left;border-bottom:1px solid var(--b);}
+.marge-table td{padding:9px 10px;border-bottom:1px solid var(--b);font-size:12px;vertical-align:middle;}
+.marge-table tr:last-child td{border-bottom:none;}
+.marge-coef{display:inline-flex;align-items:center;gap:4px;background:var(--am-l);border:1px solid var(--am-b);color:var(--am);padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600;font-family:'IBM Plex Mono',monospace;}
+.marge-stat{background:var(--s2);border-radius:var(--r);padding:14px;border-left:3px solid var(--bm);}
+.marge-stat.target{border-color:var(--bl);}
+.marge-stat.real{border-color:var(--gn);}
+.marge-stat.unit{border-color:var(--am);}
+.marge-val{font-size:22px;font-weight:600;font-family:'IBM Plex Mono',monospace;margin-bottom:2px;}
+.marge-lbl{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;}
+.coef-edit-input{width:55px;padding:3px 6px;border:1px solid var(--b);border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:11px;text-align:center;outline:none;}
+.coef-edit-input:focus{border-color:var(--bl);}
+
+/* JAUGES RÉALISÉ VS OBJECTIF */
+.rvo-period-bar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;align-items:center}
+.rvo-period-btn{padding:5px 12px;border-radius:20px;border:1px solid var(--bm);background:var(--s2);color:var(--t2);font-size:11px;font-weight:500;cursor:pointer;transition:.15s;font-family:'IBM Plex Sans',sans-serif}
+.rvo-period-btn.active{background:var(--tx);color:#fff;border-color:var(--tx)}
+.rvo-custom-wrap{display:none;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.rvo-custom-wrap input{padding:5px 8px;border:1px solid var(--bm);border-radius:var(--r);font-size:11px;outline:none;font-family:'IBM Plex Sans',sans-serif;background:var(--sf)}
+.rvo-mag-card{background:var(--s2);border-radius:var(--r);padding:14px;margin-bottom:14px;border-left:3px solid var(--bl)}
+.rvo-big-track{height:12px;background:var(--s3);border-radius:6px;overflow:hidden;margin:8px 0}
+.rvo-big-fill{height:100%;border-radius:6px;transition:width .6s ease}
+.rvo-stats-row{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px}
+.rvo-stat{flex:1;min-width:80px}
+.rvo-stat-lbl{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.rvo-stat-val{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600}
+.rvo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin-bottom:14px}
+.rvo-card{background:var(--sf);border:1px solid var(--b);border-radius:var(--r);padding:12px}
+.rvo-card-name{font-size:12px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.rvo-coef-tag{font-size:9px;background:var(--am-l);color:var(--am);border:1px solid var(--am-b);padding:1px 6px;border-radius:10px;font-family:'IBM Plex Mono',monospace}
+.rvo-gauge-lbl{display:flex;justify-content:space-between;font-size:10px;color:var(--t3);margin-bottom:4px}
+.rvo-track{height:6px;background:var(--s3);border-radius:3px;overflow:hidden}
+.rvo-fill{height:100%;border-radius:3px;transition:width .6s ease}
+.rvo-fill.gn{background:var(--gn)}
+.rvo-fill.am{background:var(--am)}
+.rvo-fill.rd{background:var(--rd)}
+.rvo-nums{display:flex;justify-content:space-between;font-size:11px;margin-top:6px;align-items:center}
+.rvo-real{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13px;color:var(--gn)}
+.rvo-no-data{color:var(--t3);font-size:12px;text-align:center;padding:20px 0}
+@media(max-width:600px){.rvo-grid{grid-template-columns:1fr}}
+
 @media(max-width:700px){
   main{padding:10px;}
   .agrid{grid-template-columns:1fr;}
@@ -380,6 +424,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
     <button class="tab" onclick="window.showTab('signatures',this)">Signatures</button>
     <button class="tab" onclick="window.showTab('absences',this)">Mes absences</button>
     <button class="tab" onclick="window.showTab('retours',this)">💬 Retours</button>
+    <button class="tab" onclick="window.showTab('objectifs',this)">📊 Objectifs</button>
     <button class="tab adm" onclick="window.showTab('admin-abs',this)">Demandes</button>
     <button class="tab adm" onclick="window.showTab('admin-team',this)">Équipe &amp; PIN</button>
   </div>
@@ -511,6 +556,81 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
       <div class="acard">
         <div class="actitle">Jours fériés 2026</div>
         <div id="ferie-table"></div>
+      </div>
+    </div>
+
+    <!-- OBJECTIFS MARGE -->
+    <div class="view" id="view-objectifs">
+      <div class="acard" style="margin-bottom:14px">
+        <div class="actitle" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <span>📊 Objectifs de marge journaliers</span>
+          <span class="source-tag" id="marge-source-tag">🔗 Chargement...</span>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+          <span style="font-size:11px;color:var(--t2);font-weight:500">Semaine :</span>
+          <span id="marge-week-label" style="font-size:12px;font-weight:600"></span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px" id="marge-stats"></div>
+        <div style="overflow-x:auto">
+          <table class="marge-table" style="min-width:620px">
+            <thead>
+              <tr>
+                <th>Collaborateur</th>
+                <th style="text-align:center">Lun</th><th style="text-align:center">Mar</th><th style="text-align:center">Mer</th>
+                <th style="text-align:center">Jeu</th><th style="text-align:center">Ven</th><th style="text-align:center">Sam</th>
+                <th style="text-align:right">Total sem.</th>
+              </tr>
+            </thead>
+            <tbody id="marge-tbody"></tbody>
+            <tfoot><tr id="marge-tfoot" style="background:var(--s2);font-weight:600"></tr></tfoot>
+          </table>
+        </div>
+      </div>
+
+      <div class="acard adm">
+        <div class="actitle">⚙️ Coefficients vente par collaborateur</div>
+        <p style="font-size:12px;color:var(--t2);margin-bottom:14px;line-height:1.6">Ces coefficients pondèrent la part de marge. Un acheteur à 20% contribue 20% de son temps à la vente.</p>
+        <div id="coef-grid" style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:14px"></div>
+        <button class="sbmit" style="font-size:12px;padding:8px 16px" onclick="window.saveCoefs()">Enregistrer les coefficients</button>
+      </div>
+
+      <!-- RÉALISÉ VS OBJECTIF -->
+      <div class="acard" style="margin-top:14px;margin-bottom:14px">
+        <div class="actitle" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <span>🎯 Réalisé vs Objectif</span>
+          <span id="rvo-period-label" style="font-size:11px;color:var(--t3);background:var(--s2);padding:3px 9px;border-radius:10px"></span>
+        </div>
+        <div class="rvo-period-bar">
+          <button class="rvo-period-btn" onclick="window.rvoSetPeriod('hier',this)">Hier</button>
+          <button class="rvo-period-btn" onclick="window.rvoSetPeriod('semaine',this)">Cette semaine</button>
+          <button class="rvo-period-btn" onclick="window.rvoSetPeriod('mois',this)">Ce mois</button>
+          <button class="rvo-period-btn" onclick="window.rvoSetPeriod('annee',this)">Cette année</button>
+          <button class="rvo-period-btn" onclick="window.rvoSetPeriod('custom',this)">Personnalisé</button>
+        </div>
+        <div class="rvo-custom-wrap" id="rvo-custom-wrap">
+          <span style="font-size:11px;color:var(--t2)">Du</span>
+          <input type="date" id="rvo-from" onchange="window.rvoRender()">
+          <span style="font-size:11px;color:var(--t2)">au</span>
+          <input type="date" id="rvo-to" onchange="window.rvoRender()">
+        </div>
+        <div class="rvo-mag-card" id="rvo-mag-card">
+          <div style="font-size:12px;font-weight:600;margin-bottom:6px">🏪 Magasin — Marge réalisée</div>
+          <div class="rvo-big-track"><div class="rvo-big-fill" id="rvo-mag-fill" style="width:0%;background:var(--gn)"></div></div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--t3)">
+            <span>0 €</span><span id="rvo-mag-pct" style="font-weight:600;color:var(--tx)">—</span><span id="rvo-mag-obj-lbl">—</span>
+          </div>
+          <div class="rvo-stats-row">
+            <div class="rvo-stat"><div class="rvo-stat-lbl">Réalisé</div><div class="rvo-stat-val" id="rvo-mag-real" style="color:var(--gn)">—</div></div>
+            <div class="rvo-stat"><div class="rvo-stat-lbl">Objectif</div><div class="rvo-stat-val" id="rvo-mag-obj">—</div></div>
+            <div class="rvo-stat"><div class="rvo-stat-lbl">Écart</div><div class="rvo-stat-val" id="rvo-mag-ecart">—</div></div>
+            <div class="rvo-stat"><div class="rvo-stat-lbl">Jours</div><div class="rvo-stat-val" id="rvo-mag-jours" style="color:var(--t3)">—</div></div>
+          </div>
+        </div>
+        <div style="font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Par collaborateur</div>
+        <div class="rvo-grid" id="rvo-collabs-grid"><div class="rvo-no-data">Sélectionnez une période ci-dessus</div></div>
+        <div style="font-size:10px;color:var(--t3);margin-top:6px;line-height:1.6">
+          Objectifs calculés au prorata présence × coefficient vente · Réalisé issu du PDF <em>CA_des-vendeurs</em>
+        </div>
       </div>
     </div>
 
@@ -740,6 +860,7 @@ let STATE = {
     '2026-06-04': ['Inventaire BOR / BOPI'],
   },
   retours: [], // [{id, uid, nom, type, desc, device, date, traite}]
+  coefs: { allan:0, anthony:20, cathy:50, hubert:100, manon:100, lucie:100 },
 };
 
 // ── FIREBASE STORAGE ──────────────────────────────────
@@ -756,6 +877,7 @@ async function loadState(){
       if(saved.scheduleOverrides) STATE.scheduleOverrides = saved.scheduleOverrides;
       if(saved.evenements) STATE.evenements = {...STATE.evenements, ...saved.evenements};
       if(saved.retours) STATE.retours = saved.retours;
+      if(saved.coefs) STATE.coefs = {...STATE.coefs, ...saved.coefs};
     }
     setSyncStatus('ok');
   } catch(e){
@@ -775,6 +897,7 @@ async function saveState(){
       scheduleOverrides: STATE.scheduleOverrides,
       evenements: STATE.evenements,
       retours: STATE.retours,
+      coefs: STATE.coefs,
     }, { merge: true });
     setSyncStatus('ok');
   } catch(e){
@@ -804,6 +927,7 @@ function startPolling(){
       if(saved.scheduleOverrides) STATE.scheduleOverrides = saved.scheduleOverrides;
       if(saved.evenements) STATE.evenements = {...STATE.evenements, ...saved.evenements};
       if(saved.retours) STATE.retours = saved.retours;
+      if(saved.coefs) STATE.coefs = {...STATE.coefs, ...saved.coefs};
     }
     setSyncStatus('ok');
     renderPlanning();
@@ -1038,6 +1162,14 @@ function showTab(name,btn){
       document.getElementById('retours-admin').style.display='block';
       renderRetours();
     }
+  }
+  if(name==='objectifs'){
+    loadMargeData().then(()=>{
+      renderObjectifs();
+      const btnHier=document.querySelector('.rvo-period-btn');
+      if(btnHier) rvoSetPeriod('hier', btnHier);
+      else rvoRender();
+    });
   }
 }
 
@@ -1749,6 +1881,265 @@ function saveSlot(){
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2700);}
 
 // ═══════════════════════════════════════════════════════
+//  OBJECTIFS MARGE
+// ═══════════════════════════════════════════════════════
+const GVIZ_URL = `https://docs.google.com/spreadsheets/d/1wBm0SyeqC-4HBKZ7J7KefcNfdLiJ7cL2KIf3VEgcp1M/gviz/tq?tqx=out:json&sheet=${encodeURIComponent('Données journalières')}`;
+const GVIZ_VENDEUR_URL = `https://docs.google.com/spreadsheets/d/1wBm0SyeqC-4HBKZ7J7KefcNfdLiJ7cL2KIf3VEgcp1M/gviz/tq?tqx=out:json&sheet=${encodeURIComponent('Marge_par_vendeur')}`;
+let margeData = {};
+let vendeurData = {};
+
+function parseNumGviz(v){ if(v===null||v===undefined||v==='') return null; const n=parseFloat(String(v).replace(',','.').replace(/\s/g,'')); return isNaN(n)?null:n; }
+function gdateGviz(raw){
+  if(!raw) return null;
+  if(typeof raw==='string'&&raw.startsWith('Date(')){const p=raw.replace('Date(','').replace(')','').split(',').map(Number);return new Date(p[0],p[1],p[2]);}
+  if(typeof raw==='string'&&raw.match(/^\d{2}\/\d{2}\/\d{4}$/)){const p=raw.split('/');return new Date(parseInt(p[2]),parseInt(p[1])-1,parseInt(p[0]));}
+  if(raw instanceof Date) return raw;
+  return null;
+}
+
+async function loadMargeData(){
+  try {
+    const res = await fetch(GVIZ_URL);
+    const txt = await res.text();
+    const js  = JSON.parse(txt.substring(47, txt.length-2));
+    margeData = {};
+    (js.table.rows||[]).forEach(r => {
+      if(!r||!r.c) return;
+      const d = gdateGviz(r.c[0]?r.c[0].v:null);
+      if(!d) return;
+      const dISO = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      const marge = parseNumGviz(r.c[5]?r.c[5].v:null);
+      if(marge!==null) margeData[dISO] = marge;
+    });
+
+    const res2 = await fetch(GVIZ_VENDEUR_URL);
+    const txt2 = await res2.text();
+    const js2  = JSON.parse(txt2.substring(47, txt2.length-2));
+    vendeurData = {};
+    (js2.table.rows||[]).forEach(r => {
+      if(!r||!r.c) return;
+      const d = gdateGviz(r.c[0]?r.c[0].v:null);
+      if(!d) return;
+      const dISO = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      const uid   = r.c[1]?String(r.c[1].v):null;
+      const marge = parseNumGviz(r.c[4]?r.c[4].v:null);
+      if(uid&&marge!==null) vendeurData[`${dISO}|${uid}`] = marge;
+    });
+
+    const tag=document.getElementById('marge-source-tag');
+    if(tag){
+      tag.innerHTML='🔗 Google Sheets — Synchronisé';
+      tag.style.background='var(--gn-l)';tag.style.borderColor='var(--gn-b)';tag.style.color='var(--gn)';
+    }
+  } catch(e) {
+    const tag=document.getElementById('marge-source-tag');
+    if(tag) tag.innerHTML='⚠ Google Sheets — Erreur';
+    console.error('Erreur chargement marge:', e);
+  }
+}
+
+function renderObjectifs(){
+  const mon = monday(woff);
+  const dates = DAYS.map((_,i)=>{ const d=new Date(mon); d.setDate(mon.getDate()+i); return d; });
+  document.getElementById('marge-week-label').textContent = `S${wknum(mon)} — ${fmt(mon)} au ${fmt(dates[5])}`;
+
+  const tbody = document.getElementById('marge-tbody');
+  const tfoot = document.getElementById('marge-tfoot');
+  let totalSemaine = 0;
+
+  tbody.innerHTML = SIDS.map(uid => {
+    const u = USERS[uid];
+    const coef = (STATE.coefs?.[uid] || 0) / 100;
+    let totalCollab = 0;
+    const cells = dates.map((d, i) => {
+      const dISO = iso(d);
+      const dayKey = DAYS[i];
+      const absS = absStatus(uid, dISO);
+      const slot = getSlot(uid, dayKey, dISO);
+      const VIERGE_FROM = '2026-06-29';
+      const isVierge = dISO >= VIERGE_FROM && !STATE.slotOverrides[`${uid}-${dISO}`] && !STATE.scheduleOverrides[`${uid}-${dayKey}`];
+      const present = !isVierge && absS !== 'approved' && slot && slot.type !== 'off' && slot.type !== 'cp' && slot.type !== 'am';
+      const obj = margeData[dISO] || 0;
+      if(!obj) return `<td style="text-align:center;color:var(--t3);font-size:10px">—</td>`;
+      const totalPart = SIDS.reduce((acc, u2) => {
+        const s2 = getSlot(u2, dayKey, dISO);
+        const a2 = absStatus(u2, dISO);
+        const iv2 = dISO >= VIERGE_FROM && !STATE.slotOverrides[`${u2}-${dISO}`] && !STATE.scheduleOverrides[`${u2}-${dayKey}`];
+        const p2 = !iv2 && a2 !== 'approved' && s2 && s2.type !== 'off' && s2.type !== 'cp' && s2.type !== 'am';
+        return acc + (p2 ? (STATE.coefs?.[u2] || 0) / 100 : 0);
+      }, 0);
+      if(!present || coef === 0) return `<td style="text-align:center;color:var(--t3);font-size:10px">—</td>`;
+      const part = totalPart > 0 ? (coef / totalPart) * obj : 0;
+      totalCollab += part;
+      return `<td style="text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500">${Math.round(part).toLocaleString('fr-FR')} €</td>`;
+    });
+    totalSemaine += totalCollab;
+    return `<tr>
+      <td style="font-weight:500;font-size:12px">${u.short} <span class="marge-coef" style="margin-left:4px">${STATE.coefs?.[uid]||0}%</span></td>
+      ${cells.join('')}
+      <td style="text-align:right;font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--bl)">${totalCollab>0?Math.round(totalCollab).toLocaleString('fr-FR')+' €':'—'}</td>
+    </tr>`;
+  }).join('');
+
+  const footCells = dates.map(d => {
+    const dISO = iso(d);
+    const obj = margeData[dISO];
+    return `<td style="text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11px;padding:9px 10px">${obj?obj.toLocaleString('fr-FR')+' €':'—'}</td>`;
+  });
+  tfoot.innerHTML = `<td style="padding:9px 10px;font-size:11px">🎯 Objectif magasin</td>${footCells.join('')}<td style="text-align:right;font-family:'IBM Plex Mono',monospace;padding:9px 10px;color:var(--gn)">${totalSemaine>0?Math.round(totalSemaine).toLocaleString('fr-FR')+' €':'—'}</td>`;
+
+  const totalObj = dates.reduce((a, d) => a + (margeData[iso(d)] || 0), 0);
+  document.getElementById('marge-stats').innerHTML = `
+    <div class="marge-stat target"><div class="marge-val">${totalObj>0?totalObj.toLocaleString('fr-FR')+' €':'—'}</div><div class="marge-lbl">Objectif semaine</div></div>
+    <div class="marge-stat real"><div class="marge-val">${SIDS.length}</div><div class="marge-lbl">Collaborateurs actifs</div></div>
+    <div class="marge-stat unit"><div class="marge-val">${Object.keys(margeData).length} jours</div><div class="marge-lbl">Données chargées</div></div>`;
+
+  const coefGrid = document.getElementById('coef-grid');
+  if(coefGrid) coefGrid.innerHTML = SIDS.map(uid => `
+    <div style="display:flex;align-items:center;gap:6px;font-size:12px">
+      <span style="width:65px;font-weight:500">${USERS[uid].short}</span>
+      <input type="number" class="coef-edit-input" id="coef-${uid}" value="${STATE.coefs?.[uid]||0}" min="0" max="100"> %
+    </div>`).join('');
+}
+
+async function saveCoefs(){
+  if(!STATE.coefs) STATE.coefs={};
+  SIDS.forEach(uid => {
+    const inp = document.getElementById(`coef-${uid}`);
+    if(inp) STATE.coefs[uid] = parseInt(inp.value) || 0;
+  });
+  await saveState();
+  toast('Coefficients enregistrés ✓');
+  renderObjectifs();
+}
+
+// ═══════════════════════════════════════════════════════
+//  RÉALISÉ VS OBJECTIF
+// ═══════════════════════════════════════════════════════
+let rvoPeriod = 'hier';
+
+function rvoGetRange(period){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const toISO = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  if(period==='hier'){
+    const h=new Date(today); h.setDate(today.getDate()-1);
+    return {from:h, to:h};
+  }
+  if(period==='semaine'){
+    const dow=today.getDay()===0?6:today.getDay()-1;
+    const m=new Date(today); m.setDate(today.getDate()-dow);
+    return {from:m, to:today};
+  }
+  if(period==='mois') return {from:new Date(today.getFullYear(),today.getMonth(),1), to:today};
+  if(period==='annee') return {from:new Date(today.getFullYear(),0,1), to:today};
+  if(period==='custom'){
+    const f=document.getElementById('rvo-from').value, t=document.getElementById('rvo-to').value;
+    if(!f||!t) return null;
+    const [fy,fm,fd]=f.split('-').map(Number), [ty,tm,td]=t.split('-').map(Number);
+    return {from:new Date(fy,fm-1,fd), to:new Date(ty,tm-1,td)};
+  }
+  return null;
+}
+
+function rvoSetPeriod(period, btn){
+  rvoPeriod = period;
+  document.querySelectorAll('.rvo-period-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const cw = document.getElementById('rvo-custom-wrap');
+  cw.style.display = period==='custom' ? 'flex' : 'none';
+  if(period!=='custom') rvoRender();
+}
+
+function rvoRender(){
+  const range = rvoGetRange(rvoPeriod);
+  if(!range) return;
+  const {from, to} = range;
+  const toISO = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const fmtD = d => d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'});
+
+  document.getElementById('rvo-period-label').textContent =
+    from.getTime()===to.getTime() ? fmtD(from) : `${fmtD(from)} → ${fmtD(to)}`;
+
+  const datesInRange = [];
+  const cur2 = new Date(from);
+  while(cur2 <= to){ datesInRange.push(toISO(new Date(cur2))); cur2.setDate(cur2.getDate()+1); }
+
+  let totalObj=0, totalReal=0, joursAvecDonnees=0;
+  datesInRange.forEach(dISO => {
+    const obj = margeData[dISO] || 0;
+    const realJour = SIDS.filter(uid=>uid!=='allan').reduce((s,uid)=>{
+      const v = vendeurData[`${dISO}|${uid}`];
+      return s + (v||0);
+    },0);
+    if(obj>0){ totalObj+=obj; joursAvecDonnees++; }
+    totalReal += realJour;
+  });
+
+  const ecartMag = totalReal - totalObj;
+  const pctMag = totalObj>0 ? Math.min(totalReal/totalObj*100,100) : 0;
+
+  const fmtE = n => n!==null&&!isNaN(n) ? Math.round(n).toLocaleString('fr-FR')+' €' : '—';
+  document.getElementById('rvo-mag-real').textContent = fmtE(totalReal);
+  document.getElementById('rvo-mag-obj').textContent  = fmtE(totalObj);
+  document.getElementById('rvo-mag-ecart').textContent = (ecartMag>=0?'+':'')+fmtE(ecartMag);
+  document.getElementById('rvo-mag-ecart').style.color = ecartMag>=0?'var(--gn)':'var(--rd)';
+  document.getElementById('rvo-mag-jours').textContent = joursAvecDonnees;
+  document.getElementById('rvo-mag-pct').textContent = pctMag.toFixed(1)+'%';
+  document.getElementById('rvo-mag-obj-lbl').textContent = fmtE(totalObj);
+  const fill = document.getElementById('rvo-mag-fill');
+  fill.style.width = pctMag+'%';
+  fill.style.background = pctMag>=100?'var(--gn)':pctMag>=80?'var(--am)':'var(--rd)';
+
+  const collabs = SIDS.filter(uid=>uid!=='allan');
+  const hasVendeurData = collabs.some(uid=>datesInRange.some(d=>vendeurData[`${d}|${uid}`]!==undefined));
+
+  const grid = document.getElementById('rvo-collabs-grid');
+  if(!hasVendeurData){
+    grid.innerHTML='<div class="rvo-no-data">Aucune donnée réalisée disponible sur cette période.<br><small>Le pipeline CA_des-vendeurs doit avoir tourné au moins une fois.</small></div>';
+    return;
+  }
+
+  grid.innerHTML = collabs.map(uid => {
+    const u = USERS[uid];
+    const coef = (STATE.coefs?.[uid]||0)/100;
+    const realMarge = datesInRange.reduce((s,dISO)=>s+(vendeurData[`${dISO}|${uid}`]||0),0);
+
+    let objMarge = 0;
+    datesInRange.forEach(dISO => {
+      const dayObj = margeData[dISO]||0;
+      if(!dayObj) return;
+      const totalPart = SIDS.filter(u2=>u2!=='allan').reduce((s,u2)=>{
+        const hasDonnees = vendeurData[`${dISO}|${u2}`]!==undefined;
+        return s + (hasDonnees ? (STATE.coefs?.[u2]||0)/100 : 0);
+      },0);
+      const wasThere = vendeurData[`${dISO}|${uid}`]!==undefined;
+      if(wasThere && totalPart>0) objMarge += (coef/totalPart)*dayObj;
+    });
+
+    const ecart = realMarge - objMarge;
+    const pct = objMarge>0 ? Math.min(realMarge/objMarge*100,100) : 0;
+    const cl = pct>=100?'gn':pct>=75?'am':'rd';
+    const joursCollab = datesInRange.filter(d=>vendeurData[`${d}|${uid}`]!==undefined).length;
+
+    return `<div class="rvo-card">
+      <div class="rvo-card-name">${u.short}<span class="rvo-coef-tag">${STATE.coefs?.[uid]||0}%</span></div>
+      <div class="rvo-gauge-lbl"><span>Marge réalisée</span><span style="font-weight:600;color:var(--tx)">${pct.toFixed(1)}%</span></div>
+      <div class="rvo-track"><div class="rvo-fill ${cl}" style="width:${pct}%"></div></div>
+      <div class="rvo-nums">
+        <div>
+          <div class="rvo-real">${fmtE(realMarge)}</div>
+          <div style="font-size:10px;color:var(--t3);margin-top:2px">${joursCollab} jour(s)</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--t3)">Obj : ${fmtE(objMarge)}</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:${ecart>=0?'var(--gn)':'var(--rd)'}">${ecart>=0?'+':''}${fmtE(ecart)}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════
 //  MAINTENANCE
 // ═══════════════════════════════════════════════════════
 async function nettoyerScheduleOverrides(){
@@ -2146,6 +2537,7 @@ window.openDupDay=openDupDay; window.openDupWeek=openDupWeek; window.closeDupMod
 window.openEvModal=openEvModal;
 window.submitRetour=submitRetour; window.marquerTraite=marquerTraite; window.exportRetours=exportRetours;
 window.nettoyerScheduleOverrides=nettoyerScheduleOverrides;
+window.saveCoefs=saveCoefs; window.rvoSetPeriod=rvoSetPeriod; window.rvoRender=rvoRender;
 window.closeEvModal=closeEvModal; window.saveEv=saveEv;
 // Exposer les fonctions internes pour le script classique
 window._saveState=saveState;
