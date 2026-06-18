@@ -1426,69 +1426,6 @@ function printSigs(){
   window.print();
   setTimeout(()=>document.body.classList.remove('print-signatures'),1000);
 }
-    // Résumé semaine
-    let weekSummary='';
-    let workedDays=[];
-    DAYS.forEach((d,i)=>{
-      const dt=new Date(mon);dt.setDate(mon.getDate()+i);
-      const dISO=iso(dt);
-      const abs=absStatus(uid,dISO);
-      if(isFerieChome(uid,dISO)){workedDays.push(`${DLBL[i]}: Férié chômé`);}
-      else if(abs==='approved'){workedDays.push(`${DLBL[i]}: Absence`);}
-      else if(abs==='repos_echange'){workedDays.push(`${DLBL[i]}: Repos (échange)`);}
-      else{
-        const s=getSlot(uid,d,dISO);
-        if(s.type==='off')return;
-        if(s.type==='form'){workedDays.push(`${DLBL[i]}: Formation`);}
-        else if(s.type==='full'||s.type==='mat'||s.type==='apm'||s.type==='sat'){
-          const times=[s.mat,s.apm].filter(Boolean).join(' / ');
-          workedDays.push(`${DLBL[i]}: ${times}`);
-        }
-      }
-    });
-    weekSummary=workedDays.join(' · ');
-
-    // Peut signer : salarié lui-même uniquement (ou admin pour voir)
-    const canSign=cur===uid&&!sig;
-    const isMe=cur===uid;
-
-    h+=`<div class="sig-box">
-      <div class="av" style="background:${u.bg};color:${u.ct};width:36px;height:36px;font-size:12px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px">${ini}</div>
-      <div class="sig-name">${u.name}</div>
-      <div class="sig-hours">${u.role.split('·')[0].trim()}</div>
-      <div style="font-size:10px;color:var(--t2);margin-bottom:8px;line-height:1.5">${weekSummary}</div>
-      <div style="font-size:11px;font-weight:500;color:var(--t2);margin-bottom:3px">Total planifié : <b style="color:var(--tx)">${mh(wm)}</b> / ${mh(cm)}${ft>0?` (dont ${mh(ft)} férié)`:''}</div>`;
-
-    if(sig){
-      // Déjà signé : afficher le dessin
-      h+=`<div class="sig-area" style="cursor:default">
-        <img src="${sig.drawing}" style="width:100%;height:100%;object-fit:contain">
-      </div>
-      <div class="sig-signed">✓ Signé le ${sig.date}</div>`;
-      if(USERS[cur].admin){
-        h+=`<button class="sig-clear" onclick="window.clearSig('${uid}','${wk}')">Effacer la signature</button>`;
-      }
-    } else if(isMe){
-      h+=`<div class="sig-area" id="sig-area-${uid}" onclick="window.startSig('${uid}','${wk}')">
-        <span class="sig-area-label">Cliquez et signez ici</span>
-      </div>
-      <div class="sig-signed" style="color:var(--t3)">Non signé</div>`;
-    } else {
-      h+=`<div class="sig-area" style="cursor:default;background:var(--s3)">
-        <span class="sig-area-label" style="font-size:10px">En attente de signature</span>
-      </div>
-      <div class="sig-signed" style="color:var(--t3)">Non signé</div>`;
-    }
-    h+=`</div>`;
-  });
-  document.getElementById('sig-grid').innerHTML=h;
-
-  // Initialiser les canvas de signature pour l'utilisateur connecté
-  if(SIDS.includes(cur)&&!STATE.signatures[`${cur}-${wk}`]){
-    initSigCanvas(cur,wk);
-  }
-}
-
 
 // ═══════════════════════════════════════════════════════
 //  ABSENCES
