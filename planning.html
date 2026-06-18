@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<!-- saved from url=(0069)https://allantavernier-bot.github.io/easycash-dashboard/planning.html -->
-<html lang="fr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Planning — Easy Cash Berck</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -278,69 +278,6 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
 .sync-dot{width:7px;height:7px;border-radius:50%;background:var(--gn);display:inline-block;margin-right:4px;}
 .sync-dot.syncing{background:var(--am);animation:pulse .8s infinite;}
 .sync-dot.error{background:var(--rd);}
-
-/* SLOTS CP ET ARRÊT MALADIE */
-.sl-cp{background:var(--rd-l);border:1px solid var(--rd-b);border-radius:4px;padding:3px 6px;font-size:9px;color:var(--rd);font-weight:600;text-align:center;width:100%;}
-.sl-am{background:var(--vl-l);border:1px solid var(--vl-b);border-radius:4px;padding:3px 6px;font-size:9px;color:var(--vl);font-weight:600;text-align:center;width:100%;}
-
-/* OBJECTIFS MARGE */
-.marge-stat{background:var(--s2);border-radius:var(--r);padding:14px;border-left:3px solid var(--bm);}
-.marge-stat.target{border-color:var(--bl);}
-.marge-stat.real{border-color:var(--gn);}
-.marge-stat.unit{border-color:var(--am);}
-.marge-val{font-size:22px;font-weight:600;font-family:'IBM Plex Mono',monospace;margin-bottom:2px;}
-.marge-lbl{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;}
-.marge-table{width:100%;border-collapse:collapse;}
-.marge-table th{padding:8px 10px;background:var(--s2);font-size:10px;font-weight:600;color:var(--t2);text-align:left;border-bottom:1px solid var(--b);}
-.marge-table td{padding:9px 10px;border-bottom:1px solid var(--b);font-size:12px;vertical-align:middle;}
-.marge-table tr:last-child td{border-bottom:none;}
-.marge-coef{display:inline-flex;align-items:center;gap:4px;background:var(--am-l);border:1px solid var(--am-b);color:var(--am);padding:2px 7px;border-radius:10px;font-size:10px;font-weight:600;font-family:'IBM Plex Mono',monospace;}
-.pres-bar{height:6px;background:var(--s3);border-radius:3px;overflow:hidden;width:80px;display:inline-block;}
-.pres-fill{height:100%;background:var(--bl);border-radius:3px;}
-.obj-amt{font-family:'IBM Plex Mono',monospace;font-weight:600;}
-.source-tag{display:inline-flex;align-items:center;gap:5px;background:var(--gn-l);border:1px solid var(--gn-b);color:var(--gn);padding:3px 8px;border-radius:5px;font-size:10px;font-weight:500;}
-.coef-edit-input{width:55px;padding:3px 6px;border:1px solid var(--b);border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:11px;text-align:center;outline:none;}
-.coef-edit-input:focus{border-color:var(--bl);}
-
-/* JAUGES RÉALISÉ VS OBJECTIF */
-.rvo-period-bar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;align-items:center}
-.rvo-period-btn{padding:5px 12px;border-radius:20px;border:1px solid var(--bm);background:var(--s2);color:var(--t2);font-size:11px;font-weight:500;cursor:pointer;transition:.15s;font-family:'IBM Plex Sans',sans-serif}
-.rvo-period-btn.active{background:var(--tx);color:#fff;border-color:var(--tx)}
-.rvo-custom-wrap{display:none;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px}
-.rvo-custom-wrap input{padding:5px 8px;border:1px solid var(--bm);border-radius:var(--r);font-size:11px;outline:none;font-family:'IBM Plex Sans',sans-serif;background:var(--sf)}
-.rvo-mag-card{background:var(--s2);border-radius:var(--r);padding:14px;margin-bottom:14px;border-left:3px solid var(--bl)}
-.rvo-big-track{height:12px;background:var(--s3);border-radius:6px;overflow:hidden;margin:8px 0}
-.rvo-big-fill{height:100%;border-radius:6px;transition:width .6s ease}
-.rvo-stats-row{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px}
-.rvo-stat{flex:1;min-width:80px}
-.rvo-stat-lbl{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
-.rvo-stat-val{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600}
-.rvo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin-bottom:14px}
-.rvo-card{background:var(--sf);border:1px solid var(--b);border-radius:var(--r);padding:12px}
-.rvo-card-name{font-size:12px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:6px}
-.rvo-coef-tag{font-size:9px;background:var(--am-l);color:var(--am);border:1px solid var(--am-b);padding:1px 6px;border-radius:10px;font-family:'IBM Plex Mono',monospace}
-.rvo-gauge-lbl{display:flex;justify-content:space-between;font-size:10px;color:var(--t3);margin-bottom:4px}
-.rvo-track{height:6px;background:var(--s3);border-radius:3px;overflow:hidden}
-.rvo-fill{height:100%;border-radius:3px;transition:width .6s ease}
-.rvo-fill.gn{background:var(--gn)}
-.rvo-fill.am{background:var(--am)}
-.rvo-fill.rd{background:var(--rd)}
-.rvo-nums{display:flex;justify-content:space-between;font-size:11px;margin-top:6px;align-items:center}
-.rvo-real{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13px;color:var(--gn)}
-.rvo-no-data{color:var(--t3);font-size:12px;text-align:center;padding:20px 0}
-@media(max-width:600px){.rvo-grid{grid-template-columns:1fr}}display:grid;grid-template-columns:30px 1fr 70px 55px 60px 80px auto;align-items:center;gap:10px;padding:10px 12px;background:var(--sf);border:1px solid var(--b);border-radius:var(--r);margin-bottom:6px;transition:.15s;}
-.collab-mgr-row:hover{background:var(--s2);}
-.collab-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0;}
-.collab-mgr-actions{display:flex;gap:4px;}
-.icon-btn{width:26px;height:26px;border-radius:5px;border:1px solid var(--b);background:var(--sf);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;transition:.15s;font-family:'IBM Plex Sans',sans-serif;}
-.icon-btn:hover{background:var(--s2);}
-.icon-btn.del:hover{background:var(--rd-l);border-color:var(--rd-b);}
-
-/* DUPLICATION */
-.dup-panel{background:var(--am-l);border:1px solid var(--am-b);border-radius:var(--r);padding:14px;margin-top:8px;display:none;}
-.dup-panel.open{display:block;}
-.dup-check{display:flex;align-items:center;gap:7px;padding:4px 0;font-size:12px;cursor:pointer;}
-.dup-check input{cursor:pointer;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
 
 /* BANNIÈRE RAPPEL SIGNATURE */
@@ -362,20 +299,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
   .sig-card{border:none;padding:0;}
   .sig-box{border:1px solid #ccc;page-break-inside:avoid;}
 }
-@media print{
-  body.print-signatures header,
-  body.print-signatures .tabs,
-  body.print-signatures .nbox,
-  body.print-signatures .edit-bar,
-  body.print-signatures #view-planning,
-  body.print-signatures #view-objectifs,
-  body.print-signatures #view-absences,
-  body.print-signatures #view-admin-abs,
-  body.print-signatures #view-admin-team,
-  body.print-signatures #view-retours,
-  body.print-signatures .print-btn,
-  body.print-signatures .sig-nav { display:none!important; }
-  @media(max-width:700px){
+@media(max-width:700px){
   main{padding:10px;}
   .agrid{grid-template-columns:1fr;}
   header{padding:0 10px;}
@@ -386,7 +310,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
 <body>
 
 <!-- LOGIN -->
-<div id="login" style="display: none;">
+<div id="login">
   <div class="lbox">
     <div class="lhead">
       <div class="lbadge">EC</div>
@@ -409,16 +333,16 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
     </div>
     <div class="lerr" id="lerr">Code incorrect — réessayez.</div>
     <div class="npad">
-      <div class="nb" onclick="pp(&#39;1&#39;)">1</div><div class="nb" onclick="pp(&#39;2&#39;)">2</div><div class="nb" onclick="pp(&#39;3&#39;)">3</div>
-      <div class="nb" onclick="pp(&#39;4&#39;)">4</div><div class="nb" onclick="pp(&#39;5&#39;)">5</div><div class="nb" onclick="pp(&#39;6&#39;)">6</div>
-      <div class="nb" onclick="pp(&#39;7&#39;)">7</div><div class="nb" onclick="pp(&#39;8&#39;)">8</div><div class="nb" onclick="pp(&#39;9&#39;)">9</div>
-      <div class="nb z" onclick="pp(&#39;0&#39;)">0</div><div class="nb del" onclick="pdel()">⌫</div>
+      <div class="nb" onclick="pp('1')">1</div><div class="nb" onclick="pp('2')">2</div><div class="nb" onclick="pp('3')">3</div>
+      <div class="nb" onclick="pp('4')">4</div><div class="nb" onclick="pp('5')">5</div><div class="nb" onclick="pp('6')">6</div>
+      <div class="nb" onclick="pp('7')">7</div><div class="nb" onclick="pp('8')">8</div><div class="nb" onclick="pp('9')">9</div>
+      <div class="nb z" onclick="pp('0')">0</div><div class="nb del" onclick="pdel()">⌫</div>
     </div>
   </div>
 </div>
 
 <!-- APP -->
-<div id="app" style="display: block;">
+<div id="app">
   <header>
     <div style="display:flex;align-items:center;">
       <div class="hbadge">EC</div><span class="htitle">Planning équipe</span>
@@ -427,10 +351,10 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
       </span>
     </div>
     <div class="hright">
-      <span class="huser">Connecté : <b id="huser">Allan</b></span>
+      <span class="huser">Connecté : <b id="huser"></b></span>
       <div class="nbell">
         <button class="logbtn" id="btn-notifs" style="font-size:14px;padding:4px 9px;" onclick="window.openNotifs()">🔔</button>
-        <span class="nbadge" id="nbadge" style="display: flex;">30</span>
+        <span class="nbadge" id="nbadge"></span>
       </div>
       <button class="logbtn" onclick="logout()">Déconnexion</button>
     </div>
@@ -441,24 +365,23 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
     <span id="sig-banner-msg">⚠️ Vous n'avez pas encore signé votre planning du mois.</span>
     <div style="display:flex;gap:8px;align-items:center">
       <a onclick="allerSignatures()">Signer maintenant →</a>
-      <button class="close-banner" onclick="document.getElementById(&#39;sig-banner&#39;).classList.remove(&#39;show&#39;)">×</button>
+      <button class="close-banner" onclick="document.getElementById('sig-banner').classList.remove('show')">×</button>
     </div>
   </div>
 
   <!-- Panneau notifs -->
   <div class="nbox" id="nbox">
-    <div class="nhead"><span style="font-size:13px;font-weight:500">Notifications</span><button onclick="document.getElementById(&#39;nbox&#39;).classList.remove(&#39;open&#39;)" style="background:none;border:none;color:var(--t3);font-size:16px;cursor:pointer">×</button></div>
+    <div class="nhead"><span style="font-size:13px;font-weight:500">Notifications</span><button onclick="document.getElementById('nbox').classList.remove('open')" style="background:none;border:none;color:var(--t3);font-size:16px;cursor:pointer">×</button></div>
     <div id="nlist"></div>
   </div>
 
   <div class="tabs">
-    <button class="tab on" onclick="showTab(&#39;planning&#39;,this)">Planning</button>
-    <button class="tab" onclick="showTab(&#39;signatures&#39;,this)">Signatures</button>
-    <button class="tab" onclick="showTab(&#39;absences&#39;,this)">Mes absences</button>
-    <button class="tab" onclick="showTab(&#39;retours&#39;,this)">💬 Retours</button>
-    <button class="tab" onclick="showTab(&#39;objectifs&#39;,this)">📊 Objectifs</button>
-    <button class="tab adm" onclick="showTab(&#39;admin-abs&#39;,this)" style="display: block;">Demandes</button>
-    <button class="tab adm" onclick="showTab(&#39;admin-team&#39;,this)" style="display: block;">Équipe &amp; PIN</button>
+    <button class="tab on" onclick="showTab('planning',this)">Planning</button>
+    <button class="tab" onclick="window.showTab('signatures',this)">Signatures</button>
+    <button class="tab" onclick="showTab('absences',this)">Mes absences</button>
+    <button class="tab" onclick="showTab('retours',this)">💬 Retours</button>
+    <button class="tab adm" onclick="showTab('admin-abs',this)">Demandes</button>
+    <button class="tab adm" onclick="showTab('admin-team',this)">Équipe &amp; PIN</button>
   </div>
 
   <main>
@@ -472,50 +395,28 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
       </div>
       <div class="wnav">
         <div class="wctrl">
-          <button class="wbtn" onclick="cw(-1)">‹</button>
-          <span class="wtitle" id="wtitle">Semaine du 15/06 au 20/06</span>
-          <button class="wbtn" onclick="cw(1)">›</button>
+          <button class="wbtn" onclick="cw(-1)">&#8249;</button>
+          <span class="wtitle" id="wtitle"></span>
+          <button class="wbtn" onclick="cw(1)">&#8250;</button>
           <button class="tbtn" onclick="gotoday()">Aujourd'hui</button>
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
-          <span style="font-size:11px;color:var(--t3);font-family:&#39;IBM Plex Mono&#39;,monospace" id="wkn">S25 · 2026</span>
-          <button class="tbtn adm" id="edit-toggle" onclick="toggleEdit()" style="border-color: var(--bl-b); color: var(--bl); display: block;">✎ Modifier</button>
+          <span style="font-size:11px;color:var(--t3);font-family:'IBM Plex Mono',monospace" id="wkn"></span>
+          <button class="tbtn adm" id="edit-toggle" onclick="toggleEdit()" style="border-color:var(--bl-b);color:var(--bl)">✎ Modifier</button>
         </div>
       </div>
       <div class="edit-bar" id="edit-bar" style="display:none">
         <span>Mode édition — cliquez sur une cellule pour modifier les horaires</span>
-        <button onclick="openDupWeek()" style="background:var(--am-l);color:var(--am);border:1px solid var(--am-b);padding:5px 12px;border-radius:var(--r);font-size:11px;font-weight:500;cursor:pointer;font-family:&#39;IBM Plex Sans&#39;,sans-serif">📋 Dupliquer la semaine</button>
+        <button onclick="window.openDupWeek()" style="background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;padding:4px 12px;border-radius:var(--r);font-size:11px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;margin-right:6px">📋 Dupliquer la semaine</button>
         <button class="edit-exit" onclick="toggleEdit()">✓ Terminer</button>
       </div>
       <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--rl);border:1px solid var(--b);">
         <div style="display:none;font-size:11px;color:var(--t3);padding:4px 8px;text-align:right" id="scroll-hint">← Glisser pour voir le samedi →</div>
         <div class="ptbl" style="min-width:600px;border:none;border-radius:0;">
-          <div class="pth" id="pth"></div><div class="phc phctr">Lundi<div class="phdate">15/06</div><div class="role-badges"><span class="rb rb-buy">Achat ✓</span><span class="rb rb-sell">Vente ✓</span><span class="rb" style="background:var(--gn-l);color:var(--gn);border:1px solid var(--gn-b)">🔑 Clés OK</span></div></div><div class="phc phctr">Mardi<div class="phdate">16/06</div><div class="role-badges"><span class="rb rb-buy">Achat ✓</span><span class="rb rb-sell">Vente ✓</span><span class="rb" style="background:var(--gn-l);color:var(--gn);border:1px solid var(--gn-b)">🔑 Clés OK</span></div></div><div class="phc phctr">Mercredi<div class="phdate">17/06</div><div class="role-badges"><span class="rb rb-buy">Achat ✓</span><span class="rb rb-sell">Vente ✓</span><span class="rb" style="background:var(--gn-l);color:var(--gn);border:1px solid var(--gn-b)">🔑 Clés OK</span></div></div><div class="phc phctr">Jeudi<div class="phdate">18/06</div><div class="tdot"></div><div class="role-badges"><span class="rb rb-buy">Achat ✓</span><span class="rb rb-sell">Vente ✓</span><span class="rb" style="background:var(--gn-l);color:var(--gn);border:1px solid var(--gn-b)">🔑 Clés OK</span></div></div><div class="phc phctr">Vendredi<div class="phdate">19/06</div><div class="role-badges"><span class="rb rb-buy">Achat ✓</span><span class="rb rb-sell">Vente ✓</span><span class="rb" style="background:var(--gn-l);color:var(--gn);border:1px solid var(--gn-b)">🔑 Clés OK</span></div></div><div class="phc phctr">Samedi<div class="phdate">20/06</div><div class="role-badges"><span class="rb rb-buy">Achat ✓</span><span class="rb rb-sell">Vente ✓</span><span class="rb" style="background:var(--gn-l);color:var(--gn);border:1px solid var(--gn-b)">🔑 Clés OK</span><span class="rb" style="background:var(--vl-l);color:var(--vl);border:1px solid var(--vl-b)">🍽 Pauses OK</span></div></div></div>
-          <div class="ev-row" id="ev-row"><div class="ev-label">📌 Événements</div><div class="ev-cell" data-date="2026-06-15"></div><div class="ev-cell" data-date="2026-06-16"></div><div class="ev-cell" data-date="2026-06-17"></div><div class="ev-cell today-col" data-date="2026-06-18"></div><div class="ev-cell" data-date="2026-06-19"></div><div class="ev-cell" data-date="2026-06-20"></div></div>
+          <div class="pth" id="pth"></div>
+          <div class="ev-row" id="ev-row"></div>
           <div id="pbody"></div>
-    <div><div class="pname">Allan</div><div class="prole">Directeur</div></div>
-  </div><div class="dc"><div class="sl so">Absent</div></div><div class="dc"><div class="sl so">Absent</div></div><div class="dc"><div class="sl" style="background:#EFEFED;color:#444;border:1px solid #CCC;font-size:9px;margin-top:1px">▸ APM</div></div><div class="dc today-col"><div class="sl" style="background:#EFEFED;color:#444;border:1px solid #CCC;font-size:9px">▸ Matin</div><div class="sl" style="background:#EFEFED;color:#444;border:1px solid #CCC;font-size:9px;margin-top:1px">▸ APM</div></div><div class="dc"><div class="sl" style="background:#EFEFED;color:#444;border:1px solid #CCC;font-size:9px">▸ Matin</div><div class="sl" style="background:#EFEFED;color:#444;border:1px solid #CCC;font-size:9px;margin-top:1px">▸ APM</div></div><div class="dc"><div class="sl so">Absent</div></div></div><div style="height:2px;background:var(--bm);grid-column:1/-1"></div><div class="pr"><div class="ppers">
-      <div class="av" style="background:#E8F0FF;color:#1A4BAA">AV</div>
-      <div><div class="pname">Anthony</div><div class="prole">Acheteur principal</div>
-      <div class="psigned">✓ Signé</div>
-      </div></div><div class="dc" style="position:relative"><div class="prep-tag">▸ 09h45 prépa</div><div class="sl sw">09h45–12h00</div><div class="sl sw" style="margin-top:1px">14h00–19h15</div><div class="pause-tag">pause 10min (non rém.)</div></div><div class="dc" style="position:relative"><div class="prep-tag">▸ 09h45 prépa</div><div class="sl sw">09h45–12h00</div><div class="sl sw" style="margin-top:1px">14h00–19h15</div><div class="pause-tag">pause 10min (non rém.)</div></div><div class="dc" style="position:relative"><div class="prep-tag">▸ 09h45 prépa</div><div class="sl sw">09h45–12h00</div><div class="sl sw" style="margin-top:1px">14h00–19h15</div><div class="pause-tag">pause 10min (non rém.)</div></div><div class="dc today-col" style="position:relative"><div class="sl so">Repos</div></div><div class="dc" style="position:relative"><div class="sl sw">14h00–18h35</div><div class="pause-tag">pause 10min (non rém.)</div></div><div class="dc" style="position:relative"><div class="prep-tag">▸ 09h30 prépa</div><div class="sl sg">09h30–13h00</div><div class="pause-tag" style="color:var(--vl);font-weight:600">🍽 Pause repas 13h–14h</div><div class="sl sg" style="margin-top:1px">14h00–19h15</div><div class="pause-tag">pause 10min (non rém.)</div></div></div><div class="pr"><div class="ppers">
-      <div class="av" style="background:#FCEAF2;color:#7A2040">CM</div>
-      <div><div class="pname">Cathy</div><div class="prole">Bijoutière</div>
-      <div class="psigned">✓ Signé</div>
-      </div></div><div class="dc" style="position:relative"><div class="sl so">Repos</div></div><div class="dc" style="position:relative"><div class="prep-tag">▸ 09h45 prépa</div><div class="sl sw">09h45–12h00</div><div class="sl sw" style="margin-top:1px">14h00–19h15</div><div class="pause-tag">pause 10min (non rém.)</div></div><div class="dc" style="position:relative"><div class="prep-tag">▸ 09h45 prépa</div><div class="sl sw">09h45–12h30</div><div class="sl sw" style="margin-top:1px">14h00–18h05</div><div class="pause-tag">pause 10min (non rém.)</div></div><div class="dc today-col" style="position:relative"><div class="prep-tag">▸ 09h45 prépa</div><div class="sl sw">09h45–12h00</div><div class="sl sw" style="margin-top:1px">14h00–19h15</div><div class="pause-tag">pause 10min (non rém.)</div></div><div class="dc" style="position:relative"><div class="sl sw">14h00–19h15</div><div class="pause-tag">pause 10min (non rém.)</div></div><div class="dc" style="position:relative"><div class="prep-tag">▸ 09h30 prépa</div><div class="sl sg">09h30–12h00</div><div class="pause-tag" style="color:var(--vl);font-weight:600">🍽 Pause repas 12h–13h</div><div class="sl sg" style="margin-top:1px">13h00–19h15</div><div class="pause-tag">pause 10min (non rém.)</div></div></div><div class="pr"><div class="ppers">
-      <div class="av" style="background:#FFF5E8;color:#7A4808">HP</div>
-      <div><div class="pname">Hubert</div><div class="prole">Vendeur téléphonie</div>
-      <div class="psigned">✓ Signé</div>
-      </div></div><div class="dc" style="position:relative"><div class="prep-tag">▸ 09h45 prépa</div><div class="sl sw">09h45–12h30</div><div class="sl sw" style="margin-top:1px">14h00–19h15</div><div class="pause-tag">pause 10min (non rém.)</div></div><div class="dc" style="position:relative"><div class="sl sw">14h00–18h05</div><div class="pause-tag">pause 10min (non rém.)</div></div><div class="dc" style="position:relative"><div class="sl so">Repos</div></div><div class="dc today-col" style="position:relative"><div class="prep-tag">▸ 09h45 prépa</div><div class="sl sw">09h45–12h30</div><div class="sl sw" style="margin-top:1px">14h00–19h15</div><div class="pause-tag">pause 10min (non rém.)</div></div><div class="dc" style="position:relative"><div class="prep-tag">▸ 09h45 prépa</div><div class="sl sw">09h45–12h30</div><div class="sl sw" style="margin-top:1px">14h00–19h15</div><div class="pause-tag">pause 10min (non rém.)</div></div><div class="dc" style="position:relative"><div class="prep-tag">▸ 09h30 prépa</div><div class="sl sg">09h30–13h00</div><div class="pause-tag" style="color:var(--vl);font-weight:600">🍽 Pause repas 12h–13h</div><div class="sl sg" style="margin-top:1px">14h00–18h15</div><div class="pause-tag">pause 10min (non rém.)</div></div></div><div class="pr"><div class="ppers">
-      <div class="av" style="background:#EAFAF2;color:#0F6830">MV</div>
-      <div><div class="pname">Manon</div><div class="prole">Vendeuse JV &amp; Culture</div>
-      
-      </div></div><div class="dc" style="position:relative"><div class="sl so">Repos</div></div><div class="dc" style="position:relative"><div class="sl so">Repos</div></div><div class="dc" style="position:relative"><div class="prep-tag">▸ 09h30 prépa</div><div class="sl sw">09h30–12h30</div><div class="sl sw" style="margin-top:1px">14h00–19h15</div><div class="pause-tag">pause 10min (non rém.)</div></div><div class="dc today-col" style="position:relative"><div class="sl so">Repos</div></div><div class="dc" style="position:relative"><div class="prep-tag">▸ 09h15 prépa</div><div class="sl sw">09h15–12h30</div><div class="sl sw" style="margin-top:1px">14h00–19h15</div><div class="pause-tag">pause 10min (non rém.)</div></div><div class="dc" style="position:relative"><div class="prep-tag">▸ 09h30 prépa</div><div class="sl sg">09h30–13h00</div><div class="pause-tag" style="color:var(--vl);font-weight:600">🍽 Pause repas 13h–14h</div><div class="sl sg" style="margin-top:1px">14h00–19h15</div><div class="pause-tag">pause 10min (non rém.)</div></div></div><div class="pr"><div class="ppers">
-      <div class="av" style="background:#EEEEFF;color:#3D2DA0">LB</div>
-      <div><div class="pname">Lucie</div><div class="prole">Vendeuse générale</div>
-      <div class="psigned">✓ Signé</div>
-      </div></div><div class="dc" style="position:relative"><div class="prep-tag">▸ 09h45 prépa</div><div class="sl sw">09h45–12h00</div><div class="sl sw" style="margin-top:1px">14h00–19h15</div><div class="pause-tag">pause 10min (non rém.)</div></div><div class="dc" style="position:relative"><div class="sl sf">Formation (5h)</div><div class="pause-tag">09h00–11h30 | 14h00–16h30</div><div class="pause-tag" style="color:var(--am)">comptées au contrat</div></div><div class="dc" style="position:relative"><div class="prep-tag">▸ 09h45 prépa</div><div class="sl sw">09h45–12h00</div><div class="sl sw" style="margin-top:1px">14h00–19h15</div><div class="pause-tag">pause 10min (non rém.)</div></div><div class="dc today-col" style="position:relative"><div class="prep-tag">▸ 09h45 prépa</div><div class="sl sw">09h45–12h00</div><div class="sl sw" style="margin-top:1px">14h00–19h15</div><div class="pause-tag">pause 10min (non rém.)</div></div><div class="dc" style="position:relative"><div class="sl so">Repos</div></div><div class="dc" style="position:relative"><div class="sl so">Repos</div></div></div><div class="sstrip"><span style="font-size:11px;color:var(--t3)">Vue directeur — toutes semaines accessibles</span></div></div>
-          <div class="ptot" id="ptot"></div><div class="ptc"><div class="ptn" style="">3</div></div><div class="ptc"><div class="ptn" style="">3</div></div><div class="ptc"><div class="ptn" style="">4</div></div><div class="ptc"><div class="ptn" style="">3</div></div><div class="ptc"><div class="ptn" style="">4</div></div><div class="ptc"><div class="ptn" style="">4</div></div></div>
+          <div class="ptot" id="ptot"></div>
         </div>
       </div>
       <div class="leg">
@@ -528,14 +429,14 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
         <div class="li" style="border-left:2px solid var(--gn);padding-left:6px;color:var(--gn)">🔑 Clés/Coffre : Allan ou Anthony présent obligatoirement</div>
         <div class="li" style="border-left:2px solid var(--vl);padding-left:6px;color:var(--vl)">🍽 Sam. 12h–13h : Cathy, Hubert, Allan &nbsp;|&nbsp; 13h–14h : Anthony, Manon, Lucie</div>
       </div>
-      <div class="hcard adm" id="hcard" style="display: block;">
+      <div class="hcard adm" id="hcard" style="display:none">
         <div style="font-size:12px;font-weight:500">Contrôle contrats — semaine</div>
-        <div class="hgrid" id="hgrid"><div class="hitem hitem-ok"><div class="hlbl">Anthony</div><div class="hval hok2">35h</div><div class="hsub">Contrat 35h · ✓</div></div><div class="hitem hitem-ok"><div class="hlbl">Cathy</div><div class="hval hok2">35h</div><div class="hsub">Contrat 35h · ✓</div></div><div class="hitem hitem-ok"><div class="hlbl">Hubert</div><div class="hval hok2">35h</div><div class="hsub">Contrat 35h · ✓</div></div><div class="hitem hitem-ok"><div class="hlbl">Manon</div><div class="hval hok2">25h</div><div class="hsub">Contrat 25h · ✓</div></div><div class="hitem hitem-warn"><div class="hlbl">Lucie</div><div class="hval hwrn2">27h</div><div class="hsub">Contrat 35h · −8h</div></div></div>
+        <div class="hgrid" id="hgrid"></div>
         <div id="halert"></div>
       </div>
-      <div class="acard adm" id="covcard" style="display: block; margin-top: 12px;">
+      <div class="acard adm" id="covcard" style="display:none;margin-top:12px">
         <div style="font-size:12px;font-weight:500;margin-bottom:8px">Couverture des rôles clés</div>
-        <div class="covgrid" id="covgrid"><div class="cov-item cov-warn"><div class="cov-lbl">◐ Lundi</div><div class="cov-detail">Achat: Anthony, Hubert</div><div class="cov-detail">Bijoux: ⚠</div></div><div class="cov-item cov-ok"><div class="cov-lbl">✓ Mardi</div><div class="cov-detail">Achat: Anthony, Hubert</div><div class="cov-detail">Bijoux: Cathy</div></div><div class="cov-item cov-ok"><div class="cov-lbl">✓ Mercredi</div><div class="cov-detail">Achat: Anthony</div><div class="cov-detail">Bijoux: Cathy</div></div><div class="cov-item cov-ok"><div class="cov-lbl">✓ Jeudi</div><div class="cov-detail">Achat: Hubert, Allan</div><div class="cov-detail">Bijoux: Cathy, Allan</div></div><div class="cov-item cov-ok"><div class="cov-lbl">✓ Vendredi</div><div class="cov-detail">Achat: Anthony, Hubert, Allan</div><div class="cov-detail">Bijoux: Cathy, Allan</div></div><div class="cov-item cov-ok"><div class="cov-lbl">✓ Samedi</div><div class="cov-detail">Achat: Anthony, Hubert</div><div class="cov-detail">Bijoux: Cathy</div></div></div>
+        <div class="covgrid" id="covgrid"></div>
       </div>
     </div>
 
@@ -543,59 +444,19 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
     <div class="view" id="view-signatures">
       <div class="sig-card">
         <div class="sig-title">
-          <span>Feuille de signatures — <span id="sig-week-label">Semaine du 15/06 au 20/06 (S25)</span></span>
+          <span>Feuille de signatures — <span id="sig-week-label"></span></span>
           <button class="print-btn" onclick="window.printSigs()">🖨 Imprimer / PDF</button>
         </div>
-        <!-- Navigation semaine indépendante -->
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-          <button onclick="cwSig(-1)" style="background:var(--s2);border:1px solid var(--bm);width:28px;height:28px;border-radius:var(--r);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:&#39;IBM Plex Sans&#39;,sans-serif">‹</button>
-          <button onclick="cwSig(1)" style="background:var(--s2);border:1px solid var(--bm);width:28px;height:28px;border-radius:var(--r);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:&#39;IBM Plex Sans&#39;,sans-serif">›</button>
-          <button onclick="cwSig(0)" style="background:none;border:1px solid var(--bm);padding:4px 10px;border-radius:var(--r);cursor:pointer;font-size:11px;color:var(--t2);font-family:&#39;IBM Plex Sans&#39;,sans-serif">Semaine actuelle</button>
+          <button onclick="window.cwSig(-1)" style="background:var(--s2);border:1px solid var(--bm);width:28px;height:28px;border-radius:var(--r);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Sans',sans-serif">‹</button>
+          <button onclick="window.cwSig(1)" style="background:var(--s2);border:1px solid var(--bm);width:28px;height:28px;border-radius:var(--r);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Sans',sans-serif">›</button>
+          <button onclick="window.cwSig(0)" style="background:none;border:1px solid var(--bm);padding:4px 10px;border-radius:var(--r);cursor:pointer;font-size:11px;color:var(--t2);font-family:'IBM Plex Sans',sans-serif">Semaine actuelle</button>
           <span style="font-size:11px;color:var(--t3)" id="sig-nav-hint"></span>
         </div>
         <div style="font-size:11px;color:var(--t2);margin-bottom:14px;">
           En signant, le salarié confirme avoir pris connaissance de ses horaires et n'avoir aucune réserve à formuler.
         </div>
         <div class="sig-grid" id="sig-grid"></div>
-      <div class="sig-name">Anthony Vantorre</div>
-      <div class="sig-hours">Acheteur principal</div>
-      <div style="font-size:10px;color:var(--t2);margin-bottom:8px;line-height:1.5">Lundi: 09h45–12h00 / 14h00–19h15 · Mardi: 09h45–12h00 / 14h00–19h15 · Mercredi: 09h45–12h00 / 14h00–19h15 · Vendredi: 14h00–18h35 · Samedi: 09h30–13h00 / 14h00–19h15</div>
-      <div style="font-size:11px;font-weight:500;color:var(--t2);margin-bottom:3px">Total planifié : <b style="color:var(--tx)">35h</b> / 35h</div><div class="sig-area" style="cursor:default">
-        <img src="data:image/png;base64,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" style="width:100%;height:100%;object-fit:contain">
-      </div>
-      <div class="sig-signed">✓ Signé le 15/06/2026</div><button class="sig-clear" onclick="window.clearSig(&#39;anthony&#39;,&#39;2026-06-15&#39;)">Effacer la signature</button></div><div class="sig-box">
-      <div class="av" style="background:#FCEAF2;color:#7A2040;width:36px;height:36px;font-size:12px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px">CM</div>
-      <div class="sig-name">Cathy Matturel</div>
-      <div class="sig-hours">Bijoutière</div>
-      <div style="font-size:10px;color:var(--t2);margin-bottom:8px;line-height:1.5">Mardi: 09h45–12h00 / 14h00–19h15 · Mercredi: 09h45–12h30 / 14h00–18h05 · Jeudi: 09h45–12h00 / 14h00–19h15 · Vendredi: 14h00–19h15 · Samedi: 09h30–12h00 / 13h00–19h15</div>
-      <div style="font-size:11px;font-weight:500;color:var(--t2);margin-bottom:3px">Total planifié : <b style="color:var(--tx)">35h</b> / 35h</div><div class="sig-area" style="cursor:default">
-        <img src="data:image/png;base64,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" style="width:100%;height:100%;object-fit:contain">
-      </div>
-      <div class="sig-signed">✓ Signé le 17/06/2026</div><button class="sig-clear" onclick="window.clearSig(&#39;cathy&#39;,&#39;2026-06-15&#39;)">Effacer la signature</button></div><div class="sig-box">
-      <div class="av" style="background:#FFF5E8;color:#7A4808;width:36px;height:36px;font-size:12px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px">HP</div>
-      <div class="sig-name">Hubert Poidevin</div>
-      <div class="sig-hours">Vendeur téléphonie</div>
-      <div style="font-size:10px;color:var(--t2);margin-bottom:8px;line-height:1.5">Lundi: 09h45–12h30 / 14h00–19h15 · Mardi: 14h00–18h05 · Jeudi: 09h45–12h30 / 14h00–19h15 · Vendredi: 09h45–12h30 / 14h00–19h15 · Samedi: 09h30–13h00 / 14h00–18h15</div>
-      <div style="font-size:11px;font-weight:500;color:var(--t2);margin-bottom:3px">Total planifié : <b style="color:var(--tx)">35h</b> / 35h</div><div class="sig-area" style="cursor:default">
-        <img src="data:image/png;base64,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" style="width:100%;height:100%;object-fit:contain">
-      </div>
-      <div class="sig-signed">✓ Signé le 15/06/2026</div><button class="sig-clear" onclick="window.clearSig(&#39;hubert&#39;,&#39;2026-06-15&#39;)">Effacer la signature</button></div><div class="sig-box">
-      <div class="av" style="background:#EAFAF2;color:#0F6830;width:36px;height:36px;font-size:12px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px">MV</div>
-      <div class="sig-name">Manon Vivien</div>
-      <div class="sig-hours">Vendeuse JV &amp; Culture</div>
-      <div style="font-size:10px;color:var(--t2);margin-bottom:8px;line-height:1.5">Mercredi: 09h30–12h30 / 14h00–19h15 · Vendredi: 09h15–12h30 / 14h00–19h15 · Samedi: 09h30–13h00 / 14h00–19h15</div>
-      <div style="font-size:11px;font-weight:500;color:var(--t2);margin-bottom:3px">Total planifié : <b style="color:var(--tx)">25h</b> / 25h</div><div class="sig-area" style="cursor:default;background:var(--s3)">
-        <span class="sig-area-label" style="font-size:10px">En attente de signature</span>
-      </div>
-      <div class="sig-signed" style="color:var(--t3)">Non signé</div></div><div class="sig-box">
-      <div class="av" style="background:#EEEEFF;color:#3D2DA0;width:36px;height:36px;font-size:12px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px">LB</div>
-      <div class="sig-name">Lucie Bridoux</div>
-      <div class="sig-hours">Vendeuse générale</div>
-      <div style="font-size:10px;color:var(--t2);margin-bottom:8px;line-height:1.5">Lundi: 09h45–12h00 / 14h00–19h15 · Mardi: Formation · Mercredi: 09h45–12h00 / 14h00–19h15 · Jeudi: 09h45–12h00 / 14h00–19h15</div>
-      <div style="font-size:11px;font-weight:500;color:var(--t2);margin-bottom:3px">Total planifié : <b style="color:var(--tx)">27h</b> / 35h</div><div class="sig-area" style="cursor:default">
-        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAVIAAABGCAYAAACe5RzWAAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAABUqADAAQAAAABAAAARgAAAADlLghLAAAMIUlEQVR4Ae1dTYwcxRXejb1eL/b+eA04BBLCATiCEEIILkDIAYWAEBcuSQ4IbigBBII7QiBxQBhx4oLgCAgZDokUIkWKYgkOIRGHBBASJkFeSx7vz8Tr3ZnZ5XutecWb3u7e6e7p6aqeryWrqqtfvXr1Vfvb96pqqqeneBEBzxBYXFzs/QiXmLWLa3V1NcoXNfPYsWO7WndnZ6cN1c/i/iT+HdBypF009RTaknJeRCAXAgdzSVOYCFSMwMzMzCtKotLUKEkURHkRureh9g3TjZ3p6emTrVbrD6aMWSKQC4HpXNIUJgIVI2C9xwsXLpR6P60ueKLbINEZmO90gljfB1E/XHGXqH4CEKBHOgGDHEoXl5aWXAje6/XEcyx8WRIFYU6BRA8ZZZsg6cvMPbNEoBQCpeaeSrXMykTAIAASlRA7KgHx7a6vr8+ax7mylkSlouqVPFS/RxIVJHiNEgEX5oxSKXURgTwIYHGpC4/RLvwUXmSKk6jaAQLtIIy3Xqk+YkoESiNAj7Q0hFRQEoH7LYmKNyr64EXm/iOfRqJQd5okWnKUWD0Tgdwva6Y2PiQCORGw5IeQ+9cI8U8pieZZbLJ6jAk96OA6gAGE2WoQoEdaDa7UOgQCdnEJq+o7qPLRENX2iCSRKBzbL0iie6BiQUUI8K91RcBSbTYC8cWltbW1gTnS7No/PE0g0V0Q6E8gcfYHKeaIQLUI0COtFl9qT0BgYWFhW8N3mRItuuk+TqLQeRYkKu80STQBdxZVhwCJtDpsqTkFgQMHDsjG+OgCieaepweBPp9Aoo/g10lXqV6mRGCcCDC0HyfabGvKEmC73X41LySofx51lm09eKG5ydjWZ54IlEWAHmlZBFl/aATii0udTufJYSufOHHiFyBRWZByJCpbpUiiwyJIuSoRoEdaJbrU7RAos7gEAv12e3v7GqcMGSHRonOrVg/zRGAUCJBIR4EidWQigDnRx3VxSQT3IcCBMB0k2kOVgciJJJoJNx/WgMDAS1tD+2xyAhDoe6PRu7ZfKC7hP0g3FRWSaCo0fFAjAgN/6Wu0g003GAH1RkGCw/QyVYgkOgx8lKkDARJpHahPaJsgQlksSr3gjf5FSTcuRBKNI8J7nxDgHKlPo9FAW+SzIdqtrF8vgUS3QKKJpzORRBVBpr4iQI/U15FpiF0gx8x3DItJb+GfzIuSRBsy5pPYDXqkkzjqY+wzCDJqTbzKeLMg0DbKjmg5ZM9C7Md6L1X2WeFXUaZEoFYEMr2FWi1j48EjMD8/f047AUKUL3dGF8L958QLxY0l0UdwANSJvkiUoE768r0VZJ4I1IwAPdKaB6DJzWP/6OWmf69IHgT6NZLrTPkatkRhinSpB4/UEWe32y31zSajn1kiUDkC9Egrh3hyG1Bi1LAeJLoGNCyJviQkCg9VToMaeBe3trb+PLnIseehIeA8gNAMp73+I9AP36fwRdBL8jkRkKU79Uk35sMT3UD50Xhv9Hm8nPdEwEcEBrwAHw2kTWEiAIJ0e0YR4s8qicI73VGShMwZS6II57th9pZWTzoCJNJJfwMq6j8I0kY7UR4kuo0FpOgkfITzsvn+p9q8kCu8Vr6PCgjToBDgixvUcAVtLDh0NfpW/dzc3NPgzLu1NzhO70XJx8hXHzMlAt4jYL0G742lgWEg0F+Bd3+k4Yl+CRK9Qa3XuVO5x5an0/jF0x2Sl+kAJVMN/6WcFxHwHQH3svtuKO0LAwGQ5N9Bhva9OpVGoiDY75REpXdKoigPo7O0kgj0EeA+Ur4KI0MAJPo/KJMveEaXECJI9EG9t54onv0fz67WZ7GUTBoDhLd+I0Ai9Xt8grEOJDnwc08xHGH7Ge2AJVGUd+CJDmx5wq+g3Io9CNZ6tKqCKRHwFgESqbdDE45hmNvswNo979L6+vq10gtLovBEd0Giew4owRapQt+1DwclWtpkBPiXv8mjO4a+gSRlgSgiUXCkOzJPCFOaB8m6MF3K0rxN6Iis7Vcbg+VsggiMDgES6eiwnDhNfU9Td35cAkk6r1QIUUjUEGQqiQK4exU8/AqKv7FXMJgGgwDDqWCGyh9D8Wnkew4dOiSHj+h1HtuVsMd+ceDgEbMKn0WiQrhfqSzCfkfGqpwpEfAdAXqkvo+QZ/aB9N7Ep5E/NmZ9DhKNTnkCGbr3SYkxK5xXHUZWi5gSgaAQ4F//oIarXmMRyv8DFtysVoAk30E4/xu9ByFqNkqHIVFbQeTtPfNEIBQESKShjFTNdi4vL6+A565UMxDaP7CysvKh3ielaQtLVlamA/QeYb3zaLWMKREIAQESaQijVLON8EQvgkTn1Iykn28i5HeEKHJJMlrfphrW2zLmiUBoCJBIQxuxMdsLgpSN8roouQuC3OM1igwI0ZVjw707Qm8/c5VIGdbvhxSf+4wAidTn0anZNtkjChOiiU8QXc9ub1LTEJrL6fZKtFo8VHr06NEVFcSJ+J9pnikRCA0B50WEZjjtrRaB2B7Riykkuonj8Nyp93ktOnjw4BVaZ3Nz8xbNMyUCoSFAIg1txCq29/jx47/tk2jUErzNswjn3dc+tXmE8xsg0cN6P+ycqMpLyrDeosF8yAiQSEMevRHbDnJ8F9Obb6lahPOftlqtq/ReU4Tz50GC7tCRIiSquiRFm9z2ZAFhPjgESKTBDVk1BsML/TfI8WHVDhI9iXD+Nr3XFGT7X3iiy3pflEShxy1I4XCTQnOsagNTIlA3AlxsqnsEPGgfJNqCGcfUFJCjbLr/p95rCk/0PyBbd4Yo5G7UZ3lTE9bnrUp5IuAdAiRS74ZkvAaBRC+ixcw9omIRSPQ0PFH3uZB2u/0Yir+QZ2UueL7OMy2jh3WJQJ0IkEjrRL/mtkGiF2CCkmjiHlExEWH4B/Agb1dzcULTa/hg3Zt6nze1YT1+zcSwPi+AlPcOAc6Rejck4zEIJCr7Npe0NYTpie/CwsLCqyBR97kQeJCnMKf5e61XJGVYXwQ11vEZAXqkPo9ORbYhTH8Bqm9S9WkLRjMzM4/i4HpHmlhd/wQepCNVrV80hT6G9UXBYz2vEBg8rscr02hMVQjAG3XbjdJIFG1fDzk3BwrO+xIk6uZIk2xTvUKQaSG7hPXqkWa0naSeZUTAWwQSwzlvraVhpRFQsusrejlNoSVRhPPy2eRMEk3TEy9XEoVOR+ZxGd4TgdAQYGgf2oiVsDdGov+CR/hckjorB+eyBRJ1W56S5HOUPaOy0EsiVTCYBo8AQ/vgh3C4DiCkls+AaASyChJ1+0atBkuicBrb2JQ/b59n5bVuWmjPsD4LPT4LGQF6pCGP3pC2g+Bkr2hEoiDHDshxXxIFGV6CJzo0iQ5jignrhxGnDBEIBgH1UIIxmIbmQwAk+g1qRHtFZV4SJLrnm/KiUb1JyYNEOyBR3V8qRaWv2dnZP6kS7EPtaJ4pEWgCAiTSJoxiSh8QSr+PRz/TxyDRxPGWkFtlwLWy4p5ItipTJJ2bm/ul1tvY2Bi5ftXNlAjUgUDif6w6DGGbo0UAxHUnQumHVGvaViM7bwkSnQLZVvJLIxPWc5FJB4VpYxAgkTZmKAc7cvjw4b9pCTbWO0LVMklBovKJkGjBsR/2V7L4eOTIkTPaLsL6dc0zJQJNQYBE2pSRNP2w850o/uO5c+c+MI+jLEi0BQ513mda2B+vV+QeRH6N1kNY736WqmVMiUDoCHDVPvQRjNlv5zvx6DuE9PfFRGRh6SOUuZX7tLA/Xq/ovfF6i6pgPSLgNQL0SL0ennzGgUS3lLRQ8xIIMm0j/a9Uc9UkOj8/39a2ut3uV5pnSgSahAA90oaMJrzM8+hKtBouK+8I1RO3L9mwH3J/rbr7OPTkMm0DZ5her3mmRKBJCNAjbcBoLi8vf4puuM9/pK28x0h0HXJ3Vd199ZBlMavqtqifCNSFAIm0LuRH1C7I8Xlw1K2qLi1Ut3OnkBePdVHrVJXiLNOu6sYi09uaZ0oEmoYAiTT8EX1Ru5BFotYzTPNYVc+oUnyaxO0KwLan341KL/UQAd8QIJH6NiI57IGX2TPir5u8y0LG7hWVDfdjG3OQd2QHw3o3HMw0FAEuNgU8sCCqiBRBVD0Q5BPxroBE43tFK9lwH29X7m1YD9t+niTDMiLQFAS+B9U9CEJ+rQELAAAAAElFTkSuQmCC" style="width:100%;height:100%;object-fit:contain">
-      </div>
-      <div class="sig-signed">✓ Signé le 15/06/2026</div><button class="sig-clear" onclick="window.clearSig(&#39;lucie&#39;,&#39;2026-06-15&#39;)">Effacer la signature</button></div></div>
       </div>
     </div>
 
@@ -631,185 +492,25 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
       </div>
     </div>
 
-    <!-- ADMIN ÉQUIPE AMÉLIORÉE -->
+    <!-- ADMIN ÉQUIPE -->
     <div class="view" id="view-admin-team">
       <div class="acard" style="margin-bottom:14px;background:var(--rd-l);border-color:var(--rd-b)">
         <div class="actitle" style="color:var(--rd)">🛠 Maintenance — Données Firebase</div>
-        <p style="font-size:12px;color:var(--t2);margin-bottom:10px">Si votre planning s'affiche incorrectement sur les semaines futures, cliquez ici pour nettoyer les anciennes données.</p>
-        <button onclick="nettoyerScheduleOverrides()" style="background:var(--rd);color:#fff;border:none;padding:7px 14px;border-radius:var(--r);font-size:12px;font-weight:500;cursor:pointer;font-family:&#39;IBM Plex Sans&#39;,sans-serif">🗑 Nettoyer les surcharges de planning</button>
+        <p style="font-size:12px;color:var(--t2);margin-bottom:10px">Si votre planning s'affiche incorrectement sur les semaines futures, cliquez ici pour nettoyer les anciennes données de planification.</p>
+        <button onclick="nettoyerScheduleOverrides()" style="background:var(--rd);color:#fff;border:none;padding:7px 14px;border-radius:var(--r);font-size:12px;font-weight:500;cursor:pointer;font-family:'IBM Plex Sans',sans-serif">
+          🗑 Nettoyer les surcharges de planning (scheduleOverrides)
+        </button>
       </div>
       <div class="acard" style="margin-bottom:14px">
-        <div class="actitle" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-          <span>👥 Équipe, PIN &amp; statut signatures</span>
-          <button onclick="openCollabModal(&#39;new&#39;)" style="background:var(--tx);color:#fff;border:none;padding:6px 14px;border-radius:var(--r);font-size:12px;font-weight:500;cursor:pointer;font-family:&#39;IBM Plex Sans&#39;,sans-serif">+ Nouveau collaborateur</button>
-        </div>
-        <div id="collab-mgr-list" style="margin-top:14px"></div>
+        <div class="actitle">Équipe, PIN &amp; statut signatures</div>
+        <table class="stbl">
+          <thead><tr><th>Nom</th><th>Compétences</th><th>Contrat</th><th>Heures sem.</th><th>PIN</th><th>Signature</th></tr></thead>
+          <tbody id="teambody"></tbody>
+        </table>
       </div>
       <div class="acard">
         <div class="actitle">Jours fériés 2026</div>
         <div id="ferie-table"></div>
-      </div>
-    </div>
-
-    <!-- OBJECTIFS MARGE -->
-    <div class="view" id="view-objectifs">
-      <div class="acard" style="margin-bottom:14px">
-        <div class="actitle" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-          <span>📊 Objectifs de marge journaliers</span>
-          <span class="source-tag" id="marge-source-tag" style="background: var(--gn-l); border-color: var(--gn-b); color: var(--gn);">🔗 Google Sheets — Synchronisé</span>
-        </div>
-        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
-          <span style="font-size:11px;color:var(--t2);font-weight:500">Semaine :</span>
-          <span id="marge-week-label" style="font-size:12px;font-weight:600">S25 — 15/06 au 20/06</span>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px" id="marge-stats"></div><div class="marge-lbl">Objectif semaine</div></div>
-    <div class="marge-stat real"><div class="marge-val">5</div><div class="marge-lbl">Collaborateurs actifs</div></div>
-    <div class="marge-stat unit"><div class="marge-val">278 jours</div><div class="marge-lbl">Données chargées</div></div></div>
-        <div style="overflow-x:auto">
-          <table class="marge-table" style="min-width:620px">
-            <thead>
-              <tr>
-                <th>Collaborateur</th>
-                <th style="text-align:center">Lun</th><th style="text-align:center">Mar</th><th style="text-align:center">Mer</th>
-                <th style="text-align:center">Jeu</th><th style="text-align:center">Ven</th><th style="text-align:center">Sam</th>
-                <th style="text-align:right">Total sem.</th>
-              </tr>
-            </thead>
-            <tbody id="marge-tbody"></tbody>
-            <tfoot><tr id="marge-tfoot" style="background:var(--s2);font-weight:600"></table>
-        </div>
-      </div>
-      <div class="acard adm" style="display: block;">
-        <div class="actitle">⚙️ Coefficients vente par collaborateur</div>
-        <p style="font-size:12px;color:var(--t2);margin-bottom:14px;line-height:1.6">Ces coefficients pondèrent la part de marge. Un acheteur à 20% contribue 20% de son temps à la vente.</p>
-        <div id="coef-grid" style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:14px"></div>
-    <div style="display:flex;align-items:center;gap:6px;font-size:12px">
-      <span style="width:65px;font-weight:500">Cathy</span>
-      <input type="number" class="coef-edit-input" id="coef-cathy" value="50" min="0" max="100"> %
-    </div>
-    <div style="display:flex;align-items:center;gap:6px;font-size:12px">
-      <span style="width:65px;font-weight:500">Hubert</span>
-      <input type="number" class="coef-edit-input" id="coef-hubert" value="100" min="0" max="100"> %
-    </div>
-    <div style="display:flex;align-items:center;gap:6px;font-size:12px">
-      <span style="width:65px;font-weight:500">Manon</span>
-      <input type="number" class="coef-edit-input" id="coef-manon" value="100" min="0" max="100"> %
-    </div>
-    <div style="display:flex;align-items:center;gap:6px;font-size:12px">
-      <span style="width:65px;font-weight:500">Lucie</span>
-      <input type="number" class="coef-edit-input" id="coef-lucie" value="100" min="0" max="100"> %
-    </div></div>
-        <button class="sbmit" style="font-size:12px;padding:8px 16px" onclick="saveCoefs()">Enregistrer les coefficients</button>
-      </div>
-
-      <!-- RÉALISÉ VS OBJECTIF -->
-      <div class="acard" style="margin-bottom:14px">
-        <div class="actitle" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-          <span>🎯 Réalisé vs Objectif</span>
-          <span id="rvo-period-label" style="font-size:11px;color:var(--t3);background:var(--s2);padding:3px 9px;border-radius:10px">17 juin</span>
-        </div>
-        <div class="rvo-period-bar">
-          <button class="rvo-period-btn active" onclick="rvoSetPeriod(&#39;hier&#39;,this)">Hier</button>
-          <button class="rvo-period-btn" onclick="rvoSetPeriod(&#39;semaine&#39;,this)">Cette semaine</button>
-          <button class="rvo-period-btn" onclick="rvoSetPeriod(&#39;mois&#39;,this)">Ce mois</button>
-          <button class="rvo-period-btn" onclick="rvoSetPeriod(&#39;annee&#39;,this)">Cette année</button>
-          <button class="rvo-period-btn" onclick="rvoSetPeriod(&#39;custom&#39;,this)">Personnalisé</button>
-        </div>
-        <div class="rvo-custom-wrap" id="rvo-custom-wrap" style="display: none;">
-          <span style="font-size:11px;color:var(--t2)">Du</span>
-          <input type="date" id="rvo-from" onchange="rvoRender()">
-          <span style="font-size:11px;color:var(--t2)">au</span>
-          <input type="date" id="rvo-to" onchange="rvoRender()">
-        </div>
-        <!-- Jauge magasin -->
-        <div class="rvo-mag-card" id="rvo-mag-card">
-          <div style="font-size:12px;font-weight:600;margin-bottom:6px">🏪 Magasin — Marge réalisée</div>
-          <div class="rvo-big-track"><div class="rvo-big-fill" id="rvo-mag-fill" style="width: 60.2657%; background: var(--rd);"></div></div>
-          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--t3)">
-            <span>0 €</span><span id="rvo-mag-pct" style="font-weight:600;color:var(--tx)">60.3%</span><span id="rvo-mag-obj-lbl">1 554 €</span>
-          </div>
-          <div class="rvo-stats-row">
-            <div class="rvo-stat"><div class="rvo-stat-lbl">Réalisé</div><div class="rvo-stat-val" id="rvo-mag-real" style="color:var(--gn)">937 €</div></div>
-            <div class="rvo-stat"><div class="rvo-stat-lbl">Objectif</div><div class="rvo-stat-val" id="rvo-mag-obj">1 554 €</div></div>
-            <div class="rvo-stat"><div class="rvo-stat-lbl">Écart</div><div class="rvo-stat-val" id="rvo-mag-ecart" style="color: var(--rd);">-618 €</div></div>
-            <div class="rvo-stat"><div class="rvo-stat-lbl">Jours</div><div class="rvo-stat-val" id="rvo-mag-jours" style="color:var(--t3)">1</div></div>
-          </div>
-        </div>
-        <!-- Jauges collaborateurs -->
-        <div style="font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Par collaborateur</div>
-        <div class="rvo-grid" id="rvo-collabs-grid"><div class="rvo-no-data">Sélectionnez une période ci-dessus</div></div>
-      <div class="rvo-gauge-lbl"><span>Marge réalisée</span><span style="font-weight:600;color:var(--tx)">0.0%</span></div>
-      <div class="rvo-track"><div class="rvo-fill rd" style="width:0%"></div></div>
-      <div class="rvo-nums">
-        <div>
-          <div class="rvo-real">0 €</div>
-          <div style="font-size:10px;color:var(--t3);margin-top:2px">0 jour(s)</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:10px;color:var(--t3)">Obj : 0 €</div>
-          <div style="font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;color:var(--gn)">+0 €</div>
-        </div>
-      </div>
-    </div><div class="rvo-card">
-      <div class="rvo-card-name">Cathy<span class="rvo-coef-tag">50%</span></div>
-      <div class="rvo-gauge-lbl"><span>Marge réalisée</span><span style="font-weight:600;color:var(--tx)">100.0%</span></div>
-      <div class="rvo-track"><div class="rvo-fill gn" style="width:100%"></div></div>
-      <div class="rvo-nums">
-        <div>
-          <div class="rvo-real">595 €</div>
-          <div style="font-size:10px;color:var(--t3);margin-top:2px">1 jour(s)</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:10px;color:var(--t3)">Obj : 311 €</div>
-          <div style="font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;color:var(--gn)">+284 €</div>
-        </div>
-      </div>
-    </div><div class="rvo-card">
-      <div class="rvo-card-name">Hubert<span class="rvo-coef-tag">100%</span></div>
-      <div class="rvo-gauge-lbl"><span>Marge réalisée</span><span style="font-weight:600;color:var(--tx)">0.0%</span></div>
-      <div class="rvo-track"><div class="rvo-fill rd" style="width:0%"></div></div>
-      <div class="rvo-nums">
-        <div>
-          <div class="rvo-real">0 €</div>
-          <div style="font-size:10px;color:var(--t3);margin-top:2px">0 jour(s)</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:10px;color:var(--t3)">Obj : 0 €</div>
-          <div style="font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;color:var(--gn)">+0 €</div>
-        </div>
-      </div>
-    </div><div class="rvo-card">
-      <div class="rvo-card-name">Manon<span class="rvo-coef-tag">100%</span></div>
-      <div class="rvo-gauge-lbl"><span>Marge réalisée</span><span style="font-weight:600;color:var(--tx)">31.6%</span></div>
-      <div class="rvo-track"><div class="rvo-fill rd" style="width:31.56100228376596%"></div></div>
-      <div class="rvo-nums">
-        <div>
-          <div class="rvo-real">196 €</div>
-          <div style="font-size:10px;color:var(--t3);margin-top:2px">1 jour(s)</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:10px;color:var(--t3)">Obj : 622 €</div>
-          <div style="font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;color:var(--rd)">-426 €</div>
-        </div>
-      </div>
-    </div><div class="rvo-card">
-      <div class="rvo-card-name">Lucie<span class="rvo-coef-tag">100%</span></div>
-      <div class="rvo-gauge-lbl"><span>Marge réalisée</span><span style="font-weight:600;color:var(--tx)">23.4%</span></div>
-      <div class="rvo-track"><div class="rvo-fill rd" style="width:23.43433368715623%"></div></div>
-      <div class="rvo-nums">
-        <div>
-          <div class="rvo-real">146 €</div>
-          <div style="font-size:10px;color:var(--t3);margin-top:2px">1 jour(s)</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:10px;color:var(--t3)">Obj : 622 €</div>
-          <div style="font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;color:var(--rd)">-476 €</div>
-        </div>
-      </div>
-    </div></div>
-        <div style="font-size:10px;color:var(--t3);margin-top:6px;line-height:1.6">
-          Objectifs calculés au prorata présence × coefficient vente · Réalisé issu du PDF <em>CA_des-vendeurs</em>
-        </div>
       </div>
     </div>
 
@@ -846,10 +547,10 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
       </div>
 
       <!-- Liste des retours (vue manager uniquement) -->
-      <div class="adm" id="retours-admin" style="margin-top: 24px; display: block;">
+      <div class="adm" id="retours-admin" style="margin-top:24px;display:none">
         <div style="font-size:13px;font-weight:500;margin-bottom:12px;color:var(--tx)">
           Retours reçus de l'équipe
-          <button onclick="exportRetours()" style="margin-left:12px;background:none;border:1px solid var(--bm);padding:3px 10px;border-radius:var(--r);font-size:11px;cursor:pointer;color:var(--t2);font-family:&#39;IBM Plex Sans&#39;,sans-serif">📋 Copier pour Claude</button>
+          <button onclick="exportRetours()" style="margin-left:12px;background:none;border:1px solid var(--bm);padding:3px 10px;border-radius:var(--r);font-size:11px;cursor:pointer;color:var(--t2);font-family:'IBM Plex Sans',sans-serif">📋 Copier pour Claude</button>
         </div>
         <div id="retours-list"></div>
       </div>
@@ -875,8 +576,6 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
           <option value="mat">Matin seulement</option>
           <option value="sat">Samedi (continu)</option>
           <option value="form">Formation</option>
-          <option value="cp">🏖 Absence CP</option>
-          <option value="am">🤒 Arrêt Maladie</option>
         </select>
       </div>
       <div id="m-times" style="display:none">
@@ -909,92 +608,22 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
 
 <div class="toast" id="toast"></div>
 
-<!-- MODAL COLLABORATEUR -->
-<div class="mbg" id="modal-collab" style="display:none" onclick="if(event.target===this)closeCollabModal()">
-  <div class="mbox" style="max-width:480px">
-    <div class="mhead">
-      <div><div class="mtitle" id="collab-modal-title">Nouveau collaborateur</div></div>
-      <button class="mclose" onclick="closeCollabModal()">×</button>
-    </div>
-    <div class="mbody">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="mrow"><label>Prénom &amp; Nom</label><input type="text" id="cm-nom" placeholder="Sophie Martin" style="width:100%;padding:7px 9px;border:1px solid var(--bm);border-radius:var(--r);font-family:&#39;IBM Plex Sans&#39;,sans-serif;font-size:13px;outline:none"></div>
-        <div class="mrow"><label>Poste</label><input type="text" id="cm-poste" placeholder="Vendeuse" style="width:100%;padding:7px 9px;border:1px solid var(--bm);border-radius:var(--r);font-family:&#39;IBM Plex Sans&#39;,sans-serif;font-size:13px;outline:none"></div>
-        <div class="mrow"><label>Contrat</label>
-          <select id="cm-h" style="width:100%;padding:7px 9px;border:1px solid var(--bm);border-radius:var(--r);font-family:&#39;IBM Plex Sans&#39;,sans-serif;font-size:13px;outline:none">
-            <option value="0">Forfait jours</option>
-            <option value="35">35h/sem</option>
-            <option value="30">30h/sem</option>
-            <option value="25">25h/sem</option>
-            <option value="20">20h/sem</option>
-          </select>
-        </div>
-        <div class="mrow"><label>Code PIN</label><input type="text" id="cm-pin" placeholder="2006" maxlength="4" style="width:100%;padding:7px 9px;border:1px solid var(--bm);border-radius:var(--r);font-family:&#39;IBM Plex Sans&#39;,sans-serif;font-size:13px;outline:none"></div>
-        <div class="mrow"><label>Compétence</label>
-          <select id="cm-comp" style="width:100%;padding:7px 9px;border:1px solid var(--bm);border-radius:var(--r);font-family:&#39;IBM Plex Sans&#39;,sans-serif;font-size:13px;outline:none">
-            <option value="sell">Vente</option>
-            <option value="buy">Achat</option>
-            <option value="both">Achat + Vente</option>
-          </select>
-        </div>
-        <div class="mrow"><label>Coeff vente (%)</label><input type="number" id="cm-coef" value="100" min="0" max="100" style="width:100%;padding:7px 9px;border:1px solid var(--bm);border-radius:var(--r);font-family:&#39;IBM Plex Sans&#39;,sans-serif;font-size:13px;outline:none"></div>
-      </div>
-      <div class="mrow" style="margin-top:10px"><label>Email</label><input type="email" id="cm-email" placeholder="prenom@gmail.com" style="width:100%;padding:7px 9px;border:1px solid var(--bm);border-radius:var(--r);font-family:&#39;IBM Plex Sans&#39;,sans-serif;font-size:13px;outline:none"></div>
-      <div class="mrow" style="margin-top:10px">
-        <label>Couleur d'affichage</label>
-        <div style="display:flex;gap:8px;flex-wrap:wrap" id="cm-color-picker">
-          <span class="color-opt" data-bg="#E8F0FF" data-ct="#1A4BAA" style="background:#E8F0FF;color:#1A4BAA;padding:3px 10px;border-radius:10px;font-size:11px;cursor:pointer;border:2px solid transparent">Bleu</span>
-          <span class="color-opt" data-bg="#FCEAF2" data-ct="#7A2040" style="background:#FCEAF2;color:#7A2040;padding:3px 10px;border-radius:10px;font-size:11px;cursor:pointer;border:2px solid transparent">Rose</span>
-          <span class="color-opt" data-bg="#FFF5E8" data-ct="#7A4808" style="background:#FFF5E8;color:#7A4808;padding:3px 10px;border-radius:10px;font-size:11px;cursor:pointer;border:2px solid transparent">Orange</span>
-          <span class="color-opt" data-bg="#EAFAF2" data-ct="#0F6830" style="background:#EAFAF2;color:#0F6830;padding:3px 10px;border-radius:10px;font-size:11px;cursor:pointer;border:2px solid transparent">Vert</span>
-          <span class="color-opt" data-bg="#EEEEFF" data-ct="#3D2DA0" style="background:#EEEEFF;color:#3D2DA0;padding:3px 10px;border-radius:10px;font-size:11px;cursor:pointer;border:2px solid transparent">Violet</span>
-          <span class="color-opt" data-bg="#EFEFED" data-ct="#2A2A28" style="background:#EFEFED;color:#2A2A28;padding:3px 10px;border-radius:10px;font-size:11px;cursor:pointer;border:2px solid transparent">Gris</span>
-        </div>
-      </div>
-    </div>
-    <div class="mfoot">
-      <button class="mcncl" onclick="closeCollabModal()">Annuler</button>
-      <button class="msave" onclick="saveCollab()">Enregistrer</button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL SUPPRESSION COLLABORATEUR -->
-<div class="mbg" id="modal-del-collab" style="display:none" onclick="if(event.target===this)this.style.display=&#39;none&#39;">
-  <div class="mbox" style="max-width:380px">
-    <div class="mhead">
-      <div><div class="mtitle">⚠️ Supprimer ce collaborateur ?</div></div>
-      <button class="mclose" onclick="document.getElementById(&#39;modal-del-collab&#39;).style.display=&#39;none&#39;">×</button>
-    </div>
-    <div class="mbody">
-      <p style="font-size:13px;color:var(--t2);line-height:1.6">
-        Cette action supprimera <strong id="del-collab-name"></strong> de l'équipe. 
-        Ses données de planning resteront dans l'historique mais il n'apparaîtra plus dans les vues.
-      </p>
-    </div>
-    <div class="mfoot">
-      <button class="mcncl" onclick="document.getElementById(&#39;modal-del-collab&#39;).style.display=&#39;none&#39;">Annuler</button>
-      <button class="msave" style="background:var(--rd)" onclick="confirmDelCollab()">Supprimer</button>
-    </div>
-  </div>
-</div>
-
 <!-- MODAL DUPLICATION -->
-<div class="mbg" id="modal-dup" style="display:none" onclick="if(event.target===this)closeDupModal()">
+<div class="mbg" id="modal-dup" style="display:none" onclick="if(event.target===this)window.closeDupModal()">
   <div class="mbox" style="max-width:420px">
     <div class="mhead">
       <div><div class="mtitle" id="dup-title">Dupliquer</div><div class="msub" id="dup-sub"></div></div>
-      <button class="mclose" onclick="closeDupModal()">×</button>
+      <button class="mclose" onclick="window.closeDupModal()">×</button>
     </div>
-    <div class="mbody">
-      <div id="dup-body"></div>
-    </div>
+    <div class="mbody"><div id="dup-body"></div></div>
     <div class="mfoot">
-      <button class="mcncl" onclick="closeDupModal()">Annuler</button>
-      <button class="msave" onclick="confirmDup()">Dupliquer</button>
+      <button class="mcncl" onclick="window.closeDupModal()">Annuler</button>
+      <button class="msave" onclick="window.confirmDup()">Dupliquer</button>
     </div>
   </div>
 </div>
+
+<!-- MODAL ÉVÉNEMENT -->
 <div class="mbg" id="modal-ev" style="display:none" onclick="if(event.target===this)closeEvModal()">
   <div class="mbox">
     <div class="mhead">
@@ -1004,7 +633,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
     <div class="mbody">
       <div id="ev-list-edit" style="margin-bottom:12px"></div>
       <div style="display:flex;gap:8px;align-items:flex-start">
-        <textarea id="ev-input" rows="2" style="flex:1;padding:8px 10px;border:1px solid var(--bm);border-radius:var(--r);font-family:&#39;IBM Plex Sans&#39;,sans-serif;font-size:13px;resize:vertical;" placeholder="Nouvel événement..."></textarea>
+        <textarea id="ev-input" rows="2" style="flex:1;padding:8px 10px;border:1px solid var(--bm);border-radius:var(--r);font-family:'IBM Plex Sans',sans-serif;font-size:13px;resize:vertical;" placeholder="Nouvel événement..."></textarea>
         <button onclick="addEvItem()" style="padding:8px 12px;background:var(--tx);color:#fff;border:none;border-radius:var(--r);cursor:pointer;font-size:12px;font-weight:500;white-space:nowrap;margin-top:2px">+ Ajouter</button>
       </div>
     </div>
@@ -1111,10 +740,6 @@ let STATE = {
     '2026-06-04': ['Inventaire BOR / BOPI'],
   },
   retours: [], // [{id, uid, nom, type, desc, device, date, traite}]
-  collabs: null, // null = utiliser USERS/BASE_SCHEDULE par défaut
-  coefs: { // coefficients vente par collaborateur
-    allan:0, anthony:20, cathy:50, hubert:100, manon:100, lucie:100
-  },
 };
 
 // ── FIREBASE STORAGE ──────────────────────────────────
@@ -1131,8 +756,6 @@ async function loadState(){
       if(saved.scheduleOverrides) STATE.scheduleOverrides = saved.scheduleOverrides;
       if(saved.evenements) STATE.evenements = {...STATE.evenements, ...saved.evenements};
       if(saved.retours) STATE.retours = saved.retours;
-      if(saved.collabs) STATE.collabs = saved.collabs;
-      if(saved.coefs) STATE.coefs = {...STATE.coefs, ...saved.coefs};
     }
     setSyncStatus('ok');
   } catch(e){
@@ -1152,8 +775,6 @@ async function saveState(){
       scheduleOverrides: STATE.scheduleOverrides,
       evenements: STATE.evenements,
       retours: STATE.retours,
-      collabs: STATE.collabs,
-      coefs: STATE.coefs,
     }, { merge: true });
     setSyncStatus('ok');
   } catch(e){
@@ -1183,8 +804,6 @@ function startPolling(){
       if(saved.scheduleOverrides) STATE.scheduleOverrides = saved.scheduleOverrides;
       if(saved.evenements) STATE.evenements = {...STATE.evenements, ...saved.evenements};
       if(saved.retours) STATE.retours = saved.retours;
-      if(saved.collabs) STATE.collabs = saved.collabs;
-      if(saved.coefs) STATE.coefs = {...STATE.coefs, ...saved.coefs};
     }
     setSyncStatus('ok');
     renderPlanning();
@@ -1283,7 +902,6 @@ function weekMins(uid,off){
     const abs=absStatus(uid,dateISO);
     if(abs==='approved'||abs==='repos_echange')return tot;
     if(isFerieChome(uid,dateISO))return tot;
-    // Semaine vierge : ne compter que si un slotOverride ou scheduleOverride existe
     const isVierge=dateISO>=VIERGE_FROM&&!STATE.slotOverrides[`${uid}-${dateISO}`]&&!STATE.scheduleOverrides[`${uid}-${d}`];
     if(isVierge&&BASE_SCHEDULE[uid].h>0)return tot;
     return tot+(getSlot(uid,d,dateISO).mins||0);
@@ -1412,18 +1030,9 @@ function showTab(name,btn){
   document.getElementById('view-'+name).classList.add('on');
   if(btn)btn.classList.add('on');
   if(name==='admin-abs')renderAdminAbs();
-  if(name==='admin-team'){renderCollabMgr();renderAdminTeam();}
+  if(name==='admin-team')renderAdminTeam();
   if(name==='absences')renderMyAbs();
   if(name==='signatures'){sigOff=woff;renderSigPage();}
-  if(name==='objectifs'){
-    loadMargeData().then(()=>{
-      renderObjectifs();
-      // Activer le bouton Hier par défaut
-      const btnHier = document.querySelector('.rvo-period-btn');
-      if(btnHier) rvoSetPeriod('hier', btnHier);
-      else rvoRender();
-    });
-  }
   if(name==='retours'){
     if(USERS[cur].admin){
       document.getElementById('retours-admin').style.display='block';
@@ -1492,17 +1101,8 @@ function slotHTMLBase(uid,dayKey,dateISO,abs){
   const s=getSlot(uid,dayKey,dateISO);
   const note=s.note?`<div class="pause-tag" style="color:var(--bl)">${s.note}</div>`:'';
 
-  // Planning vierge à partir de S27 (semaine du 29/06/2026)
-  const VIERGE_FROM = '2026-06-29';
-  const isVierge = dateISO >= VIERGE_FROM && !STATE.slotOverrides[`${uid}-${dateISO}`] && !STATE.scheduleOverrides[`${uid}-${dayKey}`];
-  if(isVierge && BASE_SCHEDULE[uid].h > 0){
-    return'<div class="sl so" style="color:var(--t3);font-style:italic;font-size:9px">—</div>';
-  }
-
-  if(s.type==='cp')  return'<div class="sl-cp">🏖 CP</div>';
-  if(s.type==='am')  return'<div class="sl-am">🤒 Arrêt</div>';
-
   if(s.type==='sat'){
+    // Créneau de pause repas selon le groupe
     let pauseRepas='';
     if(PAUSE_SAM_12H.includes(uid))
       pauseRepas=`<div class="pause-tag" style="color:var(--vl);font-weight:600">🍽 Pause repas 12h–13h</div>`;
@@ -1640,7 +1240,7 @@ function renderPlanning(){
       const dtxt=diff===0?`<span class="hok">✓ Conforme (${mh(cm)})</span>`:diff>0?`<span class="hbad">⚠ +${mh(diff)} — dépasse le contrat</span>`:`<span class="hwrn">−${mh(Math.abs(diff))} sous le contrat</span>`;
       let det=ft>0?`<span style="font-size:10px;color:var(--am);margin-left:8px">Dont ${mh(ft)} férié · Budget : ${mh(bg)}</span>`:'';
       const sigPart=signed
-        ?`<span class="signed">✓ Planning signé — <a href="#" onclick="window.showTab('signatures',document.querySelector('.tab:nth-child(2)'));return false" style="color:var(--bl)">voir</a></span>`
+        ?`<span class="signed">✓ Planning signé — <a href="#" onclick="window.showTab('signatures',document.querySelector('.tab:nth-child(2))'));return false" style="color:var(--bl)">voir</a></span>`
         :`<button class="sbtn" onclick="window.showTab('signatures',document.querySelectorAll('.tab')[1])">Signer ce planning ✓</button>`;
       bH+=`<div class="sstrip"><div class="hinfo">Planifié : <b class="${cls}">${mh(wm)}</b> / ${mh(cm)} &nbsp;${dtxt}${det}</div>${sigPart}</div>`;
     }
@@ -1699,19 +1299,18 @@ function renderPlanning(){
 // ═══════════════════════════════════════════════════════
 let sigCanvases={};
 
-// Décalage semaine indépendant pour les signatures (permet d'aller dans le passé)
+// Décalage semaine indépendant pour les signatures
 let sigOff = 0;
 
 function cwSig(dir){
-  if(dir === 0){ sigOff = 0; }
+  if(dir===0){ sigOff=0; }
   else {
-    const n = sigOff + dir;
-    // Limite : pas plus de 5 semaines dans le futur pour les non-admins
-    if(!USERS[cur].admin && n > 5){ toast('Seules les 5 prochaines semaines sont visibles.'); return; }
-    sigOff = n;
+    const n=sigOff+dir;
+    if(!USERS[cur].admin&&n>5){toast('Seules les 5 prochaines semaines sont visibles.');return;}
+    sigOff=n;
   }
-  const hint = document.getElementById('sig-nav-hint');
-  if(hint) hint.textContent = sigOff < 0 ? `(${Math.abs(sigOff)} semaine${Math.abs(sigOff)>1?'s':''} en arrière)` : sigOff > 0 ? `(${sigOff} semaine${sigOff>1?'s':''} en avant)` : '';
+  const hint=document.getElementById('sig-nav-hint');
+  if(hint) hint.textContent=sigOff<0?`(${Math.abs(sigOff)} sem. en arrière)`:sigOff>0?`(${sigOff} sem. en avant)`:'';
   renderSigPage();
 }
 
@@ -1726,6 +1325,107 @@ function renderSigPage(){
     const ini=u.name.split(' ').map(w=>w[0]).join('').slice(0,2);
     const sig=STATE.signatures[`${uid}-${wk}`];
     const wm=weekMins(uid,sigOff),cm=BASE_SCHEDULE[uid].h*60,ft=ferieChomeMinsForWeek(uid,sigOff);
+    // Résumé semaine
+    let weekSummary='';
+    let workedDays=[];
+    DAYS.forEach((d,i)=>{
+      const dt=new Date(mon);dt.setDate(mon.getDate()+i);
+      const dISO=iso(dt);
+      const abs=absStatus(uid,dISO);
+      if(isFerieChome(uid,dISO)){workedDays.push(`${DLBL[i]}: Férié chômé`);}
+      else if(abs==='approved'){workedDays.push(`${DLBL[i]}: Absence`);}
+      else if(abs==='repos_echange'){workedDays.push(`${DLBL[i]}: Repos (échange)`);}
+      else{
+        const s=getSlot(uid,d,dISO);
+        if(s.type==='off')return;
+        if(s.type==='form'){workedDays.push(`${DLBL[i]}: Formation`);}
+        else if(s.type==='full'||s.type==='mat'||s.type==='apm'||s.type==='sat'){
+          const times=[s.mat,s.apm].filter(Boolean).join(' / ');
+          workedDays.push(`${DLBL[i]}: ${times}`);
+        }
+      }
+    });
+    weekSummary=workedDays.join(' · ');
+    const canSign=cur===uid&&!sig;
+    const isMe=cur===uid;
+
+    h+=`<div class="sig-box">
+      <div class="av" style="background:${u.bg};color:${u.ct};width:36px;height:36px;font-size:12px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px">${ini}</div>
+      <div class="sig-name">${u.name}</div>
+      <div class="sig-hours">${u.role.split('·')[0].trim()}</div>
+      <div style="font-size:10px;color:var(--t2);margin-bottom:8px;line-height:1.5">${weekSummary}</div>
+      <div style="font-size:11px;font-weight:500;color:var(--t2);margin-bottom:3px">Total planifié : <b style="color:var(--tx)">${mh(wm)}</b> / ${mh(cm)}${ft>0?` (dont ${mh(ft)} férié)`:''}</div>`;
+
+    if(sig){
+      h+=`<div class="sig-area" style="cursor:default"><img src="${sig.drawing}" style="width:100%;height:100%;object-fit:contain"></div>
+      <div class="sig-signed">✓ Signé le ${sig.date}</div>`;
+      if(USERS[cur].admin){
+        h+=`<button class="sig-clear" onclick="window.clearSig('${uid}','${wk}')">Effacer la signature</button>`;
+      }
+    } else if(isMe){
+      h+=`<div class="sig-area" id="sig-area-${uid}" onclick="window.startSig('${uid}','${wk}')">
+        <span class="sig-area-label">Cliquez et signez ici</span>
+      </div>
+      <div class="sig-signed" style="color:var(--t3)">Non signé</div>`;
+    } else {
+      h+=`<div class="sig-area" style="cursor:default;background:var(--s3)">
+        <span class="sig-area-label" style="font-size:10px">En attente de signature</span>
+      </div>
+      <div class="sig-signed" style="color:var(--t3)">Non signé</div>`;
+    }
+    h+=`</div>`;
+  });
+  document.getElementById('sig-grid').innerHTML=h;
+  if(SIDS.includes(cur)&&!STATE.signatures[`${cur}-${wk}`]){
+    initSigCanvas(cur,wk);
+  }
+}
+
+function initSigCanvas(uid,wk){
+  const area=document.getElementById(`sig-area-${uid}`);
+  if(!area)return;
+  area.onclick=null;
+  area.innerHTML='<canvas id="sig-canvas-'+uid+'" style="position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair"></canvas><span class="sig-area-label" style="z-index:0">Signez ici</span>';
+  const canvas=document.getElementById('sig-canvas-'+uid);
+  canvas.width=area.offsetWidth||200;
+  canvas.height=area.offsetHeight||70;
+  const ctx=canvas.getContext('2d');
+  ctx.strokeStyle='#111';ctx.lineWidth=2;ctx.lineCap='round';
+  let drawing=false,hasMark=false;
+  const getPos=e=>{
+    const r=canvas.getBoundingClientRect();
+    const src=e.touches?e.touches[0]:e;
+    return{x:(src.clientX-r.left)*(canvas.width/r.width),y:(src.clientY-r.top)*(canvas.height/r.height)};
+  };
+  canvas.addEventListener('mousedown',e=>{drawing=true;const p=getPos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);});
+  canvas.addEventListener('mousemove',e=>{if(!drawing)return;hasMark=true;const p=getPos(e);ctx.lineTo(p.x,p.y);ctx.stroke();});
+  canvas.addEventListener('mouseup',()=>{drawing=false;if(hasMark)showConfirmSig(uid,wk,canvas);});
+  canvas.addEventListener('touchstart',e=>{e.preventDefault();drawing=true;const p=getPos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);});
+  canvas.addEventListener('touchmove',e=>{e.preventDefault();if(!drawing)return;hasMark=true;const p=getPos(e);ctx.lineTo(p.x,p.y);ctx.stroke();});
+  canvas.addEventListener('touchend',()=>{drawing=false;if(hasMark)showConfirmSig(uid,wk,canvas);});
+  sigCanvases[uid]={canvas,ctx};
+}
+
+function showConfirmSig(uid,wk,canvas){
+  if(!confirm(`Confirmer votre signature pour la semaine S${wknum(monday(sigOff))} ?\nEn signant vous confirmez avoir pris connaissance de vos horaires.`))return;
+  const drawing=canvas.toDataURL('image/png');
+  const now=new Date().toLocaleDateString('fr-FR');
+  STATE.signatures[`${uid}-${wk}`]={date:now,drawing};
+  addNotif('allan',`✍ ${USERS[uid].name} a signé son planning — S${wknum(monday(sigOff))} (${fmt(monday(sigOff))})`);
+  saveState().then(()=>{toast(`Planning signé ✓`);renderSigPage();renderPlanning();});
+}
+
+function clearSig(uid,wk){
+  if(!confirm(`Effacer la signature de ${USERS[uid].short} ?`))return;
+  delete STATE.signatures[`${uid}-${wk}`];
+  saveState().then(()=>{renderSigPage();renderPlanning();});
+}
+
+function printSigs(){
+  document.body.classList.add('print-signatures');
+  window.print();
+  setTimeout(()=>document.body.classList.remove('print-signatures'),1000);
+}
     // Résumé semaine
     let weekSummary='';
     let workedDays=[];
@@ -1789,57 +1489,6 @@ function renderSigPage(){
   }
 }
 
-function initSigCanvas(uid,wk){
-  const area=document.getElementById(`sig-area-${uid}`);
-  if(!area)return;
-  // Vider le click handler
-  area.onclick=null;
-  area.innerHTML='<canvas id="sig-canvas-'+uid+'" style="position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair"></canvas><span class="sig-area-label" style="z-index:0">Signez ici</span>';
-  const canvas=document.getElementById('sig-canvas-'+uid);
-  canvas.width=area.offsetWidth||200;
-  canvas.height=area.offsetHeight||70;
-  const ctx=canvas.getContext('2d');
-  ctx.strokeStyle='#111';ctx.lineWidth=2;ctx.lineCap='round';
-  let drawing=false,hasMark=false;
-  const getPos=e=>{
-    const r=canvas.getBoundingClientRect();
-    const src=e.touches?e.touches[0]:e;
-    return{x:(src.clientX-r.left)*(canvas.width/r.width),y:(src.clientY-r.top)*(canvas.height/r.height)};
-  };
-  canvas.addEventListener('mousedown',e=>{drawing=true;const p=getPos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);});
-  canvas.addEventListener('mousemove',e=>{if(!drawing)return;hasMark=true;const p=getPos(e);ctx.lineTo(p.x,p.y);ctx.stroke();});
-  canvas.addEventListener('mouseup',()=>{drawing=false;if(hasMark)showConfirmSig(uid,wk,canvas);});
-  canvas.addEventListener('touchstart',e=>{e.preventDefault();drawing=true;const p=getPos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);});
-  canvas.addEventListener('touchmove',e=>{e.preventDefault();if(!drawing)return;hasMark=true;const p=getPos(e);ctx.lineTo(p.x,p.y);ctx.stroke();});
-  canvas.addEventListener('touchend',()=>{drawing=false;if(hasMark)showConfirmSig(uid,wk,canvas);});
-  sigCanvases[uid]={canvas,ctx};
-}
-
-function showConfirmSig(uid,wk,canvas){
-  if(!confirm(`Confirmer votre signature pour la semaine S${wknum(monday(sigOff))} ?\nEn signant vous confirmez avoir pris connaissance de vos horaires.`))return;
-  const drawing=canvas.toDataURL('image/png');
-  const now=new Date().toLocaleDateString('fr-FR');
-  STATE.signatures[`${uid}-${wk}`]={date:now,drawing};
-  addNotif('allan',`✍ ${USERS[uid].name} a signé son planning — S${wknum(monday(sigOff))} (${fmt(monday(sigOff))})`);
-  saveState().then(()=>{
-    toast(`Planning signé ✓`);
-    renderSigPage();
-    renderPlanning();
-  });
-}
-
-function clearSig(uid,wk){
-  if(!confirm(`Effacer la signature de ${USERS[uid].short} ?`))return;
-  delete STATE.signatures[`${uid}-${wk}`];
-  saveState().then(()=>{renderSigPage();renderPlanning();});
-}
-
-function printSigs(){
-  // Ajouter une classe au body pour cibler uniquement les signatures via CSS @media print
-  document.body.classList.add('print-signatures');
-  window.print();
-  setTimeout(()=>document.body.classList.remove('print-signatures'), 1000);
-}
 
 // ═══════════════════════════════════════════════════════
 //  ABSENCES
@@ -2155,493 +1804,6 @@ function saveSlot(){
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2700);}
 
 // ═══════════════════════════════════════════════════════
-//  OBJECTIFS MARGE
-// ═══════════════════════════════════════════════════════
-const GVIZ_URL = `https://docs.google.com/spreadsheets/d/1wBm0SyeqC-4HBKZ7J7KefcNfdLiJ7cL2KIf3VEgcp1M/gviz/tq?tqx=out:json&sheet=${encodeURIComponent('Données journalières')}`;
-const GVIZ_VENDEUR_URL = `https://docs.google.com/spreadsheets/d/1wBm0SyeqC-4HBKZ7J7KefcNfdLiJ7cL2KIf3VEgcp1M/gviz/tq?tqx=out:json&sheet=${encodeURIComponent('Marge_par_vendeur')}`;
-let margeData = {};    // dateISO → marge cible € (col F)
-let vendeurData = {};  // dateISO|uid → marge réalisée €
-
-function parseNumGviz(v){ if(v===null||v===undefined||v==='') return null; const n=parseFloat(String(v).replace(',','.').replace(/\s/g,'')); return isNaN(n)?null:n; }
-function gdateGviz(raw){
-  if(!raw) return null;
-  if(typeof raw==='string'&&raw.startsWith('Date(')){const p=raw.replace('Date(','').replace(')','').split(',').map(Number);return new Date(p[0],p[1],p[2]);}
-  if(typeof raw==='string'&&raw.match(/^\d{2}\/\d{2}\/\d{4}$/)){const p=raw.split('/');return new Date(parseInt(p[2]),parseInt(p[1])-1,parseInt(p[0]));}
-  if(raw instanceof Date) return raw;
-  return null;
-}
-
-async function loadMargeData(){
-  try {
-    // Charger les objectifs (onglet principal)
-    const res = await fetch(GVIZ_URL);
-    const txt = await res.text();
-    const js  = JSON.parse(txt.substring(47, txt.length-2));
-    margeData = {};
-    (js.table.rows||[]).forEach(r => {
-      if(!r||!r.c) return;
-      const d = gdateGviz(r.c[0]?r.c[0].v:null);
-      if(!d) return;
-      const dISO = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-      const marge = parseNumGviz(r.c[5]?r.c[5].v:null); // col F = index 5 = Marge cible
-      if(marge!==null) margeData[dISO] = marge;
-    });
-
-    // Charger les données vendeurs (onglet Marge_par_vendeur)
-    const res2 = await fetch(GVIZ_VENDEUR_URL);
-    const txt2 = await res2.text();
-    const js2  = JSON.parse(txt2.substring(47, txt2.length-2));
-    vendeurData = {};
-    (js2.table.rows||[]).forEach(r => {
-      if(!r||!r.c) return;
-      const d = gdateGviz(r.c[0]?r.c[0].v:null);
-      if(!d) return;
-      const dISO = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-      const uid   = r.c[1]?String(r.c[1].v):null;
-      const marge = parseNumGviz(r.c[4]?r.c[4].v:null); // col E = Marge réalisée
-      if(uid&&marge!==null) vendeurData[`${dISO}|${uid}`] = marge;
-    });
-
-    document.getElementById('marge-source-tag').innerHTML = '🔗 Google Sheets — Synchronisé';
-    document.getElementById('marge-source-tag').style.background='var(--gn-l)';
-    document.getElementById('marge-source-tag').style.borderColor='var(--gn-b)';
-    document.getElementById('marge-source-tag').style.color='var(--gn)';
-  } catch(e) {
-    document.getElementById('marge-source-tag').innerHTML = '⚠ Google Sheets — Erreur';
-    console.error('Erreur chargement marge:', e);
-  }
-}
-
-function renderObjectifs(){
-  const mon = monday(woff);
-  const dates = DAYS.map((_,i)=>{ const d=new Date(mon); d.setDate(mon.getDate()+i); return d; });
-  const label = `S${wknum(mon)} — ${fmt(mon)} au ${fmt(dates[5])}`;
-  document.getElementById('marge-week-label').textContent = label;
-
-  // Tableau par collaborateur et par jour
-  const tbody = document.getElementById('marge-tbody');
-  const tfoot = document.getElementById('marge-tfoot');
-  const activeUIDs = SIDS;
-  let totalSemaine = 0;
-
-  // Ligne par collaborateur
-  tbody.innerHTML = activeUIDs.map(uid => {
-    const u = USERS[uid];
-    const coef = (STATE.coefs[uid] || 0) / 100;
-    let totalCollab = 0;
-    const cells = dates.map((d, i) => {
-      const dISO = iso(d);
-      const dayKey = DAYS[i];
-      const absS = absStatus(uid, dISO);
-      const slot = getSlot(uid, dayKey, dISO);
-      const VIERGE_FROM = '2026-06-29';
-      const isVierge = dISO >= VIERGE_FROM && !STATE.slotOverrides[`${uid}-${dISO}`] && !STATE.scheduleOverrides[`${uid}-${dayKey}`];
-      const present = !isVierge && absS !== 'approved' && slot && slot.type !== 'off' && slot.type !== 'cp' && slot.type !== 'am';
-      const obj = margeData[dISO] || 0;
-      if(!obj) return `<td style="text-align:center;color:var(--t3);font-size:10px">—</td>`;
-      // Calculer la part pondérée sur ce jour pour tous les présents
-      const totalPart = SIDS.reduce((acc, u2) => {
-        const s2 = getSlot(u2, dayKey, dISO);
-        const a2 = absStatus(u2, dISO);
-        const iv2 = dISO >= VIERGE_FROM && !STATE.slotOverrides[`${u2}-${dISO}`] && !STATE.scheduleOverrides[`${u2}-${dayKey}`];
-        const p2 = !iv2 && a2 !== 'approved' && s2 && s2.type !== 'off' && s2.type !== 'cp' && s2.type !== 'am';
-        return acc + (p2 ? (STATE.coefs[u2] || 0) / 100 : 0);
-      }, 0);
-      if(!present || coef === 0) return `<td style="text-align:center;color:var(--t3);font-size:10px">—</td>`;
-      const part = totalPart > 0 ? (coef / totalPart) * obj : 0;
-      totalCollab += part;
-      return `<td style="text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500">${Math.round(part).toLocaleString('fr-FR')} €</td>`;
-    });
-    totalSemaine += totalCollab;
-    return `<tr>
-      <td style="font-weight:500;font-size:12px">${u.short} <span class="marge-coef" style="margin-left:4px">${STATE.coefs[uid]}%</span></td>
-      ${cells.join('')}
-      <td style="text-align:right;font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--bl)">${totalCollab>0?Math.round(totalCollab).toLocaleString('fr-FR')+' €':'—'}</td>
-    </tr>`;
-  }).join('');
-
-  // Ligne objectifs du magasin
-  const footCells = dates.map(d => {
-    const dISO = iso(d);
-    const obj = margeData[dISO];
-    return `<td style="text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11px;padding:9px 10px">${obj?obj.toLocaleString('fr-FR')+' €':'—'}</td>`;
-  });
-  tfoot.innerHTML = `<td style="padding:9px 10px;font-size:11px">🎯 Objectif magasin</td>${footCells.join('')}<td style="text-align:right;font-family:'IBM Plex Mono',monospace;padding:9px 10px;color:var(--gn)">${totalSemaine>0?Math.round(totalSemaine).toLocaleString('fr-FR')+' €':'—'}</td>`;
-
-  // Stats globales
-  const totalObj = dates.reduce((a, d) => a + (margeData[iso(d)] || 0), 0);
-  document.getElementById('marge-stats').innerHTML = `
-    <div class="marge-stat target"><div class="marge-val">${totalObj>0?totalObj.toLocaleString('fr-FR')+' €':'—'}</div><div class="marge-lbl">Objectif semaine</div></div>
-    <div class="marge-stat real"><div class="marge-val">${SIDS.length}</div><div class="marge-lbl">Collaborateurs actifs</div></div>
-    <div class="marge-stat unit"><div class="marge-val">${Object.keys(margeData).length} jours</div><div class="marge-lbl">Données chargées</div></div>`;
-
-  // Grille des coefficients (admin)
-  const coefGrid = document.getElementById('coef-grid');
-  if(coefGrid) coefGrid.innerHTML = SIDS.map(uid => `
-    <div style="display:flex;align-items:center;gap:6px;font-size:12px">
-      <span style="width:65px;font-weight:500">${USERS[uid].short}</span>
-      <input type="number" class="coef-edit-input" id="coef-${uid}" value="${STATE.coefs[uid]||0}" min="0" max="100"> %
-    </div>`).join('');
-}
-
-async function saveCoefs(){
-  SIDS.forEach(uid => {
-    const inp = document.getElementById(`coef-${uid}`);
-    if(inp) STATE.coefs[uid] = parseInt(inp.value) || 0;
-  });
-  await saveState();
-  toast('Coefficients enregistrés ✓');
-  renderObjectifs();
-}
-
-// ═══════════════════════════════════════════════════════
-//  GESTION COLLABORATEURS
-// ═══════════════════════════════════════════════════════
-let collabEditId = null, collabDelId = null;
-let collabColorBg = '#E8F0FF', collabColorCt = '#1A4BAA';
-
-function getActiveCollabs(){
-  return STATE.collabs || SIDS.map(uid => ({
-    id: uid,
-    nom: USERS[uid].name,
-    short: USERS[uid].short,
-    role: USERS[uid].role,
-    pin: USERS[uid].pin,
-    bg: USERS[uid].bg,
-    ct: USERS[uid].ct,
-    h: BASE_SCHEDULE[uid].h,
-    coef: STATE.coefs[uid] || 0,
-  }));
-}
-
-function renderCollabMgr(){
-  const el = document.getElementById('collab-mgr-list');
-  if(!el) return;
-  const collabs = getActiveCollabs();
-  el.innerHTML = collabs.map(c => {
-    const wk = monKey(woff);
-    const hasSig = !!STATE.signatures[`${c.id}-${wk}`];
-    return `<div class="collab-mgr-row">
-      <div class="collab-av" style="background:${c.bg||'#EEE'};color:${c.ct||'#333'}">${(c.short||c.nom).substring(0,2).toUpperCase()}</div>
-      <div>
-        <div style="font-weight:500;font-size:12px">${c.nom}</div>
-        <div style="font-size:10px;color:var(--t3)">${c.role||c.poste||''} · ${c.h===0?'Forfait jours':c.h+'h/sem'}</div>
-      </div>
-      <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--t3)">${c.pin}</span>
-      <span class="marge-coef">${c.coef||0}%</span>
-      <span style="font-size:10px;${hasSig?'color:var(--gn)':'color:var(--am)'}">${hasSig?'✓ Signé':'En attente'}</span>
-      <div></div>
-      <div class="collab-mgr-actions">
-        <button class="icon-btn" onclick="openCollabModal('edit','${c.id}')" title="Modifier">✏️</button>
-        ${c.id!=='allan'?`<button class="icon-btn del" onclick="openDelCollab('${c.id}','${c.nom}')" title="Supprimer">🗑</button>`:''}
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function openCollabModal(mode, id){
-  collabEditId = mode === 'edit' ? id : null;
-  collabColorBg = '#E8F0FF'; collabColorCt = '#1A4BAA';
-  document.getElementById('collab-modal-title').textContent = mode === 'edit' ? 'Modifier le collaborateur' : 'Nouveau collaborateur';
-  if(mode === 'edit'){
-    const collabs = getActiveCollabs();
-    const c = collabs.find(x => x.id === id) || USERS[id];
-    document.getElementById('cm-nom').value = c.nom || c.name || '';
-    document.getElementById('cm-poste').value = c.role || c.poste || '';
-    document.getElementById('cm-h').value = c.h !== undefined ? c.h : BASE_SCHEDULE[id]?.h || 35;
-    document.getElementById('cm-pin').value = c.pin || '';
-    document.getElementById('cm-coef').value = c.coef !== undefined ? c.coef : (STATE.coefs[id] || 100);
-    document.getElementById('cm-email').value = c.email || USER_EMAILS[id] || '';
-    collabColorBg = c.bg || '#E8F0FF';
-    collabColorCt = c.ct || '#1A4BAA';
-  } else {
-    ['cm-nom','cm-poste','cm-pin','cm-email'].forEach(i => document.getElementById(i).value='');
-    document.getElementById('cm-h').value = '35';
-    document.getElementById('cm-comp').value = 'sell';
-    document.getElementById('cm-coef').value = '100';
-  }
-  // Couleurs
-  document.querySelectorAll('.color-opt').forEach(o => {
-    o.style.border = o.dataset.bg === collabColorBg ? '2px solid var(--tx)' : '2px solid transparent';
-    o.onclick = () => {
-      collabColorBg = o.dataset.bg; collabColorCt = o.dataset.ct;
-      document.querySelectorAll('.color-opt').forEach(x => x.style.border='2px solid transparent');
-      o.style.border = '2px solid var(--tx)';
-    };
-  });
-  document.getElementById('modal-collab').style.display = 'flex';
-}
-
-function closeCollabModal(){ document.getElementById('modal-collab').style.display = 'none'; }
-
-async function saveCollab(){
-  const nom = document.getElementById('cm-nom').value.trim();
-  if(!nom){ toast('⚠ Prénom & Nom requis'); return; }
-  const id = collabEditId || 'c' + Date.now();
-  const coef = parseInt(document.getElementById('cm-coef').value) || 0;
-  const data = {
-    id, nom,
-    short: nom.split(' ')[0],
-    role: document.getElementById('cm-poste').value,
-    h: parseInt(document.getElementById('cm-h').value),
-    pin: document.getElementById('cm-pin').value,
-    coef,
-    email: document.getElementById('cm-email').value,
-    bg: collabColorBg,
-    ct: collabColorCt,
-    admin: id === 'allan',
-  };
-  // Mettre à jour STATE.coefs
-  STATE.coefs[id] = coef;
-  // Mettre à jour STATE.collabs
-  let collabs = getActiveCollabs();
-  if(collabEditId) collabs = collabs.map(c => c.id === collabEditId ? data : c);
-  else collabs.push(data);
-  STATE.collabs = collabs;
-  await saveState();
-  closeCollabModal();
-  renderCollabMgr();
-  toast(collabEditId ? '✓ Collaborateur modifié' : '✓ Nouveau collaborateur ajouté');
-}
-
-function openDelCollab(id, nom){
-  collabDelId = id;
-  document.getElementById('del-collab-name').textContent = nom;
-  document.getElementById('modal-del-collab').style.display = 'flex';
-}
-
-async function confirmDelCollab(){
-  let collabs = getActiveCollabs().filter(c => c.id !== collabDelId);
-  STATE.collabs = collabs;
-  await saveState();
-  document.getElementById('modal-del-collab').style.display = 'none';
-  renderCollabMgr();
-  toast('✓ Collaborateur supprimé');
-}
-
-// ═══════════════════════════════════════════════════════
-//  DUPLICATION
-// ═══════════════════════════════════════════════════════
-let dupCtx = null;
-
-function openDupDay(uid, dayKey, dateISO){
-  const u = USERS[uid];
-  const slot = getSlot(uid, dayKey, dateISO);
-  const [y,m,d] = dateISO.split('-');
-  dupCtx = { mode: 'day', uid, dayKey, dateISO, slot };
-  document.getElementById('dup-title').textContent = `Dupliquer — ${u.short}`;
-  document.getElementById('dup-sub').textContent = `${DLBL[DAYS.indexOf(dayKey)]} ${d}/${m} → copier vers :`;
-  const mon = monday(woff);
-  const otherDays = DAYS.map((dk, i) => {
-    const dt = new Date(mon); dt.setDate(mon.getDate() + i);
-    const dISO = iso(dt);
-    if(dISO === dateISO) return null;
-    return { dk, dISO, label: `${DLBL[i]} ${fmt(dt)}` };
-  }).filter(Boolean);
-  document.getElementById('dup-body').innerHTML = `
-    <div style="margin-bottom:10px;font-size:11px;color:var(--t2)">Cocher les jours cibles :</div>
-    ${otherDays.map((d,i) => `
-      <label class="dup-check">
-        <input type="checkbox" id="dup-d-${i}" value="${d.dISO}" checked> ${d.label}
-      </label>`).join('')}`;
-  document.getElementById('modal-dup').style.display = 'flex';
-}
-
-function openDupWeek(){
-  dupCtx = { mode: 'week', woff };
-  document.getElementById('dup-title').textContent = 'Dupliquer la semaine';
-  const mon = monday(woff);
-  document.getElementById('dup-sub').textContent = `S${wknum(mon)} vers :`;
-  document.getElementById('dup-body').innerHTML = `
-    <div style="margin-bottom:10px;font-size:11px;color:var(--t2)">Semaine cible :</div>
-    <label class="dup-check"><input type="radio" name="dup-wk" value="1" checked> Semaine suivante (S${wknum(mon)+1})</label>
-    <label class="dup-check"><input type="radio" name="dup-wk" value="2"> Dans 2 semaines (S${wknum(mon)+2})</label>
-    <label class="dup-check"><input type="radio" name="dup-wk" value="3"> Dans 3 semaines (S${wknum(mon)+3})</label>
-    <div style="margin-top:14px;font-size:11px;color:var(--t2);margin-bottom:8px">Collaborateurs :</div>
-    ${SIDS.map(uid => `<label class="dup-check"><input type="checkbox" id="dup-uid-${uid}" checked> ${USERS[uid].short}</label>`).join('')}`;
-  document.getElementById('modal-dup').style.display = 'flex';
-}
-
-function closeDupModal(){ document.getElementById('modal-dup').style.display = 'none'; dupCtx = null; }
-
-async function confirmDup(){
-  if(!dupCtx) return;
-  if(dupCtx.mode === 'day'){
-    const checkboxes = document.querySelectorAll('#dup-body input[type=checkbox]:checked');
-    checkboxes.forEach(cb => {
-      const targetDate = cb.value;
-      // Calculer le dayKey cible à partir de la date
-      const dt = new Date(targetDate);
-      const dow = dt.getDay(); // 0=dim,1=lun...6=sam
-      const idx = dow === 0 ? 5 : dow - 1; // sam=5, dim ignoré
-      const targetDayKey = DAYS[idx];
-      if(targetDayKey) STATE.slotOverrides[`${dupCtx.uid}-${targetDate}`] = {...dupCtx.slot};
-    });
-    await saveState();
-    toast(`✓ Créneau dupliqué sur ${checkboxes.length} jour(s)`);
-  } else {
-    const wkDelta = parseInt(document.querySelector('#dup-body input[name=dup-wk]:checked')?.value || 1);
-    // Lire les checkboxes collaborateurs depuis le DOM dynamique
-    const targetUIDs = SIDS.filter(uid => {
-      const el = document.querySelector(`#dup-body input#dup-uid-${uid}`);
-      return el && el.checked;
-    });
-    const srcMon = monday(dupCtx.woff);
-    targetUIDs.forEach(uid => {
-      DAYS.forEach((dk, i) => {
-        const srcDate = new Date(srcMon); srcDate.setDate(srcMon.getDate() + i);
-        const srcISO = iso(srcDate);
-        const tgtDate = new Date(srcMon); tgtDate.setDate(srcMon.getDate() + i + wkDelta * 7);
-        const tgtISO = iso(tgtDate);
-        const slot = STATE.slotOverrides[`${uid}-${srcISO}`] || STATE.scheduleOverrides[`${uid}-${dk}`] || BASE_SCHEDULE[uid][dk];
-        if(slot) STATE.slotOverrides[`${uid}-${tgtISO}`] = {...slot};
-      });
-    });
-    await saveState();
-    toast(`✓ Semaine dupliquée pour ${targetUIDs.length} collaborateur(s)`);
-  }
-  closeDupModal();
-  renderPlanning();
-}
-
-// ═══════════════════════════════════════════════════════
-//  RÉALISÉ VS OBJECTIF
-// ═══════════════════════════════════════════════════════
-let rvoPeriod = 'hier';
-
-function rvoGetRange(period){
-  const today = new Date(); today.setHours(0,0,0,0);
-  const toISO = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-  if(period==='hier'){
-    const h=new Date(today); h.setDate(today.getDate()-1);
-    return {from:h, to:h};
-  }
-  if(period==='semaine'){
-    const dow=today.getDay()===0?6:today.getDay()-1;
-    const m=new Date(today); m.setDate(today.getDate()-dow);
-    return {from:m, to:today};
-  }
-  if(period==='mois') return {from:new Date(today.getFullYear(),today.getMonth(),1), to:today};
-  if(period==='annee') return {from:new Date(today.getFullYear(),0,1), to:today};
-  if(period==='custom'){
-    const f=document.getElementById('rvo-from').value, t=document.getElementById('rvo-to').value;
-    if(!f||!t) return null;
-    const [fy,fm,fd]=f.split('-').map(Number), [ty,tm,td]=t.split('-').map(Number);
-    return {from:new Date(fy,fm-1,fd), to:new Date(ty,tm-1,td)};
-  }
-  return null;
-}
-
-function rvoSetPeriod(period, btn){
-  rvoPeriod = period;
-  document.querySelectorAll('.rvo-period-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  const cw = document.getElementById('rvo-custom-wrap');
-  cw.style.display = period==='custom' ? 'flex' : 'none';
-  if(period!=='custom') rvoRender();
-}
-
-function rvoRender(){
-  const range = rvoGetRange(rvoPeriod);
-  if(!range) return;
-  const {from, to} = range;
-  const toISO = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-  const fmtD = d => d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'});
-
-  // Label période
-  document.getElementById('rvo-period-label').textContent =
-    from.getTime()===to.getTime() ? fmtD(from) : `${fmtD(from)} → ${fmtD(to)}`;
-
-  // Construire la liste des dates ISO dans la plage
-  const datesInRange = [];
-  const cur = new Date(from);
-  while(cur <= to){ datesInRange.push(toISO(new Date(cur))); cur.setDate(cur.getDate()+1); }
-
-  // Totaux magasin depuis margeData (objectif) et vendeurData (réalisé)
-  let totalObj=0, totalReal=0, joursAvecDonnees=0;
-  datesInRange.forEach(dISO => {
-    const obj = margeData[dISO] || 0;
-    // Réalisé magasin = somme des marges de tous les vendeurs ce jour
-    const realJour = SIDS.filter(uid=>uid!=='allan').reduce((s,uid)=>{
-      const v = vendeurData[`${dISO}|${uid}`];
-      return s + (v||0);
-    },0);
-    if(obj>0){ totalObj+=obj; joursAvecDonnees++; }
-    totalReal += realJour;
-  });
-
-  const ecartMag = totalReal - totalObj;
-  const pctMag = totalObj>0 ? Math.min(totalReal/totalObj*100,100) : 0;
-
-  const fmtE = n => n!==null&&!isNaN(n) ? Math.round(n).toLocaleString('fr-FR')+' €' : '—';
-  document.getElementById('rvo-mag-real').textContent = fmtE(totalReal);
-  document.getElementById('rvo-mag-obj').textContent  = fmtE(totalObj);
-  document.getElementById('rvo-mag-ecart').textContent = (ecartMag>=0?'+':'')+fmtE(ecartMag);
-  document.getElementById('rvo-mag-ecart').style.color = ecartMag>=0?'var(--gn)':'var(--rd)';
-  document.getElementById('rvo-mag-jours').textContent = joursAvecDonnees;
-  document.getElementById('rvo-mag-pct').textContent = pctMag.toFixed(1)+'%';
-  document.getElementById('rvo-mag-obj-lbl').textContent = fmtE(totalObj);
-  const fill = document.getElementById('rvo-mag-fill');
-  fill.style.width = pctMag+'%';
-  fill.style.background = pctMag>=100?'var(--gn)':pctMag>=80?'var(--am)':'var(--rd)';
-
-  // Jauges par collaborateur (hors Allan)
-  const collabs = SIDS.filter(uid=>uid!=='allan');
-  const hasVendeurData = collabs.some(uid=>datesInRange.some(d=>vendeurData[`${d}|${uid}`]!==undefined));
-
-  const grid = document.getElementById('rvo-collabs-grid');
-  if(!hasVendeurData){
-    grid.innerHTML='<div class="rvo-no-data">Aucune donnée réalisée disponible sur cette période.<br><small>Le pipeline CA_des-vendeurs doit avoir tourné au moins une fois.</small></div>';
-    return;
-  }
-
-  grid.innerHTML = collabs.map(uid => {
-    const u = USERS[uid];
-    const coef = (STATE.coefs[uid]||0)/100;
-
-    // Marge réalisée sur la période
-    const realMarge = datesInRange.reduce((s,dISO)=>s+(vendeurData[`${dISO}|${uid}`]||0),0);
-
-    // Objectif pondéré : pour chaque jour avec objectif, calculer la part
-    let objMarge = 0;
-    datesInRange.forEach(dISO => {
-      const dayObj = margeData[dISO]||0;
-      if(!dayObj) return;
-      // Collaborateurs présents ce jour (ayant des données vendeur)
-      const totalPart = SIDS.filter(u2=>u2!=='allan').reduce((s,u2)=>{
-        const hasDonnees = vendeurData[`${dISO}|${u2}`]!==undefined;
-        return s + (hasDonnees ? (STATE.coefs[u2]||0)/100 : 0);
-      },0);
-      const wasThere = vendeurData[`${dISO}|${uid}`]!==undefined;
-      if(wasThere && totalPart>0) objMarge += (coef/totalPart)*dayObj;
-    });
-
-    const ecart = realMarge - objMarge;
-    const pct = objMarge>0 ? Math.min(realMarge/objMarge*100,100) : 0;
-    const cl = pct>=100?'gn':pct>=75?'am':'rd';
-    const joursCollab = datesInRange.filter(d=>vendeurData[`${d}|${uid}`]!==undefined).length;
-
-    return `<div class="rvo-card">
-      <div class="rvo-card-name">${u.short}<span class="rvo-coef-tag">${STATE.coefs[uid]}%</span></div>
-      <div class="rvo-gauge-lbl"><span>Marge réalisée</span><span style="font-weight:600;color:var(--tx)">${pct.toFixed(1)}%</span></div>
-      <div class="rvo-track"><div class="rvo-fill ${cl}" style="width:${pct}%"></div></div>
-      <div class="rvo-nums">
-        <div>
-          <div class="rvo-real">${fmtE(realMarge)}</div>
-          <div style="font-size:10px;color:var(--t3);margin-top:2px">${joursCollab} jour(s)</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--t3)">Obj : ${fmtE(objMarge)}</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:${ecart>=0?'var(--gn)':'var(--rd)'}">${ecart>=0?'+':''}${fmtE(ecart)}</div>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-}
-window.rvoSetPeriod = rvoSetPeriod;
-window.rvoRender    = rvoRender;
-
-// ═══════════════════════════════════════════════════════
 //  MAINTENANCE
 // ═══════════════════════════════════════════════════════
 async function nettoyerScheduleOverrides(){
@@ -2709,7 +1871,7 @@ function renderRetours(){
         <span style="font-size:10px;color:var(--t3)">${r.date}${r.device?' · '+DEVICE_LABELS[r.device]:''}</span>
       </div>
       <div style="font-size:13px;color:var(--tx);line-height:1.5">${r.desc}</div>
-      ${!r.traite?`<button onclick="marquerTraite(${i})" style="font-size:10px;background:var(--gn-l);color:var(--gn);border:1px solid var(--gn-b);padding:2px 8px;border-radius:var(--r);cursor:pointer;font-family:'IBM Plex Sans',sans-serif">✓ Marquer traité</button>`:''}
+      ${!r.traite?`<button onclick="window.marquerTraite(${i})" style="font-size:10px;background:var(--gn-l);color:var(--gn);border:1px solid var(--gn-b);padding:2px 8px;border-radius:var(--r);cursor:pointer;font-family:'IBM Plex Sans',sans-serif">✓ Marquer traité</button>`:''}
     </div>`).join('');
 }
 
@@ -2948,19 +2110,97 @@ window.allerSignatures = function() {
 // ═══════════════════════════════════════════════════════
 window.pp=pp; window.pdel=pdel; window.logout=logout;
 window.showTab=showTab; window.cw=cw; window.gotoday=gotoday;
+// ═══════════════════════════════════════════════════════
+//  DUPLICATION
+// ═══════════════════════════════════════════════════════
+let dupCtx = null;
+
+function openDupDay(uid, dayKey, dateISO){
+  const u=USERS[uid];
+  const slot=getSlot(uid,dayKey,dateISO);
+  const [y,m,d]=dateISO.split('-');
+  dupCtx={mode:'day',uid,dayKey,dateISO,slot};
+  document.getElementById('dup-title').textContent=`Dupliquer — ${u.short}`;
+  document.getElementById('dup-sub').textContent=`${DLBL[DAYS.indexOf(dayKey)]} ${d}/${m} → copier vers :`;
+  const mon=monday(woff);
+  const otherDays=DAYS.map((dk,i)=>{
+    const dt=new Date(mon);dt.setDate(mon.getDate()+i);
+    const dISO=iso(dt);
+    if(dISO===dateISO)return null;
+    return{dk,dISO,label:`${DLBL[i]} ${fmt(dt)}`};
+  }).filter(Boolean);
+  document.getElementById('dup-body').innerHTML=`
+    <div style="margin-bottom:10px;font-size:11px;color:var(--t2)">Cocher les jours cibles :</div>
+    ${otherDays.map((d,i)=>`<label class="dup-check" style="display:flex;align-items:center;gap:7px;padding:4px 0;font-size:12px;cursor:pointer">
+      <input type="checkbox" id="dup-d-${i}" value="${d.dISO}" checked> ${d.label}
+    </label>`).join('')}`;
+  document.getElementById('modal-dup').style.display='flex';
+}
+
+function openDupWeek(){
+  dupCtx={mode:'week',woff};
+  document.getElementById('dup-title').textContent='Dupliquer la semaine';
+  const mon=monday(woff);
+  document.getElementById('dup-sub').textContent=`S${wknum(mon)} vers :`;
+  document.getElementById('dup-body').innerHTML=`
+    <div style="margin-bottom:10px;font-size:11px;color:var(--t2)">Semaine cible :</div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;padding:3px 0"><input type="radio" name="dup-wk" value="1" checked> Semaine suivante (S${wknum(mon)+1})</label>
+    <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;padding:3px 0"><input type="radio" name="dup-wk" value="2"> Dans 2 semaines (S${wknum(mon)+2})</label>
+    <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;padding:3px 0"><input type="radio" name="dup-wk" value="3"> Dans 3 semaines (S${wknum(mon)+3})</label>
+    <div style="margin-top:14px;font-size:11px;color:var(--t2);margin-bottom:8px">Collaborateurs :</div>
+    ${SIDS.map(uid=>`<label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;padding:2px 0"><input type="checkbox" id="dup-uid-${uid}" checked> ${USERS[uid].short}</label>`).join('')}`;
+  document.getElementById('modal-dup').style.display='flex';
+}
+
+function closeDupModal(){document.getElementById('modal-dup').style.display='none';dupCtx=null;}
+
+async function confirmDup(){
+  if(!dupCtx)return;
+  if(dupCtx.mode==='day'){
+    const checkboxes=document.querySelectorAll('#dup-body input[type=checkbox]:checked');
+    checkboxes.forEach(cb=>{
+      const targetDate=cb.value;
+      const dt=new Date(targetDate);
+      const dow=dt.getDay();
+      const idx=dow===0?5:dow-1;
+      const targetDayKey=DAYS[idx];
+      if(targetDayKey) STATE.slotOverrides[`${dupCtx.uid}-${targetDate}`]={...dupCtx.slot};
+    });
+    await saveState();
+    toast(`✓ Créneau dupliqué sur ${checkboxes.length} jour(s)`);
+  } else {
+    const wkDelta=parseInt(document.querySelector('#dup-body input[name=dup-wk]:checked')?.value||1);
+    const targetUIDs=SIDS.filter(uid=>{
+      const el=document.querySelector(`#dup-body input#dup-uid-${uid}`);
+      return el&&el.checked;
+    });
+    const srcMon=monday(dupCtx.woff);
+    targetUIDs.forEach(uid=>{
+      DAYS.forEach((dk,i)=>{
+        const srcDate=new Date(srcMon);srcDate.setDate(srcMon.getDate()+i);
+        const srcISO=iso(srcDate);
+        const tgtDate=new Date(srcMon);tgtDate.setDate(srcMon.getDate()+i+wkDelta*7);
+        const tgtISO=iso(tgtDate);
+        const slot=STATE.slotOverrides[`${uid}-${srcISO}`]||STATE.scheduleOverrides[`${uid}-${dk}`]||BASE_SCHEDULE[uid][dk];
+        if(slot) STATE.slotOverrides[`${uid}-${tgtISO}`]={...slot};
+      });
+    });
+    await saveState();
+    toast(`✓ Semaine dupliquée pour ${targetUIDs.length} collaborateur(s)`);
+  }
+  closeDupModal();
+  renderPlanning();
+}
+
 window.toggleEdit=toggleEdit; window.openModal=openModal; window.closeModal=closeModal;
 window.onTypeChange=onTypeChange; window.updatePreview=updatePreview; window.saveSlot=saveSlot;
 window.submitAbs=submitAbs; window.decide=decide;
-window.printSigs=printSigs; window.cwSig=cwSig;
-window.clearSig=clearSig; window.startSig=initSigCanvas;
+window.printSigs=printSigs; window.clearSig=clearSig; window.startSig=initSigCanvas;
+window.cwSig=cwSig;
+window.openDupDay=openDupDay; window.openDupWeek=openDupWeek; window.closeDupModal=closeDupModal; window.confirmDup=confirmDup;
 window.openEvModal=openEvModal;
 window.submitRetour=submitRetour; window.marquerTraite=marquerTraite; window.exportRetours=exportRetours;
 window.nettoyerScheduleOverrides=nettoyerScheduleOverrides;
-// Nouvelles fonctions
-window.saveCoefs=saveCoefs;
-window.openCollabModal=openCollabModal; window.closeCollabModal=closeCollabModal;
-window.saveCollab=saveCollab; window.openDelCollab=openDelCollab; window.confirmDelCollab=confirmDelCollab;
-window.openDupWeek=openDupWeek; window.openDupDay=openDupDay; window.closeDupModal=closeDupModal; window.confirmDup=confirmDup;
 // Exposer les fonctions internes pour le script classique
 window._saveState=saveState;
 window._renderPlanning=renderPlanning;
@@ -3062,6 +2302,5 @@ async function saveEv(){
   if(window._renderPlanning) window._renderPlanning();
 }
 </script>
-
-
-</body></html>
+</body>
+</html>
