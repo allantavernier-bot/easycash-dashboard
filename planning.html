@@ -1098,6 +1098,15 @@ function slotHTML(uid,dayKey,dateISO){
 function slotHTMLBase(uid,dayKey,dateISO,abs){
   if(abs==='approved')return'<div class="sl sa">Absence</div>';
   if(abs==='pending') return'<div class="sl sv">Abs. (att.)</div>';
+
+  // Planning vierge à partir du 29/06/2026
+  const VIERGE_FROM='2026-06-29';
+  const isVierge=dateISO>=VIERGE_FROM
+    &&!STATE.slotOverrides[`${uid}-${dateISO}`]
+    &&!STATE.scheduleOverrides[`${uid}-${dayKey}`];
+  if(isVierge&&BASE_SCHEDULE[uid].h>0)
+    return'<div class="sl so" style="color:var(--t3);font-style:italic;font-size:10px">—</div>';
+
   const s=getSlot(uid,dayKey,dateISO);
   const note=s.note?`<div class="pause-tag" style="color:var(--bl)">${s.note}</div>`:'';
 
