@@ -333,10 +333,10 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
     </div>
     <div class="lerr" id="lerr">Code incorrect — réessayez.</div>
     <div class="npad">
-      <div class="nb" onclick="pp('1')">1</div><div class="nb" onclick="pp('2')">2</div><div class="nb" onclick="pp('3')">3</div>
-      <div class="nb" onclick="pp('4')">4</div><div class="nb" onclick="pp('5')">5</div><div class="nb" onclick="pp('6')">6</div>
-      <div class="nb" onclick="pp('7')">7</div><div class="nb" onclick="pp('8')">8</div><div class="nb" onclick="pp('9')">9</div>
-      <div class="nb z" onclick="pp('0')">0</div><div class="nb del" onclick="pdel()">⌫</div>
+      <div class="nb" onclick="window.pp('1')">1</div><div class="nb" onclick="window.pp('2')">2</div><div class="nb" onclick="window.pp('3')">3</div>
+      <div class="nb" onclick="window.pp('4')">4</div><div class="nb" onclick="window.pp('5')">5</div><div class="nb" onclick="window.pp('6')">6</div>
+      <div class="nb" onclick="window.pp('7')">7</div><div class="nb" onclick="window.pp('8')">8</div><div class="nb" onclick="window.pp('9')">9</div>
+      <div class="nb z" onclick="window.pp('0')">0</div><div class="nb del" onclick="window.pdel()">⌫</div>
     </div>
   </div>
 </div>
@@ -356,7 +356,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
         <button class="logbtn" id="btn-notifs" style="font-size:14px;padding:4px 9px;" onclick="window.openNotifs()">🔔</button>
         <span class="nbadge" id="nbadge"></span>
       </div>
-      <button class="logbtn" onclick="logout()">Déconnexion</button>
+      <button class="logbtn" onclick="window.logout()">Déconnexion</button>
     </div>
   </header>
 
@@ -364,7 +364,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
   <div class="sig-banner" id="sig-banner">
     <span id="sig-banner-msg">⚠️ Vous n'avez pas encore signé votre planning du mois.</span>
     <div style="display:flex;gap:8px;align-items:center">
-      <a onclick="allerSignatures()">Signer maintenant →</a>
+      <a onclick="window.allerSignatures()">Signer maintenant →</a>
       <button class="close-banner" onclick="document.getElementById('sig-banner').classList.remove('show')">×</button>
     </div>
   </div>
@@ -376,12 +376,12 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
   </div>
 
   <div class="tabs">
-    <button class="tab on" onclick="showTab('planning',this)">Planning</button>
+    <button class="tab on" onclick="window.showTab('planning',this)">Planning</button>
     <button class="tab" onclick="window.showTab('signatures',this)">Signatures</button>
-    <button class="tab" onclick="showTab('absences',this)">Mes absences</button>
-    <button class="tab" onclick="showTab('retours',this)">💬 Retours</button>
-    <button class="tab adm" onclick="showTab('admin-abs',this)">Demandes</button>
-    <button class="tab adm" onclick="showTab('admin-team',this)">Équipe &amp; PIN</button>
+    <button class="tab" onclick="window.showTab('absences',this)">Mes absences</button>
+    <button class="tab" onclick="window.showTab('retours',this)">💬 Retours</button>
+    <button class="tab adm" onclick="window.showTab('admin-abs',this)">Demandes</button>
+    <button class="tab adm" onclick="window.showTab('admin-team',this)">Équipe &amp; PIN</button>
   </div>
 
   <main>
@@ -395,20 +395,20 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
       </div>
       <div class="wnav">
         <div class="wctrl">
-          <button class="wbtn" onclick="cw(-1)">&#8249;</button>
+          <button class="wbtn" onclick="window.cw(-1)">&#8249;</button>
           <span class="wtitle" id="wtitle"></span>
-          <button class="wbtn" onclick="cw(1)">&#8250;</button>
-          <button class="tbtn" onclick="gotoday()">Aujourd'hui</button>
+          <button class="wbtn" onclick="window.cw(1)">&#8250;</button>
+          <button class="tbtn" onclick="window.gotoday()">Aujourd'hui</button>
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
           <span style="font-size:11px;color:var(--t3);font-family:'IBM Plex Mono',monospace" id="wkn"></span>
-          <button class="tbtn adm" id="edit-toggle" onclick="toggleEdit()" style="border-color:var(--bl-b);color:var(--bl)">✎ Modifier</button>
+          <button class="tbtn adm" id="edit-toggle" onclick="window.toggleEdit()" style="border-color:var(--bl-b);color:var(--bl)">✎ Modifier</button>
         </div>
       </div>
       <div class="edit-bar" id="edit-bar" style="display:none">
         <span>Mode édition — cliquez sur une cellule pour modifier les horaires</span>
         <button onclick="window.openDupWeek()" style="background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;padding:4px 12px;border-radius:var(--r);font-size:11px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;margin-right:6px">📋 Dupliquer la semaine</button>
-        <button class="edit-exit" onclick="toggleEdit()">✓ Terminer</button>
+        <button class="edit-exit" onclick="window.toggleEdit()">✓ Terminer</button>
       </div>
       <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--rl);border:1px solid var(--b);">
         <div style="display:none;font-size:11px;color:var(--t3);padding:4px 8px;text-align:right" id="scroll-hint">← Glisser pour voir le samedi →</div>
@@ -479,7 +479,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
           <div class="frow"><label>Fin</label><input type="date" id="aend"></div>
         </div>
         <div class="frow"><label>Commentaire (optionnel)</label><textarea id="acomment" placeholder="Précisions…"></textarea></div>
-        <button class="sbmit" onclick="submitAbs()">Envoyer →</button>
+        <button class="sbmit" onclick="window.submitAbs()">Envoyer →</button>
       </div>
       <div class="alist" id="myalist"></div>
     </div>
@@ -497,7 +497,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
       <div class="acard" style="margin-bottom:14px;background:var(--rd-l);border-color:var(--rd-b)">
         <div class="actitle" style="color:var(--rd)">🛠 Maintenance — Données Firebase</div>
         <p style="font-size:12px;color:var(--t2);margin-bottom:10px">Si votre planning s'affiche incorrectement sur les semaines futures, cliquez ici pour nettoyer les anciennes données de planification.</p>
-        <button onclick="nettoyerScheduleOverrides()" style="background:var(--rd);color:#fff;border:none;padding:7px 14px;border-radius:var(--r);font-size:12px;font-weight:500;cursor:pointer;font-family:'IBM Plex Sans',sans-serif">
+        <button onclick="window.nettoyerScheduleOverrides()" style="background:var(--rd);color:#fff;border:none;padding:7px 14px;border-radius:var(--r);font-size:12px;font-weight:500;cursor:pointer;font-family:'IBM Plex Sans',sans-serif">
           🗑 Nettoyer les surcharges de planning (scheduleOverrides)
         </button>
       </div>
@@ -543,14 +543,14 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
             <option value="pc">PC / Ordinateur</option>
           </select>
         </div>
-        <button class="sbmit" onclick="submitRetour()">Envoyer mon retour →</button>
+        <button class="sbmit" onclick="window.submitRetour()">Envoyer mon retour →</button>
       </div>
 
       <!-- Liste des retours (vue manager uniquement) -->
       <div class="adm" id="retours-admin" style="margin-top:24px;display:none">
         <div style="font-size:13px;font-weight:500;margin-bottom:12px;color:var(--tx)">
           Retours reçus de l'équipe
-          <button onclick="exportRetours()" style="margin-left:12px;background:none;border:1px solid var(--bm);padding:3px 10px;border-radius:var(--r);font-size:11px;cursor:pointer;color:var(--t2);font-family:'IBM Plex Sans',sans-serif">📋 Copier pour Claude</button>
+          <button onclick="window.exportRetours()" style="margin-left:12px;background:none;border:1px solid var(--bm);padding:3px 10px;border-radius:var(--r);font-size:11px;cursor:pointer;color:var(--t2);font-family:'IBM Plex Sans',sans-serif">📋 Copier pour Claude</button>
         </div>
         <div id="retours-list"></div>
       </div>
@@ -564,7 +564,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
   <div class="mbox">
     <div class="mhead">
       <div><div class="mtitle" id="modal-title">Modifier le créneau</div><div class="msub" id="modal-sub"></div></div>
-      <button class="mclose" onclick="closeModal()">×</button>
+      <button class="mclose" onclick="window.closeModal()">×</button>
     </div>
     <div class="mbody">
       <div class="mrow">
@@ -600,8 +600,8 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
       </div>
     </div>
     <div class="mfoot">
-      <button class="mcncl" onclick="closeModal()">Annuler</button>
-      <button class="msave" id="msave" onclick="saveSlot()">Enregistrer</button>
+      <button class="mcncl" onclick="window.closeModal()">Annuler</button>
+      <button class="msave" id="msave" onclick="window.saveSlot()">Enregistrer</button>
     </div>
   </div>
 </div>
@@ -628,18 +628,18 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
   <div class="mbox">
     <div class="mhead">
       <div><div class="mtitle" id="modal-ev-title">Événements du jour</div><div class="msub">Ajoutez, modifiez ou supprimez des événements</div></div>
-      <button class="mclose" onclick="closeEvModal()">×</button>
+      <button class="mclose" onclick="window.closeEvModal()">×</button>
     </div>
     <div class="mbody">
       <div id="ev-list-edit" style="margin-bottom:12px"></div>
       <div style="display:flex;gap:8px;align-items:flex-start">
         <textarea id="ev-input" rows="2" style="flex:1;padding:8px 10px;border:1px solid var(--bm);border-radius:var(--r);font-family:'IBM Plex Sans',sans-serif;font-size:13px;resize:vertical;" placeholder="Nouvel événement..."></textarea>
-        <button onclick="addEvItem()" style="padding:8px 12px;background:var(--tx);color:#fff;border:none;border-radius:var(--r);cursor:pointer;font-size:12px;font-weight:500;white-space:nowrap;margin-top:2px">+ Ajouter</button>
+        <button onclick="window.addEvItem()" style="padding:8px 12px;background:var(--tx);color:#fff;border:none;border-radius:var(--r);cursor:pointer;font-size:12px;font-weight:500;white-space:nowrap;margin-top:2px">+ Ajouter</button>
       </div>
     </div>
     <div class="mfoot">
-      <button class="mcncl" onclick="closeEvModal()">Annuler</button>
-      <button class="msave" onclick="saveEv()">Enregistrer</button>
+      <button class="mcncl" onclick="window.closeEvModal()">Annuler</button>
+      <button class="msave" onclick="window.saveEv()">Enregistrer</button>
     </div>
   </div>
 </div>
@@ -2201,6 +2201,7 @@ window.openDupDay=openDupDay; window.openDupWeek=openDupWeek; window.closeDupMod
 window.openEvModal=openEvModal;
 window.submitRetour=submitRetour; window.marquerTraite=marquerTraite; window.exportRetours=exportRetours;
 window.nettoyerScheduleOverrides=nettoyerScheduleOverrides;
+window.closeEvModal=closeEvModal; window.addEvItem=addEvItem; window.saveEv=saveEv;
 // Exposer les fonctions internes pour le script classique
 window._saveState=saveState;
 window._renderPlanning=renderPlanning;
