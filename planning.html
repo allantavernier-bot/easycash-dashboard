@@ -362,7 +362,20 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
   .sig-card{border:none;padding:0;}
   .sig-box{border:1px solid #ccc;page-break-inside:avoid;}
 }
-@media(max-width:700px){
+@media print{
+  body.print-signatures header,
+  body.print-signatures .tabs,
+  body.print-signatures .nbox,
+  body.print-signatures .edit-bar,
+  body.print-signatures #view-planning,
+  body.print-signatures #view-objectifs,
+  body.print-signatures #view-absences,
+  body.print-signatures #view-admin-abs,
+  body.print-signatures #view-admin-team,
+  body.print-signatures #view-retours,
+  body.print-signatures .print-btn,
+  body.print-signatures .sig-nav { display:none!important; }
+  @media(max-width:700px){
   main{padding:10px;}
   .agrid{grid-template-columns:1fr;}
   header{padding:0 10px;}
@@ -1446,7 +1459,7 @@ function renderPlanning(){
   </div>`;
   DAYS.forEach((d,i)=>{
     const dISO=iso(dates[i]);
-    const ec=(editMode&&isAdm)?` editable" onclick="openModal('allan','${d}'`:'';
+    const ec=(editMode&&isAdm)?` editable" onclick="window.openModal('allan','${d}'`:'';
     bH+=`<div class="dc${isToday(dates[i])?' today-col':''}${ec?ec+')':''}">${slotHTML('allan',d,dISO)}</div>`;
   });
   bH+='</div><div style="height:2px;background:var(--bm);grid-column:1/-1"></div>';
@@ -1468,8 +1481,8 @@ function renderPlanning(){
       const slot=getSlot(uid,d,dISO);
       const here=!abs&&abs!=='repos_echange'&&!isFerieChome(uid,dISO)&&(slot.type==='full'||slot.type==='apm'||slot.type==='sat'||slot.type==='mat');
       if(here)cnt[i]++;
-      const ec=(editMode&&isAdm)?` editable" onclick="openModal('${uid}','${d}'`:'';
-      const dupBtn=(editMode&&isAdm&&!magasinFerme(dISO))?`<button onclick="event.stopPropagation();openDupDay('${uid}','${d}','${dISO}')" style="position:absolute;top:2px;right:2px;background:var(--am-l);border:1px solid var(--am-b);color:var(--am);border-radius:3px;font-size:9px;padding:1px 4px;cursor:pointer;z-index:2" title="Dupliquer ce jour">⧉</button>`:'';
+      const ec=(editMode&&isAdm)?` editable" onclick="window.openModal('${uid}','${d}'`:'';
+      const dupBtn=(editMode&&isAdm&&!magasinFerme(dISO))?`<button onclick="event.stopPropagation();window.openDupDay('${uid}','${d}','${dISO}')" style="position:absolute;top:2px;right:2px;background:var(--am-l);border:1px solid var(--am-b);color:var(--am);border-radius:3px;font-size:9px;padding:1px 4px;cursor:pointer;z-index:2" title="Dupliquer ce jour">⧉</button>`:'';
       bH+=`<div class="dc${isToday(dates[i])?' today-col':''}${ec?ec+')':''}" style="position:relative">${slotHTML(uid,d,dISO)}${dupBtn}</div>`;
     });
     bH+='</div>';
@@ -1480,8 +1493,8 @@ function renderPlanning(){
       const dtxt=diff===0?`<span class="hok">✓ Conforme (${mh(cm)})</span>`:diff>0?`<span class="hbad">⚠ +${mh(diff)} — dépasse le contrat</span>`:`<span class="hwrn">−${mh(Math.abs(diff))} sous le contrat</span>`;
       let det=ft>0?`<span style="font-size:10px;color:var(--am);margin-left:8px">Dont ${mh(ft)} férié · Budget : ${mh(bg)}</span>`:'';
       const sigPart=signed
-        ?`<span class="signed">✓ Planning signé — <a href="#" onclick="showTab('signatures',document.querySelector('.tab:nth-child(2))'));return false" style="color:var(--bl)">voir</a></span>`
-        :`<button class="sbtn" onclick="showTab('signatures',document.querySelectorAll('.tab')[1])">Signer ce planning ✓</button>`;
+        ?`<span class="signed">✓ Planning signé — <a href="#" onclick="window.showTab('signatures',document.querySelector('.tab:nth-child(2)'));return false" style="color:var(--bl)">voir</a></span>`
+        :`<button class="sbtn" onclick="window.showTab('signatures',document.querySelectorAll('.tab')[1])">Signer ce planning ✓</button>`;
       bH+=`<div class="sstrip"><div class="hinfo">Planifié : <b class="${cls}">${mh(wm)}</b> / ${mh(cm)} &nbsp;${dtxt}${det}</div>${sigPart}</div>`;
     }
   });
@@ -1606,10 +1619,10 @@ function renderSigPage(){
       </div>
       <div class="sig-signed">✓ Signé le ${sig.date}</div>`;
       if(USERS[cur].admin){
-        h+=`<button class="sig-clear" onclick="clearSig('${uid}','${wk}')">Effacer la signature</button>`;
+        h+=`<button class="sig-clear" onclick="window.clearSig('${uid}','${wk}')">Effacer la signature</button>`;
       }
     } else if(isMe){
-      h+=`<div class="sig-area" id="sig-area-${uid}" onclick="startSig('${uid}','${wk}')">
+      h+=`<div class="sig-area" id="sig-area-${uid}" onclick="window.startSig('${uid}','${wk}')">
         <span class="sig-area-label">Cliquez et signez ici</span>
       </div>
       <div class="sig-signed" style="color:var(--t3)">Non signé</div>`;
@@ -1675,29 +1688,10 @@ function clearSig(uid,wk){
 }
 
 function printSigs(){
-  // Récupérer le contenu de la vue signatures
-  const sigView = document.getElementById('view-signatures');
-  if(!sigView) { window.print(); return; }
-
-  const printWin = window.open('','_blank','width=900,height=700');
-  if(!printWin) { toast('Veuillez autoriser les popups pour imprimer.'); return; }
-
-  const styles = Array.from(document.querySelectorAll('style,link[rel="stylesheet"]'))
-    .map(s => s.outerHTML).join('\n');
-
-  printWin.document.write(`<!DOCTYPE html><html lang="fr"><head>
-    <meta charset="UTF-8">
-    <title>Signatures — Easy Cash Berck</title>
-    ${styles}
-    <style>
-      body{background:#fff!important;color:#000!important;padding:20px}
-      .print-btn,.tab,.header,.nbox{display:none!important}
-      @media print{body{padding:0}button{display:none!important}}
-    </style>
-  </head><body>${sigView.innerHTML}</body></html>`);
-  printWin.document.close();
-  printWin.focus();
-  setTimeout(()=>{ printWin.print(); }, 600);
+  // Ajouter une classe au body pour cibler uniquement les signatures via CSS @media print
+  document.body.classList.add('print-signatures');
+  window.print();
+  setTimeout(()=>document.body.classList.remove('print-signatures'), 1000);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1737,7 +1731,7 @@ function renderAdminAbs(){
   const hist=STATE.absences.filter(a=>a.status!=='pending');
   let pH=pend.length===0?'<span style="font-size:11px;color:var(--t3)">Aucune demande.</span>':'';
   pend.forEach(a=>{
-    pH+=`<div class="pitem"><div><div class="pname">${USERS[a.uid].name}</div><div class="pdet">${ALBL[a.type]||a.type} · ${a.start} → ${a.end}${a.comment?' · '+a.comment:''}</div></div><div class="pbtns"><button class="okbtn" onclick="decide(${a.id},'approved')">✓ Approuver</button><button class="nobtn" onclick="decide(${a.id},'refused')">✗ Refuser</button></div></div>`;
+    pH+=`<div class="pitem"><div><div class="pname">${USERS[a.uid].name}</div><div class="pdet">${ALBL[a.type]||a.type} · ${a.start} → ${a.end}${a.comment?' · '+a.comment:''}</div></div><div class="pbtns"><button class="okbtn" onclick="window.decide(${a.id},'approved')">✓ Approuver</button><button class="nobtn" onclick="window.decide(${a.id},'refused')">✗ Refuser</button></div></div>`;
   });
   document.getElementById('pendlist').innerHTML=pH;
   let hH=hist.length===0?'<span style="font-size:11px;color:var(--t3)">Aucun historique.</span>':'';
@@ -2811,6 +2805,7 @@ window.toggleEdit=toggleEdit; window.openModal=openModal; window.closeModal=clos
 window.onTypeChange=onTypeChange; window.updatePreview=updatePreview; window.saveSlot=saveSlot;
 window.submitAbs=submitAbs; window.approveAbs=approveAbs; window.rejectAbs=rejectAbs; window.decide=decide;
 window.printSigs=printSigs; window.allerSignatures=allerSignatures; window.cwSig=cwSig;
+window.clearSig=clearSig; window.startSig=initSigCanvas;
 window.openEvModal=openEvModal;
 window.submitRetour=submitRetour; window.marquerTraite=marquerTraite; window.exportRetours=exportRetours;
 window.nettoyerScheduleOverrides=nettoyerScheduleOverrides;
