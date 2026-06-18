@@ -1557,17 +1557,16 @@ function renderAdminTeam(){
       const chome=isFerieChome(uid,d);
       const mins=ferieChomeMins(uid);
       if(ferme||di===0){
-        // Dimanche ou magasin fermé → chômé pour tous
         fH+=`<td style="text-align:center"><span style="font-size:10px;color:var(--am)">Chômé<br><span style="font-family:'IBM Plex Mono',monospace">${mh(mins)}</span></span></td>`;
-        if(!past){totaux[uid].chome++;totaux[uid].mins+=mins;}
+        totaux[uid].chome++;totaux[uid].mins+=mins;
       } else if(!dayKey){
         fH+=`<td style="text-align:center"><span style="font-size:10px;color:var(--t3)">—</span></td>`;
       } else if(chome){
         fH+=`<td style="text-align:center"><span style="font-size:10px;color:var(--am)">Chômé<br><span style="font-family:'IBM Plex Mono',monospace">${mh(mins)}</span></span></td>`;
-        if(!past){totaux[uid].chome++;totaux[uid].mins+=mins;}
+        totaux[uid].chome++;totaux[uid].mins+=mins;
       } else {
         fH+=`<td style="text-align:center"><span style="font-size:10px;color:var(--rd);font-weight:600">Travaillé<br>+50%</span></td>`;
-        if(!past)totaux[uid].travaille++;
+        totaux[uid].travaille++;
       }
     });
     fH+=`</tr>`;
@@ -1575,7 +1574,7 @@ function renderAdminTeam(){
 
   // Ligne totaux
   fH+=`<tr style="background:var(--s2);font-weight:600">
-    <td colspan="3" style="font-size:11px;padding:8px">Totaux (à venir)</td>`;
+    <td colspan="3" style="font-size:11px;padding:8px">Totaux annuels 2026</td>`;
   SIDS.forEach(uid=>{
     const t=totaux[uid];
     fH+=`<td style="text-align:center;font-size:10px">
