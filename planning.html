@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- saved from url=(0028)https://ecberck.netlify.app/ -->
+<!-- saved from url=(0069)https://allantavernier-bot.github.io/easycash-dashboard/planning.html -->
 <html lang="fr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Planning — Easy Cash Berck</title>
-<link href="./Planning — Easy Cash Berck_files/css2" rel="stylesheet">
+<link href="./planning_files/css2" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
 :root{
@@ -386,7 +386,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
 <body>
 
 <!-- LOGIN -->
-<div id="login">
+<div id="login" style="display: none;">
   <div class="lbox">
     <div class="lhead">
       <div class="lbadge">EC</div>
@@ -418,7 +418,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
 </div>
 
 <!-- APP -->
-<div id="app">
+<div id="app" style="display: block;">
   <header>
     <div style="display:flex;align-items:center;">
       <div class="hbadge">EC</div><span class="htitle">Planning équipe</span>
@@ -427,10 +427,10 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
       </span>
     </div>
     <div class="hright">
-      <span class="huser">Connecté : <b id="huser"></b></span>
+      <span class="huser">Connecté : <b id="huser">Allan</b></span>
       <div class="nbell">
         <button class="logbtn" id="btn-notifs" style="font-size:14px;padding:4px 9px;" onclick="window.openNotifs()">🔔</button>
-        <span class="nbadge" id="nbadge"></span>
+        <span class="nbadge" id="nbadge" style="display: flex;">30</span>
       </div>
       <button class="logbtn" onclick="logout()">Déconnexion</button>
     </div>
@@ -457,8 +457,8 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
     <button class="tab" onclick="showTab(&#39;absences&#39;,this)">Mes absences</button>
     <button class="tab" onclick="showTab(&#39;retours&#39;,this)">💬 Retours</button>
     <button class="tab" onclick="showTab(&#39;objectifs&#39;,this)">📊 Objectifs</button>
-    <button class="tab adm" onclick="showTab(&#39;admin-abs&#39;,this)">Demandes</button>
-    <button class="tab adm" onclick="showTab(&#39;admin-team&#39;,this)">Équipe &amp; PIN</button>
+    <button class="tab adm" onclick="showTab(&#39;admin-abs&#39;,this)" style="display: block;">Demandes</button>
+    <button class="tab adm" onclick="showTab(&#39;admin-team&#39;,this)" style="display: block;">Équipe &amp; PIN</button>
   </div>
 
   <main>
@@ -473,13 +473,13 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
       <div class="wnav">
         <div class="wctrl">
           <button class="wbtn" onclick="cw(-1)">‹</button>
-          <span class="wtitle" id="wtitle"></span>
+          <span class="wtitle" id="wtitle">Semaine du 15/06 au 20/06</span>
           <button class="wbtn" onclick="cw(1)">›</button>
           <button class="tbtn" onclick="gotoday()">Aujourd'hui</button>
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
-          <span style="font-size:11px;color:var(--t3);font-family:&#39;IBM Plex Mono&#39;,monospace" id="wkn"></span>
-          <button class="tbtn adm" id="edit-toggle" onclick="toggleEdit()" style="border-color:var(--bl-b);color:var(--bl)">✎ Modifier</button>
+          <span style="font-size:11px;color:var(--t3);font-family:&#39;IBM Plex Mono&#39;,monospace" id="wkn">S25 · 2026</span>
+          <button class="tbtn adm" id="edit-toggle" onclick="toggleEdit()" style="border-color: var(--bl-b); color: var(--bl); display: block;">✎ Modifier</button>
         </div>
       </div>
       <div class="edit-bar" id="edit-bar" style="display:none">
@@ -490,10 +490,33 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
       <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--rl);border:1px solid var(--b);">
         <div style="display:none;font-size:11px;color:var(--t3);padding:4px 8px;text-align:right" id="scroll-hint">← Glisser pour voir le samedi →</div>
         <div class="ptbl" style="min-width:600px;border:none;border-radius:0;">
-          <div class="pth" id="pth"></div>
-          <div class="ev-row" id="ev-row"></div>
-          <div id="pbody"></div>
-          <div class="ptot" id="ptot"></div>
+          <div class="pth" id="pth"><div class="phc">Collaborateur</div><div class="phc phctr">Lundi<div class="phdate">15/06</div><div class="role-badges"><span class="rb rb-buy">Achat ✓</span><span class="rb rb-sell">Vente ✓</span><span class="rb" style="background:var(--gn-l);color:var(--gn);border:1px solid var(--gn-b)">🔑 Clés OK</span></div></div><div class="phc phctr">Mardi<div class="phdate">16/06</div><div class="role-badges"><span class="rb rb-buy">Achat ✓</span><span class="rb rb-sell">Vente ✓</span><span class="rb" style="background:var(--gn-l);color:var(--gn);border:1px solid var(--gn-b)">🔑 Clés OK</span></div></div><div class="phc phctr">Mercredi<div class="phdate">17/06</div><div class="role-badges"><span class="rb rb-buy">Achat ✓</span><span class="rb rb-sell">Vente ✓</span><span class="rb" style="background:var(--gn-l);color:var(--gn);border:1px solid var(--gn-b)">🔑 Clés OK</span></div></div><div class="phc phctr">Jeudi<div class="phdate">18/06</div><div class="tdot"></div><div class="role-badges"><span class="rb rb-buy">Achat ✓</span><span class="rb rb-sell">Vente ✓</span><span class="rb" style="background:var(--gn-l);color:var(--gn);border:1px solid var(--gn-b)">🔑 Clés OK</span></div></div><div class="phc phctr">Vendredi<div class="phdate">19/06</div><div class="role-badges"><span class="rb rb-buy">Achat ✓</span><span class="rb rb-sell">Vente ✓</span><span class="rb" style="background:var(--gn-l);color:var(--gn);border:1px solid var(--gn-b)">🔑 Clés OK</span></div></div><div class="phc phctr">Samedi<div class="phdate">20/06</div><div class="role-badges"><span class="rb rb-buy">Achat ✓</span><span class="rb rb-sell">Vente ✓</span><span class="rb" style="background:var(--gn-l);color:var(--gn);border:1px solid var(--gn-b)">🔑 Clés OK</span><span class="rb" style="background:var(--vl-l);color:var(--vl);border:1px solid var(--vl-b)">🍽 Pauses OK</span></div></div></div>
+          <div class="ev-row" id="ev-row"><div class="ev-label">📌 Événements</div><div class="ev-cell" data-date="2026-06-15"></div><div class="ev-cell" data-date="2026-06-16"></div><div class="ev-cell" data-date="2026-06-17"></div><div class="ev-cell today-col" data-date="2026-06-18"></div><div class="ev-cell" data-date="2026-06-19"></div><div class="ev-cell" data-date="2026-06-20"></div></div>
+          <div id="pbody"><div class="pr" style="background:#FAFAF8"><div class="ppers" style="border-right:1px solid var(--b)">
+    <div class="av" style="background:#EFEFED;color:#2A2A28">AT</div>
+    <div><div class="pname">Allan</div><div class="prole">Directeur</div></div>
+  </div><div class="dc"><div class="sl so">Absent</div></div><div class="dc"><div class="sl so">Absent</div></div><div class="dc"><div class="sl" style="background:#EFEFED;color:#444;border:1px solid #CCC;font-size:9px;margin-top:1px">▸ APM</div></div><div class="dc today-col"><div class="sl" style="background:#EFEFED;color:#444;border:1px solid #CCC;font-size:9px">▸ Matin</div><div class="sl" style="background:#EFEFED;color:#444;border:1px solid #CCC;font-size:9px;margin-top:1px">▸ APM</div></div><div class="dc"><div class="sl" style="background:#EFEFED;color:#444;border:1px solid #CCC;font-size:9px">▸ Matin</div><div class="sl" style="background:#EFEFED;color:#444;border:1px solid #CCC;font-size:9px;margin-top:1px">▸ APM</div></div><div class="dc"><div class="sl so">Absent</div></div></div><div style="height:2px;background:var(--bm);grid-column:1/-1"></div><div class="pr"><div class="ppers">
+      <div class="av" style="background:#E8F0FF;color:#1A4BAA">AV</div>
+      <div><div class="pname">Anthony</div><div class="prole">Acheteur principal</div>
+      <div class="psigned">✓ Signé</div>
+      </div></div><div class="dc" style="position:relative"><div class="prep-tag">▸ 09h45 prépa</div><div class="sl sw">09h45–12h00</div><div class="sl sw" style="margin-top:1px">14h00–19h15</div><div class="pause-tag">pause 10min (non rém.)</div></div><div class="dc" style="position:relative"><div class="prep-tag">▸ 09h45 prépa</div><div class="sl sw">09h45–12h00</div><div class="sl sw" style="margin-top:1px">14h00–19h15</div><div class="pause-tag">pause 10min (non rém.)</div></div><div class="dc" style="position:relative"><div class="prep-tag">▸ 09h45 prépa</div><div class="sl sw">09h45–12h00</div><div class="sl sw" style="margin-top:1px">14h00–19h15</div><div class="pause-tag">pause 10min (non rém.)</div></div><div class="dc today-col" style="position:relative"><div class="sl so">Repos</div></div><div class="dc" style="position:relative"><div class="sl sw">14h00–18h35</div><div class="pause-tag">pause 10min (non rém.)</div></div><div class="dc" style="position:relative"><div class="prep-tag">▸ 09h30 prépa</div><div class="sl sg">09h30–13h00</div><div class="pause-tag" style="color:var(--vl);font-weight:600">🍽 Pause repas 13h–14h</div><div class="sl sg" style="margin-top:1px">14h00–19h15</div><div class="pause-tag">pause 10min (non rém.)</div></div></div><div class="pr"><div class="ppers">
+      <div class="av" style="background:#FCEAF2;color:#7A2040">CM</div>
+      <div><div class="pname">Cathy</div><div class="prole">Bijoutière</div>
+      <div class="psigned">✓ Signé</div>
+      </div></div><div class="dc" style="position:relative"><div class="sl so">Repos</div></div><div class="dc" style="position:relative"><div class="prep-tag">▸ 09h45 prépa</div><div class="sl sw">09h45–12h00</div><div class="sl sw" style="margin-top:1px">14h00–19h15</div><div class="pause-tag">pause 10min (non rém.)</div></div><div class="dc" style="position:relative"><div class="prep-tag">▸ 09h45 prépa</div><div class="sl sw">09h45–12h30</div><div class="sl sw" style="margin-top:1px">14h00–18h05</div><div class="pause-tag">pause 10min (non rém.)</div></div><div class="dc today-col" style="position:relative"><div class="prep-tag">▸ 09h45 prépa</div><div class="sl sw">09h45–12h00</div><div class="sl sw" style="margin-top:1px">14h00–19h15</div><div class="pause-tag">pause 10min (non rém.)</div></div><div class="dc" style="position:relative"><div class="sl sw">14h00–19h15</div><div class="pause-tag">pause 10min (non rém.)</div></div><div class="dc" style="position:relative"><div class="prep-tag">▸ 09h30 prépa</div><div class="sl sg">09h30–12h00</div><div class="pause-tag" style="color:var(--vl);font-weight:600">🍽 Pause repas 12h–13h</div><div class="sl sg" style="margin-top:1px">13h00–19h15</div><div class="pause-tag">pause 10min (non rém.)</div></div></div><div class="pr"><div class="ppers">
+      <div class="av" style="background:#FFF5E8;color:#7A4808">HP</div>
+      <div><div class="pname">Hubert</div><div class="prole">Vendeur téléphonie</div>
+      <div class="psigned">✓ Signé</div>
+      </div></div><div class="dc" style="position:relative"><div class="prep-tag">▸ 09h45 prépa</div><div class="sl sw">09h45–12h30</div><div class="sl sw" style="margin-top:1px">14h00–19h15</div><div class="pause-tag">pause 10min (non rém.)</div></div><div class="dc" style="position:relative"><div class="sl sw">14h00–18h05</div><div class="pause-tag">pause 10min (non rém.)</div></div><div class="dc" style="position:relative"><div class="sl so">Repos</div></div><div class="dc today-col" style="position:relative"><div class="prep-tag">▸ 09h45 prépa</div><div class="sl sw">09h45–12h30</div><div class="sl sw" style="margin-top:1px">14h00–19h15</div><div class="pause-tag">pause 10min (non rém.)</div></div><div class="dc" style="position:relative"><div class="prep-tag">▸ 09h45 prépa</div><div class="sl sw">09h45–12h30</div><div class="sl sw" style="margin-top:1px">14h00–19h15</div><div class="pause-tag">pause 10min (non rém.)</div></div><div class="dc" style="position:relative"><div class="prep-tag">▸ 09h30 prépa</div><div class="sl sg">09h30–13h00</div><div class="pause-tag" style="color:var(--vl);font-weight:600">🍽 Pause repas 12h–13h</div><div class="sl sg" style="margin-top:1px">14h00–18h15</div><div class="pause-tag">pause 10min (non rém.)</div></div></div><div class="pr"><div class="ppers">
+      <div class="av" style="background:#EAFAF2;color:#0F6830">MV</div>
+      <div><div class="pname">Manon</div><div class="prole">Vendeuse JV &amp; Culture</div>
+      
+      </div></div><div class="dc" style="position:relative"><div class="sl so">Repos</div></div><div class="dc" style="position:relative"><div class="sl so">Repos</div></div><div class="dc" style="position:relative"><div class="prep-tag">▸ 09h30 prépa</div><div class="sl sw">09h30–12h30</div><div class="sl sw" style="margin-top:1px">14h00–19h15</div><div class="pause-tag">pause 10min (non rém.)</div></div><div class="dc today-col" style="position:relative"><div class="sl so">Repos</div></div><div class="dc" style="position:relative"><div class="prep-tag">▸ 09h15 prépa</div><div class="sl sw">09h15–12h30</div><div class="sl sw" style="margin-top:1px">14h00–19h15</div><div class="pause-tag">pause 10min (non rém.)</div></div><div class="dc" style="position:relative"><div class="prep-tag">▸ 09h30 prépa</div><div class="sl sg">09h30–13h00</div><div class="pause-tag" style="color:var(--vl);font-weight:600">🍽 Pause repas 13h–14h</div><div class="sl sg" style="margin-top:1px">14h00–19h15</div><div class="pause-tag">pause 10min (non rém.)</div></div></div><div class="pr"><div class="ppers">
+      <div class="av" style="background:#EEEEFF;color:#3D2DA0">LB</div>
+      <div><div class="pname">Lucie</div><div class="prole">Vendeuse générale</div>
+      <div class="psigned">✓ Signé</div>
+      </div></div><div class="dc" style="position:relative"><div class="prep-tag">▸ 09h45 prépa</div><div class="sl sw">09h45–12h00</div><div class="sl sw" style="margin-top:1px">14h00–19h15</div><div class="pause-tag">pause 10min (non rém.)</div></div><div class="dc" style="position:relative"><div class="sl sf">Formation (5h)</div><div class="pause-tag">09h00–11h30 | 14h00–16h30</div><div class="pause-tag" style="color:var(--am)">comptées au contrat</div></div><div class="dc" style="position:relative"><div class="prep-tag">▸ 09h45 prépa</div><div class="sl sw">09h45–12h00</div><div class="sl sw" style="margin-top:1px">14h00–19h15</div><div class="pause-tag">pause 10min (non rém.)</div></div><div class="dc today-col" style="position:relative"><div class="prep-tag">▸ 09h45 prépa</div><div class="sl sw">09h45–12h00</div><div class="sl sw" style="margin-top:1px">14h00–19h15</div><div class="pause-tag">pause 10min (non rém.)</div></div><div class="dc" style="position:relative"><div class="sl so">Repos</div></div><div class="dc" style="position:relative"><div class="sl so">Repos</div></div></div><div class="sstrip"><span style="font-size:11px;color:var(--t3)">Vue directeur — toutes semaines accessibles</span></div></div>
+          <div class="ptot" id="ptot"><div class="ptc">Présents</div><div class="ptc"><div class="ptn" style="">3</div></div><div class="ptc"><div class="ptn" style="">3</div></div><div class="ptc"><div class="ptn" style="">4</div></div><div class="ptc"><div class="ptn" style="">3</div></div><div class="ptc"><div class="ptn" style="">4</div></div><div class="ptc"><div class="ptn" style="">4</div></div></div>
         </div>
       </div>
       <div class="leg">
@@ -506,14 +529,14 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
         <div class="li" style="border-left:2px solid var(--gn);padding-left:6px;color:var(--gn)">🔑 Clés/Coffre : Allan ou Anthony présent obligatoirement</div>
         <div class="li" style="border-left:2px solid var(--vl);padding-left:6px;color:var(--vl)">🍽 Sam. 12h–13h : Cathy, Hubert, Allan &nbsp;|&nbsp; 13h–14h : Anthony, Manon, Lucie</div>
       </div>
-      <div class="hcard adm" id="hcard" style="display:none">
+      <div class="hcard adm" id="hcard" style="display: block;">
         <div style="font-size:12px;font-weight:500">Contrôle contrats — semaine</div>
-        <div class="hgrid" id="hgrid"></div>
+        <div class="hgrid" id="hgrid"><div class="hitem hitem-ok"><div class="hlbl">Anthony</div><div class="hval hok2">35h</div><div class="hsub">Contrat 35h · ✓</div></div><div class="hitem hitem-ok"><div class="hlbl">Cathy</div><div class="hval hok2">35h</div><div class="hsub">Contrat 35h · ✓</div></div><div class="hitem hitem-ok"><div class="hlbl">Hubert</div><div class="hval hok2">35h</div><div class="hsub">Contrat 35h · ✓</div></div><div class="hitem hitem-ok"><div class="hlbl">Manon</div><div class="hval hok2">25h</div><div class="hsub">Contrat 25h · ✓</div></div><div class="hitem hitem-warn"><div class="hlbl">Lucie</div><div class="hval hwrn2">27h</div><div class="hsub">Contrat 35h · −8h</div></div></div>
         <div id="halert"></div>
       </div>
-      <div class="acard adm" id="covcard" style="display:none;margin-top:12px">
+      <div class="acard adm" id="covcard" style="display: block; margin-top: 12px;">
         <div style="font-size:12px;font-weight:500;margin-bottom:8px">Couverture des rôles clés</div>
-        <div class="covgrid" id="covgrid"></div>
+        <div class="covgrid" id="covgrid"><div class="cov-item cov-warn"><div class="cov-lbl">◐ Lundi</div><div class="cov-detail">Achat: Anthony, Hubert</div><div class="cov-detail">Bijoux: ⚠</div></div><div class="cov-item cov-ok"><div class="cov-lbl">✓ Mardi</div><div class="cov-detail">Achat: Anthony, Hubert</div><div class="cov-detail">Bijoux: Cathy</div></div><div class="cov-item cov-ok"><div class="cov-lbl">✓ Mercredi</div><div class="cov-detail">Achat: Anthony</div><div class="cov-detail">Bijoux: Cathy</div></div><div class="cov-item cov-ok"><div class="cov-lbl">✓ Jeudi</div><div class="cov-detail">Achat: Hubert, Allan</div><div class="cov-detail">Bijoux: Cathy, Allan</div></div><div class="cov-item cov-ok"><div class="cov-lbl">✓ Vendredi</div><div class="cov-detail">Achat: Anthony, Hubert, Allan</div><div class="cov-detail">Bijoux: Cathy, Allan</div></div><div class="cov-item cov-ok"><div class="cov-lbl">✓ Samedi</div><div class="cov-detail">Achat: Anthony, Hubert</div><div class="cov-detail">Bijoux: Cathy</div></div></div>
       </div>
     </div>
 
@@ -521,20 +544,60 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
     <div class="view" id="view-signatures">
       <div class="sig-card">
         <div class="sig-title">
-          <span>Feuille de signatures — <span id="sig-week-label"></span></span>
+          <span>Feuille de signatures — <span id="sig-week-label">Semaine du 15/06 au 20/06 (S25)</span></span>
           <button class="print-btn" onclick="printSigs()">🖨 Imprimer / PDF</button>
         </div>
         <!-- Navigation semaine indépendante -->
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-          <button onclick="cwSig(-1)" style="background:var(--s2);border:1px solid var(--bm);width:28px;height:28px;border-radius:var(--r);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Sans',sans-serif">‹</button>
-          <button onclick="cwSig(1)" style="background:var(--s2);border:1px solid var(--bm);width:28px;height:28px;border-radius:var(--r);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Sans',sans-serif">›</button>
-          <button onclick="cwSig(0)" style="background:none;border:1px solid var(--bm);padding:4px 10px;border-radius:var(--r);cursor:pointer;font-size:11px;color:var(--t2);font-family:'IBM Plex Sans',sans-serif">Semaine actuelle</button>
+          <button onclick="cwSig(-1)" style="background:var(--s2);border:1px solid var(--bm);width:28px;height:28px;border-radius:var(--r);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:&#39;IBM Plex Sans&#39;,sans-serif">‹</button>
+          <button onclick="cwSig(1)" style="background:var(--s2);border:1px solid var(--bm);width:28px;height:28px;border-radius:var(--r);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;font-family:&#39;IBM Plex Sans&#39;,sans-serif">›</button>
+          <button onclick="cwSig(0)" style="background:none;border:1px solid var(--bm);padding:4px 10px;border-radius:var(--r);cursor:pointer;font-size:11px;color:var(--t2);font-family:&#39;IBM Plex Sans&#39;,sans-serif">Semaine actuelle</button>
           <span style="font-size:11px;color:var(--t3)" id="sig-nav-hint"></span>
         </div>
         <div style="font-size:11px;color:var(--t2);margin-bottom:14px;">
           En signant, le salarié confirme avoir pris connaissance de ses horaires et n'avoir aucune réserve à formuler.
         </div>
-        <div class="sig-grid" id="sig-grid"></div>
+        <div class="sig-grid" id="sig-grid"><div class="sig-box">
+      <div class="av" style="background:#E8F0FF;color:#1A4BAA;width:36px;height:36px;font-size:12px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px">AV</div>
+      <div class="sig-name">Anthony Vantorre</div>
+      <div class="sig-hours">Acheteur principal</div>
+      <div style="font-size:10px;color:var(--t2);margin-bottom:8px;line-height:1.5">Lundi: 09h45–12h00 / 14h00–19h15 · Mardi: 09h45–12h00 / 14h00–19h15 · Mercredi: 09h45–12h00 / 14h00–19h15 · Vendredi: 14h00–18h35 · Samedi: 09h30–13h00 / 14h00–19h15</div>
+      <div style="font-size:11px;font-weight:500;color:var(--t2);margin-bottom:3px">Total planifié : <b style="color:var(--tx)">35h</b> / 35h</div><div class="sig-area" style="cursor:default">
+        <img src="data:image/png;base64,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" style="width:100%;height:100%;object-fit:contain">
+      </div>
+      <div class="sig-signed">✓ Signé le 15/06/2026</div><button class="sig-clear" onclick="window.clearSig(&#39;anthony&#39;,&#39;2026-06-15&#39;)">Effacer la signature</button></div><div class="sig-box">
+      <div class="av" style="background:#FCEAF2;color:#7A2040;width:36px;height:36px;font-size:12px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px">CM</div>
+      <div class="sig-name">Cathy Matturel</div>
+      <div class="sig-hours">Bijoutière</div>
+      <div style="font-size:10px;color:var(--t2);margin-bottom:8px;line-height:1.5">Mardi: 09h45–12h00 / 14h00–19h15 · Mercredi: 09h45–12h30 / 14h00–18h05 · Jeudi: 09h45–12h00 / 14h00–19h15 · Vendredi: 14h00–19h15 · Samedi: 09h30–12h00 / 13h00–19h15</div>
+      <div style="font-size:11px;font-weight:500;color:var(--t2);margin-bottom:3px">Total planifié : <b style="color:var(--tx)">35h</b> / 35h</div><div class="sig-area" style="cursor:default">
+        <img src="data:image/png;base64,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" style="width:100%;height:100%;object-fit:contain">
+      </div>
+      <div class="sig-signed">✓ Signé le 17/06/2026</div><button class="sig-clear" onclick="window.clearSig(&#39;cathy&#39;,&#39;2026-06-15&#39;)">Effacer la signature</button></div><div class="sig-box">
+      <div class="av" style="background:#FFF5E8;color:#7A4808;width:36px;height:36px;font-size:12px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px">HP</div>
+      <div class="sig-name">Hubert Poidevin</div>
+      <div class="sig-hours">Vendeur téléphonie</div>
+      <div style="font-size:10px;color:var(--t2);margin-bottom:8px;line-height:1.5">Lundi: 09h45–12h30 / 14h00–19h15 · Mardi: 14h00–18h05 · Jeudi: 09h45–12h30 / 14h00–19h15 · Vendredi: 09h45–12h30 / 14h00–19h15 · Samedi: 09h30–13h00 / 14h00–18h15</div>
+      <div style="font-size:11px;font-weight:500;color:var(--t2);margin-bottom:3px">Total planifié : <b style="color:var(--tx)">35h</b> / 35h</div><div class="sig-area" style="cursor:default">
+        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASUAAABGCAYAAACKcII3AAAKzklEQVR4AeycPY8cRRCG7TMfQkj+kpBTSySkSPwARE7GD4CEGMkpgREpIiBxBuSIhByJnIQQEiBEDmzLQghh+456bNe6rq97rmemZ3c+3tUVPdvTH1Vvdz3bs1h7dEEvKSAFpMCMFBCUZrQYckUKSIELFwQl7QIpIAVmpYCgNKvlWJ4z8lgKtFZAUGqtqMaTAlJglAKC0ij51FkKSIHWCghKrRXVeFJACtQrkGkpKGVEUZUUkAKHU0BQOpz2mlkKSIGMAoJSRhRVSQEpcDgFBKXDab+8mTfk8eXLlx9fvXr1+Nq1ayd9jD5uG5KraaiCUlM5NdgSFAA454Hmkr0u2qtvPNZl9xfn6DvOltsLSlte/Uaxk+R2Oviw0XBNh8G3CAeujTeX+k5yUvHqGpN5TaPjrja690wBQemZDvrvQAVIepLcjgffDByiSTf8wEj+aPjWNUHKmif2un///sXUHjx4cHSepX1sqCeM7/ObRhfxzd9vr6yLWFCq00mtCgoc2atwa5JqwMOJg+SOBnywrkkBRAqOFDQPHz58qWuMPvcYi/GBU+yH//G9rk8rICid1kPveirAp3/PLtXNcwACPDVzlgBUPXnDhsAJGPqQNf572y2WgtIWV32CmIHAmGEBUDz5cF0DIOYl4VPjhDLGn9Z9ia/1mGsdT1Ba68qOjqvfAMf26upBUvLYAmxyBoC6+i8FPmkMxE28MT4AmrbT+xcKCEovtNDVCAV4RKE7SYiRiNFIytrHlhyA5nbyIdYucw2IO7YTkKIa+WtBKa+LaisU4OTjzRxAJCHm9aUS8GB8CUyiRlsagGKMJRh5nLGtrvMKCEp5XVRbUMCTDgjVnHw8GSN0uAY8mJ+wCtMtptp1SYHs8a8lzh4LMripoDRYum109GQDQliadFEFTj4AJ9qakzFqk+riGqw5/rj2La8FpZZqLnwskoxHMuDjliZbLkQ/DXDyyd1fW51rlNPGYbS2mPcZj6C0T7VnNhcQcvhQkmRdj2TxJASIPJy1nwbQyUGETqlGURfXROVwBQSl4dotrifJRVK5AaHnQZwpYqL5p388CR3Z60ynFVVErdApBRGh5nShfsl2/fr1DwzAnx4yBkHpkOpPPHdMLEBEcpWmTCEUAZTrk0vSXLsl1UW9SlpxQnQYLSm21FeDz88Gn+NgT9gjtg++s7X9nGuzX9N++3gvKO1D5T3NEZPKNtRJKbFwxxPLy/MgRJ+c2SY+ydUvpS5qltOL+Fwjyrk/ql65cuUvQMP6d5nF9Y7BJ/7lWPDGIdYx58gh/NCcAxQgoeIGzCWVD0tCRfP6seWxvcaOse/+6OYJm9PMEvbEtRoK66ljMvj8Hdfe47Gn6huQZuj81veu9f3d7BfT4ZaVVX8tGwlKLdXcw1hpQtkmupibNj5mkGC5NkPrSAbvO/eTg/uZ6ub1XloCzhJEBp9/0Nuh46XB5/XS2seYiMvN6n9jL3TZvXv3btj9N83eNiB/a332/ico7V3yfhOSTHFT5j7ZGZGNZxtp9ztAS4EFvk9laOdJXNLNNbMEPFgumJ//xjV2nykNPq/VwMfjiCUxRbN7b02ldctxD7YQLYNY01i2QU/9NjTJlNuUKYTYfPvSwf3Bh5ZzWmK+a1/Afm3lJ2PGtf5Pf1sb7XLjWHLu4J27P1Wdre1/7hvAcTM/X3VNz5sbzaP/XO9z7c/zr8V9QamFiiPHsM36OGzQS6UNGjfkmI040t1dd/s66Xj3psGFxX3HYvzIyi8teb/oM2TU0PqfeqS1MXePZiRxn3GHtDVfHvl6xtLg83LqWzo+vmL4mbM5rHvqc+v3glJrRSvHs6R7+mnOprXNmv3N6HRzzmFD4reHOMEj4lfPxyZ3b5k2Pzx/ny0s+U/BPG3kSb0P3cyXHYhsPat+vTJdX/zFVyyNZUvvBaU9rrZt3F0SkXXp1OkmnePmzPmdxjH0vSXlHet7z8z/3vcLL6OGlvxnYB6/4Pc+BtKbft2ytHHjB0sWRKyp+fTIYts9Mvr1HNe3pT5DxxKUhipX0S8mkH3qZ//dkG3YJ0vcpPhdIcGQJt8b+O5aMh9b+SMDRB1zILK2u8ez9PRm4Lhp4/xh31XdZqwxFv1gPW3cU4+JjB19YV0Bj/n0CvdWYxMHIig1Fjhu3FwCMR0JzYbFbMNmP2FpN2ebym/T5GP+t7Ql8yX7zuo9kj+nY9TQ2nbuY4PHZzbWT0P07Lue5/kyxIet9elczK2JMSZe37y5BGLcmERTJTTzTGl26mj6xXbOV9cRGBlMTp1E4imkVkODxJ8GudtWVkMp+lBaT4Pn7nGs1pdcvKo7q4CgdFaTXjW+gdPNGxOIDbyGjeuQILZeIlU0LulIV/TDDCyT7VefHxima4kPGD648V42jQKTLfI07s5rVE4O6Qb2E9GUCdRLhQka26NQsxMTGuZAAPj2AQCHUbqOyBZ9wBfqZNMrICgN0Ng3sp8cGMJhtIYTEfFMaa4fMIoaMqfrOBXUmdtByPw5GAEgbCofiFNWVkBQKmuTvcOmTjcyG3jtMCKRXZAhsaIbEMBS/RgXDbEhY9O/y9K5UxDSl7ndeC87nAKCUk/tY0L5p3rPIRbZ3BOZR5qaACIISiBy/YBBzZh92sT545rFMaacP86z7Ov9ey8o9dCc5PLmJNIUn+o+/lzL0vdJQABDI6wEAqCGdlhr/WrmZ1631vPPdc2W5pegVLli8fGFT9jKbqtoFmP3RAYA1AMgDAhhuYAdApStv6fBD+bHaubP+ae6eSkgKFWuR3x88cSs7Lr4Zh47gZD8GACI9dyLBoDcYv3YayCUwjA3ps9NmbuvuvkqIChVrA1J4M1af9L7uG3Kw4wSH8mAANbSE0AECLEuGDKvW8v5NdZ+FRCUKvTuOhFUdF90E0AQAwBAPL568lO2BjUQ4oOAuTFAFH3wa3xhfjevV7lsBQSlHutHMvZovvimwIHEdyP5AdAUj6/MBYAwIFT6IMAHN3xZvMgK4IwCgtIZScoVR/Yq313fHeBD4ru1jDBCyEGUGx8gOoQoc21U10yBWQwkKFUsA4lBMz69SSauZfUKoFl8HOsDIYBYP5NarkEBQaliFeO/zeHRgiSr6La5JuiSwscBBNBLgnACchOESiptp15QqlhrHmPi90lbB9NQ+CA1p04HkJfUy6SAKyAouRLnlDkwcSo4p9uUtycdG/BgxIhx4nEDyl0nH3csByCdhFwdlSUFBKWSMpn6FEwkpicqiZvpMruqEmg8Di8BD0aMWFcgOfhwChKAulTTvZICglJJmUK9g4lEjE1IXE9oAIXF+1NeAxqMOTH3I1fWgibnLzFjACea4JNTS3VDFRCUBigHmEhEEjN+1+RDASgsB4Up6gANxpyY+1FbAho34iGunBEzVjuu2s1bgbl6JyiNXBkA5QlMQpPcI4ds1h1f3NzHXAlo3IinmQMaSAoMUEBQGiBaqQsJTXLHxHdQORzGloyHxTlK1/jiVvJZ9VJgbgoIShOviIPK4TC2ZDxsYrc1vBQ4mAKC0sGk7zexWkuBrSggKG1lpRWnFFiIAoLSQhZKbkqBrSggKG1lpRXnthVYUPSC0oIWS65KgS0oIChtYZUVoxRYkAKC0oIWS65KgS0oICjNcZXlkxTYsAKC0oYXX6FLgTkqICjNcVXkkxTYsAKC0oYXX6GvVYFlx/U/AAAA//9+hpYtAAAABklEQVQDAFOnGxQAAZ8gAAAAAElFTkSuQmCC" style="width:100%;height:100%;object-fit:contain">
+      </div>
+      <div class="sig-signed">✓ Signé le 15/06/2026</div><button class="sig-clear" onclick="window.clearSig(&#39;hubert&#39;,&#39;2026-06-15&#39;)">Effacer la signature</button></div><div class="sig-box">
+      <div class="av" style="background:#EAFAF2;color:#0F6830;width:36px;height:36px;font-size:12px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px">MV</div>
+      <div class="sig-name">Manon Vivien</div>
+      <div class="sig-hours">Vendeuse JV &amp; Culture</div>
+      <div style="font-size:10px;color:var(--t2);margin-bottom:8px;line-height:1.5">Mercredi: 09h30–12h30 / 14h00–19h15 · Vendredi: 09h15–12h30 / 14h00–19h15 · Samedi: 09h30–13h00 / 14h00–19h15</div>
+      <div style="font-size:11px;font-weight:500;color:var(--t2);margin-bottom:3px">Total planifié : <b style="color:var(--tx)">25h</b> / 25h</div><div class="sig-area" style="cursor:default;background:var(--s3)">
+        <span class="sig-area-label" style="font-size:10px">En attente de signature</span>
+      </div>
+      <div class="sig-signed" style="color:var(--t3)">Non signé</div></div><div class="sig-box">
+      <div class="av" style="background:#EEEEFF;color:#3D2DA0;width:36px;height:36px;font-size:12px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px">LB</div>
+      <div class="sig-name">Lucie Bridoux</div>
+      <div class="sig-hours">Vendeuse générale</div>
+      <div style="font-size:10px;color:var(--t2);margin-bottom:8px;line-height:1.5">Lundi: 09h45–12h00 / 14h00–19h15 · Mardi: Formation · Mercredi: 09h45–12h00 / 14h00–19h15 · Jeudi: 09h45–12h00 / 14h00–19h15</div>
+      <div style="font-size:11px;font-weight:500;color:var(--t2);margin-bottom:3px">Total planifié : <b style="color:var(--tx)">27h</b> / 35h</div><div class="sig-area" style="cursor:default">
+        <img src="data:image/png;base64,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" style="width:100%;height:100%;object-fit:contain">
+      </div>
+      <div class="sig-signed">✓ Signé le 15/06/2026</div><button class="sig-clear" onclick="window.clearSig(&#39;lucie&#39;,&#39;2026-06-15&#39;)">Effacer la signature</button></div></div>
       </div>
     </div>
 
@@ -559,14 +622,14 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
         <div class="frow"><label>Commentaire (optionnel)</label><textarea id="acomment" placeholder="Précisions…"></textarea></div>
         <button class="sbmit" onclick="submitAbs()">Envoyer →</button>
       </div>
-      <div class="alist" id="myalist"></div>
+      <div class="alist" id="myalist"><p style="font-size:12px;color:var(--t3);margin-top:12px">Aucune demande.</p></div>
     </div>
 
     <!-- ADMIN ABSENCES -->
     <div class="view" id="view-admin-abs">
       <div class="agrid">
-        <div class="acard"><div class="actitle">En attente</div><div id="pendlist"></div></div>
-        <div class="acard"><div class="actitle">Historique</div><div id="histlist"></div></div>
+        <div class="acard"><div class="actitle">En attente</div><div id="pendlist"><div class="pitem"><div><div class="pname">Anthony Vantorre</div><div class="pdet">Congés payés · 2026-09-07 → 2026-09-12 · Je veux des vacances </div></div><div class="pbtns"><button class="okbtn" onclick="window.decide(1780658446956,&#39;approved&#39;)">✓ Approuver</button><button class="nobtn" onclick="window.decide(1780658446956,&#39;refused&#39;)">✗ Refuser</button></div></div><div class="pitem"><div><div class="pname">Cathy Matturel</div><div class="pdet">Congés payés · 2026-09-18 → 2026-09-21</div></div><div class="pbtns"><button class="okbtn" onclick="window.decide(1781168083974,&#39;approved&#39;)">✓ Approuver</button><button class="nobtn" onclick="window.decide(1781168083974,&#39;refused&#39;)">✗ Refuser</button></div></div></div></div>
+        <div class="acard"><div class="actitle">Historique</div><div id="histlist"><div class="aitem" style="margin-bottom:5px"><div><div class="adate">Manon · Repos (échange)</div><div class="areason">2026-07-03 → 2026-07-03</div></div><span class="pill p-ok">Approuvée</span></div><div class="aitem" style="margin-bottom:5px"><div><div class="adate">Manon · Repos (échange)</div><div class="areason">2026-06-06 → 2026-06-06</div></div><span class="pill p-ok">Approuvée</span></div></div></div>
       </div>
     </div>
 
@@ -595,13 +658,16 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
       <div class="acard" style="margin-bottom:14px">
         <div class="actitle" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
           <span>📊 Objectifs de marge journaliers</span>
-          <span class="source-tag" id="marge-source-tag">🔗 Chargement...</span>
+          <span class="source-tag" id="marge-source-tag" style="background: var(--gn-l); border-color: var(--gn-b); color: var(--gn);">🔗 Google Sheets — Synchronisé</span>
         </div>
         <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
           <span style="font-size:11px;color:var(--t2);font-weight:500">Semaine :</span>
-          <span id="marge-week-label" style="font-size:12px;font-weight:600"></span>
+          <span id="marge-week-label" style="font-size:12px;font-weight:600">S25 — 15/06 au 20/06</span>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px" id="marge-stats"></div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px" id="marge-stats">
+    <div class="marge-stat target"><div class="marge-val">10 151,75 €</div><div class="marge-lbl">Objectif semaine</div></div>
+    <div class="marge-stat real"><div class="marge-val">5</div><div class="marge-lbl">Collaborateurs actifs</div></div>
+    <div class="marge-stat unit"><div class="marge-val">278 jours</div><div class="marge-lbl">Données chargées</div></div></div>
         <div style="overflow-x:auto">
           <table class="marge-table" style="min-width:620px">
             <thead>
@@ -612,15 +678,55 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
                 <th style="text-align:right">Total sem.</th>
               </tr>
             </thead>
-            <tbody id="marge-tbody"></tbody>
-            <tfoot><tr id="marge-tfoot" style="background:var(--s2);font-weight:600"></tr></tfoot>
+            <tbody id="marge-tbody"><tr>
+      <td style="font-weight:500;font-size:12px">Anthony <span class="marge-coef" style="margin-left:4px">20%</span></td>
+      <td style="text-align:center;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;font-weight:500">141 €</td><td style="text-align:center;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;font-weight:500">115 €</td><td style="text-align:center;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;font-weight:500">115 €</td><td style="text-align:center;color:var(--t3);font-size:10px">—</td><td style="text-align:center;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;font-weight:500">115 €</td><td style="text-align:center;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;font-weight:500">176 €</td>
+      <td style="text-align:right;font-family:&#39;IBM Plex Mono&#39;,monospace;font-weight:600;color:var(--bl)">663 €</td>
+    </tr><tr>
+      <td style="font-weight:500;font-size:12px">Cathy <span class="marge-coef" style="margin-left:4px">50%</span></td>
+      <td style="text-align:center;color:var(--t3);font-size:10px">—</td><td style="text-align:center;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;font-weight:500">288 €</td><td style="text-align:center;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;font-weight:500">288 €</td><td style="text-align:center;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;font-weight:500">311 €</td><td style="text-align:center;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;font-weight:500">288 €</td><td style="text-align:center;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;font-weight:500">441 €</td>
+      <td style="text-align:right;font-family:&#39;IBM Plex Mono&#39;,monospace;font-weight:600;color:var(--bl)">1 615 €</td>
+    </tr><tr>
+      <td style="font-weight:500;font-size:12px">Hubert <span class="marge-coef" style="margin-left:4px">100%</span></td>
+      <td style="text-align:center;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;font-weight:500">707 €</td><td style="text-align:center;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;font-weight:500">576 €</td><td style="text-align:center;color:var(--t3);font-size:10px">—</td><td style="text-align:center;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;font-weight:500">622 €</td><td style="text-align:center;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;font-weight:500">576 €</td><td style="text-align:center;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;font-weight:500">881 €</td>
+      <td style="text-align:right;font-family:&#39;IBM Plex Mono&#39;,monospace;font-weight:600;color:var(--bl)">3 361 €</td>
+    </tr><tr>
+      <td style="font-weight:500;font-size:12px">Manon <span class="marge-coef" style="margin-left:4px">100%</span></td>
+      <td style="text-align:center;color:var(--t3);font-size:10px">—</td><td style="text-align:center;color:var(--t3);font-size:10px">—</td><td style="text-align:center;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;font-weight:500">576 €</td><td style="text-align:center;color:var(--t3);font-size:10px">—</td><td style="text-align:center;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;font-weight:500">576 €</td><td style="text-align:center;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;font-weight:500">881 €</td>
+      <td style="text-align:right;font-family:&#39;IBM Plex Mono&#39;,monospace;font-weight:600;color:var(--bl)">2 033 €</td>
+    </tr><tr>
+      <td style="font-weight:500;font-size:12px">Lucie <span class="marge-coef" style="margin-left:4px">100%</span></td>
+      <td style="text-align:center;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;font-weight:500">707 €</td><td style="text-align:center;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;font-weight:500">576 €</td><td style="text-align:center;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;font-weight:500">576 €</td><td style="text-align:center;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;font-weight:500">622 €</td><td style="text-align:center;color:var(--t3);font-size:10px">—</td><td style="text-align:center;color:var(--t3);font-size:10px">—</td>
+      <td style="text-align:right;font-family:&#39;IBM Plex Mono&#39;,monospace;font-weight:600;color:var(--bl)">2 480 €</td>
+    </tr></tbody>
+            <tfoot><tr id="marge-tfoot" style="background:var(--s2);font-weight:600"><td style="padding:9px 10px;font-size:11px">🎯 Objectif magasin</td><td style="text-align:center;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;padding:9px 10px">1 554,45 €</td><td style="text-align:center;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;padding:9px 10px">1 554,45 €</td><td style="text-align:center;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;padding:9px 10px">1 554,45 €</td><td style="text-align:center;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;padding:9px 10px">1 554,45 €</td><td style="text-align:center;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;padding:9px 10px">1 554,45 €</td><td style="text-align:center;font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;padding:9px 10px">2 379,5 €</td><td style="text-align:right;font-family:&#39;IBM Plex Mono&#39;,monospace;padding:9px 10px;color:var(--gn)">10 152 €</td></tr></tfoot>
           </table>
         </div>
       </div>
-      <div class="acard adm">
+      <div class="acard adm" style="display: block;">
         <div class="actitle">⚙️ Coefficients vente par collaborateur</div>
         <p style="font-size:12px;color:var(--t2);margin-bottom:14px;line-height:1.6">Ces coefficients pondèrent la part de marge. Un acheteur à 20% contribue 20% de son temps à la vente.</p>
-        <div id="coef-grid" style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:14px"></div>
+        <div id="coef-grid" style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:14px">
+    <div style="display:flex;align-items:center;gap:6px;font-size:12px">
+      <span style="width:65px;font-weight:500">Anthony</span>
+      <input type="number" class="coef-edit-input" id="coef-anthony" value="20" min="0" max="100"> %
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;font-size:12px">
+      <span style="width:65px;font-weight:500">Cathy</span>
+      <input type="number" class="coef-edit-input" id="coef-cathy" value="50" min="0" max="100"> %
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;font-size:12px">
+      <span style="width:65px;font-weight:500">Hubert</span>
+      <input type="number" class="coef-edit-input" id="coef-hubert" value="100" min="0" max="100"> %
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;font-size:12px">
+      <span style="width:65px;font-weight:500">Manon</span>
+      <input type="number" class="coef-edit-input" id="coef-manon" value="100" min="0" max="100"> %
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;font-size:12px">
+      <span style="width:65px;font-weight:500">Lucie</span>
+      <input type="number" class="coef-edit-input" id="coef-lucie" value="100" min="0" max="100"> %
+    </div></div>
         <button class="sbmit" style="font-size:12px;padding:8px 16px" onclick="saveCoefs()">Enregistrer les coefficients</button>
       </div>
 
@@ -628,16 +734,16 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
       <div class="acard" style="margin-bottom:14px">
         <div class="actitle" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
           <span>🎯 Réalisé vs Objectif</span>
-          <span id="rvo-period-label" style="font-size:11px;color:var(--t3);background:var(--s2);padding:3px 9px;border-radius:10px"></span>
+          <span id="rvo-period-label" style="font-size:11px;color:var(--t3);background:var(--s2);padding:3px 9px;border-radius:10px">17 juin</span>
         </div>
         <div class="rvo-period-bar">
-          <button class="rvo-period-btn" onclick="rvoSetPeriod('hier',this)">Hier</button>
-          <button class="rvo-period-btn" onclick="rvoSetPeriod('semaine',this)">Cette semaine</button>
-          <button class="rvo-period-btn" onclick="rvoSetPeriod('mois',this)">Ce mois</button>
-          <button class="rvo-period-btn" onclick="rvoSetPeriod('annee',this)">Cette année</button>
-          <button class="rvo-period-btn" onclick="rvoSetPeriod('custom',this)">Personnalisé</button>
+          <button class="rvo-period-btn active" onclick="rvoSetPeriod(&#39;hier&#39;,this)">Hier</button>
+          <button class="rvo-period-btn" onclick="rvoSetPeriod(&#39;semaine&#39;,this)">Cette semaine</button>
+          <button class="rvo-period-btn" onclick="rvoSetPeriod(&#39;mois&#39;,this)">Ce mois</button>
+          <button class="rvo-period-btn" onclick="rvoSetPeriod(&#39;annee&#39;,this)">Cette année</button>
+          <button class="rvo-period-btn" onclick="rvoSetPeriod(&#39;custom&#39;,this)">Personnalisé</button>
         </div>
-        <div class="rvo-custom-wrap" id="rvo-custom-wrap">
+        <div class="rvo-custom-wrap" id="rvo-custom-wrap" style="display: none;">
           <span style="font-size:11px;color:var(--t2)">Du</span>
           <input type="date" id="rvo-from" onchange="rvoRender()">
           <span style="font-size:11px;color:var(--t2)">au</span>
@@ -646,20 +752,90 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
         <!-- Jauge magasin -->
         <div class="rvo-mag-card" id="rvo-mag-card">
           <div style="font-size:12px;font-weight:600;margin-bottom:6px">🏪 Magasin — Marge réalisée</div>
-          <div class="rvo-big-track"><div class="rvo-big-fill" id="rvo-mag-fill" style="width:0%;background:var(--gn)"></div></div>
+          <div class="rvo-big-track"><div class="rvo-big-fill" id="rvo-mag-fill" style="width: 60.2657%; background: var(--rd);"></div></div>
           <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--t3)">
-            <span>0 €</span><span id="rvo-mag-pct" style="font-weight:600;color:var(--tx)">—</span><span id="rvo-mag-obj-lbl">—</span>
+            <span>0 €</span><span id="rvo-mag-pct" style="font-weight:600;color:var(--tx)">60.3%</span><span id="rvo-mag-obj-lbl">1 554 €</span>
           </div>
           <div class="rvo-stats-row">
-            <div class="rvo-stat"><div class="rvo-stat-lbl">Réalisé</div><div class="rvo-stat-val" id="rvo-mag-real" style="color:var(--gn)">—</div></div>
-            <div class="rvo-stat"><div class="rvo-stat-lbl">Objectif</div><div class="rvo-stat-val" id="rvo-mag-obj">—</div></div>
-            <div class="rvo-stat"><div class="rvo-stat-lbl">Écart</div><div class="rvo-stat-val" id="rvo-mag-ecart">—</div></div>
-            <div class="rvo-stat"><div class="rvo-stat-lbl">Jours</div><div class="rvo-stat-val" id="rvo-mag-jours" style="color:var(--t3)">—</div></div>
+            <div class="rvo-stat"><div class="rvo-stat-lbl">Réalisé</div><div class="rvo-stat-val" id="rvo-mag-real" style="color:var(--gn)">937 €</div></div>
+            <div class="rvo-stat"><div class="rvo-stat-lbl">Objectif</div><div class="rvo-stat-val" id="rvo-mag-obj">1 554 €</div></div>
+            <div class="rvo-stat"><div class="rvo-stat-lbl">Écart</div><div class="rvo-stat-val" id="rvo-mag-ecart" style="color: var(--rd);">-618 €</div></div>
+            <div class="rvo-stat"><div class="rvo-stat-lbl">Jours</div><div class="rvo-stat-val" id="rvo-mag-jours" style="color:var(--t3)">1</div></div>
           </div>
         </div>
         <!-- Jauges collaborateurs -->
         <div style="font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Par collaborateur</div>
-        <div class="rvo-grid" id="rvo-collabs-grid"><div class="rvo-no-data">Sélectionnez une période ci-dessus</div></div>
+        <div class="rvo-grid" id="rvo-collabs-grid"><div class="rvo-card">
+      <div class="rvo-card-name">Anthony<span class="rvo-coef-tag">20%</span></div>
+      <div class="rvo-gauge-lbl"><span>Marge réalisée</span><span style="font-weight:600;color:var(--tx)">0.0%</span></div>
+      <div class="rvo-track"><div class="rvo-fill rd" style="width:0%"></div></div>
+      <div class="rvo-nums">
+        <div>
+          <div class="rvo-real">0 €</div>
+          <div style="font-size:10px;color:var(--t3);margin-top:2px">0 jour(s)</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:10px;color:var(--t3)">Obj : 0 €</div>
+          <div style="font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;color:var(--gn)">+0 €</div>
+        </div>
+      </div>
+    </div><div class="rvo-card">
+      <div class="rvo-card-name">Cathy<span class="rvo-coef-tag">50%</span></div>
+      <div class="rvo-gauge-lbl"><span>Marge réalisée</span><span style="font-weight:600;color:var(--tx)">100.0%</span></div>
+      <div class="rvo-track"><div class="rvo-fill gn" style="width:100%"></div></div>
+      <div class="rvo-nums">
+        <div>
+          <div class="rvo-real">595 €</div>
+          <div style="font-size:10px;color:var(--t3);margin-top:2px">1 jour(s)</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:10px;color:var(--t3)">Obj : 311 €</div>
+          <div style="font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;color:var(--gn)">+284 €</div>
+        </div>
+      </div>
+    </div><div class="rvo-card">
+      <div class="rvo-card-name">Hubert<span class="rvo-coef-tag">100%</span></div>
+      <div class="rvo-gauge-lbl"><span>Marge réalisée</span><span style="font-weight:600;color:var(--tx)">0.0%</span></div>
+      <div class="rvo-track"><div class="rvo-fill rd" style="width:0%"></div></div>
+      <div class="rvo-nums">
+        <div>
+          <div class="rvo-real">0 €</div>
+          <div style="font-size:10px;color:var(--t3);margin-top:2px">0 jour(s)</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:10px;color:var(--t3)">Obj : 0 €</div>
+          <div style="font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;color:var(--gn)">+0 €</div>
+        </div>
+      </div>
+    </div><div class="rvo-card">
+      <div class="rvo-card-name">Manon<span class="rvo-coef-tag">100%</span></div>
+      <div class="rvo-gauge-lbl"><span>Marge réalisée</span><span style="font-weight:600;color:var(--tx)">31.6%</span></div>
+      <div class="rvo-track"><div class="rvo-fill rd" style="width:31.56100228376596%"></div></div>
+      <div class="rvo-nums">
+        <div>
+          <div class="rvo-real">196 €</div>
+          <div style="font-size:10px;color:var(--t3);margin-top:2px">1 jour(s)</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:10px;color:var(--t3)">Obj : 622 €</div>
+          <div style="font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;color:var(--rd)">-426 €</div>
+        </div>
+      </div>
+    </div><div class="rvo-card">
+      <div class="rvo-card-name">Lucie<span class="rvo-coef-tag">100%</span></div>
+      <div class="rvo-gauge-lbl"><span>Marge réalisée</span><span style="font-weight:600;color:var(--tx)">23.4%</span></div>
+      <div class="rvo-track"><div class="rvo-fill rd" style="width:23.43433368715623%"></div></div>
+      <div class="rvo-nums">
+        <div>
+          <div class="rvo-real">146 €</div>
+          <div style="font-size:10px;color:var(--t3);margin-top:2px">1 jour(s)</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:10px;color:var(--t3)">Obj : 622 €</div>
+          <div style="font-family:&#39;IBM Plex Mono&#39;,monospace;font-size:11px;color:var(--rd)">-476 €</div>
+        </div>
+      </div>
+    </div></div>
         <div style="font-size:10px;color:var(--t3);margin-top:6px;line-height:1.6">
           Objectifs calculés au prorata présence × coefficient vente · Réalisé issu du PDF <em>CA_des-vendeurs</em>
         </div>
@@ -699,7 +875,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
       </div>
 
       <!-- Liste des retours (vue manager uniquement) -->
-      <div class="adm" id="retours-admin" style="margin-top:24px;display:none">
+      <div class="adm" id="retours-admin" style="margin-top: 24px; display: block;">
         <div style="font-size:13px;font-weight:500;margin-bottom:12px;color:var(--tx)">
           Retours reçus de l'équipe
           <button onclick="exportRetours()" style="margin-left:12px;background:none;border:1px solid var(--bm);padding:3px 10px;border-radius:var(--r);font-size:11px;cursor:pointer;color:var(--t2);font-family:&#39;IBM Plex Sans&#39;,sans-serif">📋 Copier pour Claude</button>
