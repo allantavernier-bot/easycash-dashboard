@@ -371,7 +371,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
       <option value="cathy">Cathy Matturel</option>
       <option value="hubert">Hubert Poidevin</option>
       <option value="manon">Manon Vivien</option>
-      <option value="lucie">Lucie Bridoux</option>
+      <option value="lucie" style="display:none">Lucie Bridoux (inactif)</option>
     </select>
     <label class="fl">Code PIN</label>
     <div class="pdots" id="pdots">
@@ -399,6 +399,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
     </div>
     <div class="hright">
       <span class="huser">Connecté : <b id="huser"></b></span>
+      <span style="font-size:10px;color:var(--t3);font-family:'IBM Plex Mono',monospace;opacity:.6">v2.0 — 19/06/2026</span>
       <div class="nbell">
         <button class="logbtn" id="btn-notifs" style="font-size:14px;padding:4px 9px;" onclick="window.openNotifs()">🔔</button>
         <span class="nbadge" id="nbadge"></span>
@@ -475,7 +476,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
         <div class="li"><div class="ld" style="background:#C0B8F5"></div>Repos échange / att.</div>
         <div class="li"><div class="ld" style="background:var(--s2)"></div>Repos</div>
         <div class="li" style="border-left:2px solid var(--gn);padding-left:6px;color:var(--gn)">🔑 Clés/Coffre : Allan ou Anthony présent obligatoirement</div>
-        <div class="li" style="border-left:2px solid var(--vl);padding-left:6px;color:var(--vl)">🍽 Sam. 12h–13h : Cathy, Hubert, Allan &nbsp;|&nbsp; 13h–14h : Anthony, Manon, Lucie</div>
+        <div class="li" style="border-left:2px solid var(--vl);padding-left:6px;color:var(--vl)">🍽 Sam. 12h–13h : Cathy, Hubert, Allan &nbsp;|&nbsp; 13h–14h : Anthony, Manon</div>
       </div>
       <div class="hcard adm" id="hcard" style="display:none">
         <div style="font-size:12px;font-weight:500">Contrôle contrats — semaine</div>
@@ -546,19 +547,68 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
         <div class="actitle" style="color:var(--rd)">🛠 Maintenance — Données Firebase</div>
         <p style="font-size:12px;color:var(--t2);margin-bottom:10px">Si votre planning s'affiche incorrectement sur les semaines futures, cliquez ici pour nettoyer les anciennes données de planification.</p>
         <button onclick="window.nettoyerScheduleOverrides()" style="background:var(--rd);color:#fff;border:none;padding:7px 14px;border-radius:var(--r);font-size:12px;font-weight:500;cursor:pointer;font-family:'IBM Plex Sans',sans-serif">
-          🗑 Nettoyer les surcharges de planning (scheduleOverrides)
+          🗑 Nettoyer les surcharges de planning
         </button>
       </div>
       <div class="acard" style="margin-bottom:14px">
-        <div class="actitle">Équipe, PIN &amp; statut signatures</div>
-        <table class="stbl">
-          <thead><tr><th>Nom</th><th>Compétences</th><th>Contrat</th><th>Heures sem.</th><th>PIN</th><th>Signature</th></tr></thead>
-          <tbody id="teambody"></tbody>
-        </table>
+        <div class="actitle" style="display:flex;align-items:center;justify-content:space-between">
+          <span>👥 Équipe &amp; PIN</span>
+          <button onclick="window.openCollabModal('new')" style="background:var(--tx);color:#fff;border:none;padding:6px 14px;border-radius:var(--r);font-size:12px;font-weight:500;cursor:pointer;font-family:'IBM Plex Sans',sans-serif">+ Nouveau</button>
+        </div>
+        <div id="collab-mgr-list" style="margin-top:12px"></div>
       </div>
       <div class="acard">
         <div class="actitle">Jours fériés 2026</div>
         <div id="ferie-table"></div>
+      </div>
+    </div>
+
+    <!-- MODAL COLLABORATEUR -->
+    <div class="mbg" id="modal-collab" style="display:none" onclick="if(event.target===this)window.closeCollabModal()">
+      <div class="mbox" style="max-width:480px">
+        <div class="mhead">
+          <div><div class="mtitle" id="collab-modal-title">Nouveau collaborateur</div></div>
+          <button class="mclose" onclick="window.closeCollabModal()">×</button>
+        </div>
+        <div class="mbody">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="mrow"><label>Prénom &amp; Nom</label><input type="text" id="cm-nom" placeholder="Sophie Martin" style="width:100%;padding:7px 9px;border:1px solid var(--bm);border-radius:var(--r);font-family:'IBM Plex Sans',sans-serif;font-size:13px;outline:none"></div>
+            <div class="mrow"><label>Poste</label><input type="text" id="cm-poste" placeholder="Vendeuse" style="width:100%;padding:7px 9px;border:1px solid var(--bm);border-radius:var(--r);font-family:'IBM Plex Sans',sans-serif;font-size:13px;outline:none"></div>
+            <div class="mrow"><label>Contrat</label>
+              <select id="cm-h" style="width:100%;padding:7px 9px;border:1px solid var(--bm);border-radius:var(--r);font-family:'IBM Plex Sans',sans-serif;font-size:13px;outline:none">
+                <option value="0">Forfait jours</option>
+                <option value="35">35h/sem</option>
+                <option value="30">30h/sem</option>
+                <option value="25">25h/sem</option>
+                <option value="20">20h/sem</option>
+              </select>
+            </div>
+            <div class="mrow"><label>Code PIN</label><input type="text" id="cm-pin" placeholder="2006" maxlength="4" style="width:100%;padding:7px 9px;border:1px solid var(--bm);border-radius:var(--r);font-family:'IBM Plex Sans',sans-serif;font-size:13px;outline:none"></div>
+            <div class="mrow"><label>Coeff vente (%)</label><input type="number" id="cm-coef" value="100" min="0" max="100" style="width:100%;padding:7px 9px;border:1px solid var(--bm);border-radius:var(--r);font-family:'IBM Plex Sans',sans-serif;font-size:13px;outline:none"></div>
+            <div class="mrow"><label>Email</label><input type="email" id="cm-email" placeholder="prenom@gmail.com" style="width:100%;padding:7px 9px;border:1px solid var(--bm);border-radius:var(--r);font-family:'IBM Plex Sans',sans-serif;font-size:13px;outline:none"></div>
+          </div>
+        </div>
+        <div class="mfoot">
+          <button class="mcncl" onclick="window.closeCollabModal()">Annuler</button>
+          <button class="msave" onclick="window.saveCollab()">Enregistrer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL SUPPRESSION COLLABORATEUR -->
+    <div class="mbg" id="modal-del-collab" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+      <div class="mbox" style="max-width:380px">
+        <div class="mhead">
+          <div><div class="mtitle">⚠️ Supprimer ce collaborateur ?</div></div>
+          <button class="mclose" onclick="document.getElementById('modal-del-collab').style.display='none'">×</button>
+        </div>
+        <div class="mbody">
+          <p style="font-size:13px;color:var(--t2);line-height:1.6">Voulez-vous supprimer <strong id="del-collab-name"></strong> de l'équipe active ? Ses données historiques sont conservées.</p>
+        </div>
+        <div class="mfoot">
+          <button class="mcncl" onclick="document.getElementById('modal-del-collab').style.display='none'">Annuler</button>
+          <button class="msave" style="background:var(--rd)" onclick="window.confirmDelCollab()">Supprimer</button>
+        </div>
       </div>
     </div>
 
@@ -798,7 +848,7 @@ const USERS = {
   manon:   {name:'Manon Vivien',    short:'Manon',   role:'Vendeuse JV & Culture',          pin:'2004', admin:false, bg:'#EAFAF2',ct:'#0F6830'},
   lucie:   {name:'Lucie Bridoux',   short:'Lucie',   role:'Vendeuse générale · Alternance', pin:'2005', admin:false, bg:'#EEEEFF',ct:'#3D2DA0'}
 };
-const SIDS = ['anthony','cathy','hubert','manon','lucie'];
+const SIDS = ['anthony','cathy','hubert','manon'];
 const SKILLS = {
   allan:['buy','sell','jew'], anthony:['buy','sell'],
   cathy:['sell','jew'], hubert:['buy','sell'], manon:['sell'], lucie:['sell']
@@ -863,7 +913,8 @@ let STATE = {
     '2026-06-04': ['Inventaire BOR / BOPI'],
   },
   retours: [], // [{id, uid, nom, type, desc, device, date, traite}]
-  coefs: { allan:0, anthony:20, cathy:50, hubert:100, manon:100, lucie:100 },
+  coefs: { allan:0, anthony:20, cathy:50, hubert:100, manon:100 },
+  collabs: null,
 };
 
 // ── FIREBASE STORAGE ──────────────────────────────────
@@ -881,6 +932,7 @@ async function loadState(){
       if(saved.evenements) STATE.evenements = {...STATE.evenements, ...saved.evenements};
       if(saved.retours) STATE.retours = saved.retours;
       if(saved.coefs) STATE.coefs = {...STATE.coefs, ...saved.coefs};
+      if(saved.collabs) STATE.collabs = saved.collabs;
     }
     setSyncStatus('ok');
   } catch(e){
@@ -901,6 +953,7 @@ async function saveState(){
       evenements: STATE.evenements,
       retours: STATE.retours,
       coefs: STATE.coefs,
+      collabs: STATE.collabs,
     }, { merge: true });
     setSyncStatus('ok');
   } catch(e){
@@ -1338,7 +1391,7 @@ function renderPlanning(){
   // Attacher les clics sur les cellules événements APRÈS le rendu
   if(editMode&&isAdm){
     document.querySelectorAll('#ev-row .ev-cell').forEach(cell=>{
-      cell.addEventListener('click',()=>openEvModal(cell.dataset.date));
+      cell.addEventListener('click',()=>window.openEvModal(cell.dataset.date));
     });
   }
 
@@ -1635,24 +1688,7 @@ function decide(id,status){
 //  ADMIN ÉQUIPE
 // ═══════════════════════════════════════════════════════
 function renderAdminTeam(){
-  const wk=monKey(woff);
-  let h='';
-  SIDS.forEach(uid=>{
-    const u=USERS[uid];const ini=u.name.split(' ').map(w=>w[0]).join('').slice(0,2);
-    const signed=STATE.signatures[`${uid}-${wk}`];
-    const wm=weekMins(uid,woff),cm=BASE_SCHEDULE[uid].h*60,diff=wm-cm;
-    const dc=diff>0?'var(--rd)':diff<0?'var(--am)':'var(--gn)';
-    const skills=SKILLS[uid].map(s=>({buy:'Achat',sell:'Vente',jew:'Bijoux'}[s])).join(', ');
-    h+=`<tr>
-      <td><div style="display:flex;align-items:center;gap:7px"><div class="av" style="width:24px;height:24px;font-size:8px;background:${u.bg};color:${u.ct}">${ini}</div>${u.name}</div></td>
-      <td style="font-size:11px;color:var(--t2)">${skills}</td>
-      <td style="font-family:'IBM Plex Mono',monospace;font-size:11px">${mh(cm)}/sem</td>
-      <td style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:${dc}">${mh(wm)} ${diff===0?'✓':diff>0?'⚠':''}</td>
-      <td><span class="pinshow">${u.pin}</span></td>
-      <td>${signed?`<span class="pill p-ok">✍ Signé S${wknum(monday(woff))}</span>`:'<span style="font-size:11px;color:var(--t3)">Non signé</span>'}</td>
-    </tr>`;
-  });
-  document.getElementById('teambody').innerHTML=h;
+  renderCollabMgr();
 
   // Tableau fériés avec répartition par employé
   const today=new Date();
@@ -2143,6 +2179,141 @@ function rvoRender(){
 }
 
 // ═══════════════════════════════════════════════════════
+//  GESTION COLLABORATEURS
+// ═══════════════════════════════════════════════════════
+let collabEditId = null;
+let collabDelId  = null;
+
+function getActiveCollabs(){
+  // Utilise STATE.collabs si défini, sinon USERS/SIDS par défaut
+  if(STATE.collabs && STATE.collabs.length) return STATE.collabs;
+  return ['allan',...SIDS].map(uid=>({
+    id: uid,
+    nom: USERS[uid].name,
+    short: USERS[uid].short,
+    role: USERS[uid].role,
+    pin: USERS[uid].pin,
+    bg: USERS[uid].bg,
+    ct: USERS[uid].ct,
+    h: BASE_SCHEDULE[uid].h,
+    coef: STATE.coefs?.[uid]??0,
+    admin: USERS[uid].admin||false,
+  }));
+}
+
+function renderCollabMgr(){
+  const el=document.getElementById('collab-mgr-list');
+  if(!el) return;
+  const wk=monKey(woff);
+  const collabs=getActiveCollabs();
+  el.innerHTML=collabs.map(c=>{
+    const signed=STATE.signatures[`${c.id}-${wk}`];
+    const ini=(c.short||c.nom).substring(0,2).toUpperCase();
+    return `<div style="display:grid;grid-template-columns:30px 1fr auto auto auto;align-items:center;gap:10px;padding:10px 12px;background:var(--sf);border:1px solid var(--b);border-radius:var(--r);margin-bottom:6px">
+      <div class="av" style="width:30px;height:30px;font-size:10px;background:${c.bg||'#EEE'};color:${c.ct||'#333'};border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600">${ini}</div>
+      <div>
+        <div style="font-weight:500;font-size:12px">${c.nom}${c.admin?'<span style="font-size:9px;background:var(--bl-l);color:var(--bl);border:1px solid var(--bl-b);padding:1px 6px;border-radius:10px;margin-left:6px">Admin</span>':''}</div>
+        <div style="font-size:10px;color:var(--t3)">${c.role||''} · ${c.h===0?'Forfait jours':c.h+'h/sem'} · PIN: ${c.pin}</div>
+      </div>
+      <div style="font-size:10px;color:${signed?'var(--gn)':'var(--t3)'}">${signed?'✓ Signé':'Non signé'}</div>
+      <button onclick="window.openCollabModal('edit','${c.id}')" style="background:var(--s2);border:1px solid var(--b);padding:4px 10px;border-radius:var(--r);font-size:11px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif">✏️ Modifier</button>
+      ${!c.admin?`<button onclick="window.openDelCollab('${c.id}','${c.nom}')" style="background:var(--rd-l);border:1px solid var(--rd-b);color:var(--rd);padding:4px 10px;border-radius:var(--r);font-size:11px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif">🗑</button>`:'<div></div>'}
+    </div>`;
+  }).join('');
+}
+
+function openCollabModal(mode, id){
+  collabEditId = mode==='edit' ? id : null;
+  document.getElementById('collab-modal-title').textContent = mode==='edit'?'Modifier le collaborateur':'Nouveau collaborateur';
+  if(mode==='edit'){
+    const collabs=getActiveCollabs();
+    const c=collabs.find(x=>x.id===id);
+    if(!c) return;
+    document.getElementById('cm-nom').value=c.nom||'';
+    document.getElementById('cm-poste').value=c.role||'';
+    document.getElementById('cm-h').value=c.h??35;
+    document.getElementById('cm-pin').value=c.pin||'';
+    document.getElementById('cm-coef').value=c.coef??100;
+    document.getElementById('cm-email').value=c.email||USER_EMAILS[id]||'';
+  } else {
+    ['cm-nom','cm-poste','cm-pin','cm-email'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('cm-h').value='35';
+    document.getElementById('cm-coef').value='100';
+  }
+  document.getElementById('modal-collab').style.display='flex';
+}
+
+function closeCollabModal(){
+  document.getElementById('modal-collab').style.display='none';
+}
+
+async function saveCollab(){
+  const nom=document.getElementById('cm-nom').value.trim();
+  if(!nom){toast('⚠ Prénom & Nom requis');return;}
+  const pin=document.getElementById('cm-pin').value.trim();
+  if(!pin||pin.length!==4||isNaN(pin)){toast('⚠ PIN requis (4 chiffres)');return;}
+
+  // Vérifier doublon PIN
+  const collabs=getActiveCollabs();
+  const pinDouble=collabs.find(c=>c.pin===pin&&c.id!==collabEditId);
+  if(pinDouble){toast(`⚠ Ce PIN est déjà utilisé par ${pinDouble.nom}`);return;}
+
+  const id=collabEditId||'c'+Date.now();
+  const coef=parseInt(document.getElementById('cm-coef').value)||0;
+  const data={
+    id, nom,
+    short: nom.split(' ')[0],
+    role: document.getElementById('cm-poste').value,
+    h: parseInt(document.getElementById('cm-h').value),
+    pin,
+    coef,
+    email: document.getElementById('cm-email').value,
+    bg: collabEditId ? (collabs.find(c=>c.id===collabEditId)?.bg||'#EEE') : '#EFEFED',
+    ct: collabEditId ? (collabs.find(c=>c.id===collabEditId)?.ct||'#333') : '#2A2A28',
+    admin: collabEditId==='allan',
+  };
+
+  // Mettre à jour coefs
+  if(!STATE.coefs) STATE.coefs={};
+  STATE.coefs[id]=coef;
+
+  // Mettre à jour USERS en mémoire pour que ça fonctionne immédiatement
+  USERS[id]={name:data.nom,short:data.short,role:data.role,pin:data.pin,admin:data.admin,bg:data.bg,ct:data.ct};
+
+  // Mettre à jour STATE.collabs
+  let cl=getActiveCollabs();
+  if(collabEditId) cl=cl.map(c=>c.id===collabEditId?data:c);
+  else { cl.push(data); if(!SIDS.includes(id)) SIDS.push(id); }
+  STATE.collabs=cl;
+
+  await saveState();
+  closeCollabModal();
+  renderCollabMgr();
+  toast(collabEditId?'✓ Collaborateur modifié':'✓ Nouveau collaborateur ajouté');
+}
+
+function openDelCollab(id, nom){
+  collabDelId=id;
+  document.getElementById('del-collab-name').textContent=nom;
+  document.getElementById('modal-del-collab').style.display='flex';
+}
+
+async function confirmDelCollab(){
+  if(!collabDelId) return;
+  // Retirer de SIDS
+  const idx=SIDS.indexOf(collabDelId);
+  if(idx>-1) SIDS.splice(idx,1);
+  // Retirer de STATE.collabs
+  const cl=getActiveCollabs().filter(c=>c.id!==collabDelId);
+  STATE.collabs=cl;
+  await saveState();
+  document.getElementById('modal-del-collab').style.display='none';
+  renderCollabMgr();
+  renderPlanning();
+  toast('✓ Collaborateur supprimé');
+}
+
+// ═══════════════════════════════════════════════════════
 //  MAINTENANCE
 // ═══════════════════════════════════════════════════════
 async function nettoyerScheduleOverrides(){
@@ -2233,29 +2404,61 @@ function exportRetours(){
 //  ÉVÉNEMENTS
 // ═══════════════════════════════════════════════════════
 let evCtxDate=null;
+let evTemp=[];
+
 function openEvModal(dateISO){
   if(!editMode||!USERS[cur].admin)return;
   evCtxDate=dateISO;
-  window._evCtx={date:dateISO};
   const[y,m,d]=dateISO.split('-');
   const jns=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
   const dt=new Date(y,m-1,d);
   document.getElementById('modal-ev-title').textContent=`Événements — ${jns[dt.getDay()]} ${d}/${m}/${y}`;
-  // Initialiser la liste temporaire avec les événements existants
   const existing=STATE.evenements[dateISO]||[];
-  window._evTemp=Array.isArray(existing)?[...existing]:(existing?[existing]:[]);
+  evTemp=Array.isArray(existing)?[...existing]:(existing?[existing]:[]);
   document.getElementById('ev-input').value='';
-  if(window.renderEvListEdit) window.renderEvListEdit();
+  renderEvListEdit();
   document.getElementById('modal-ev').style.display='flex';
 }
-function closeEvModal(){document.getElementById('modal-ev').style.display='none';evCtxDate=null;}
+
+function closeEvModal(){
+  document.getElementById('modal-ev').style.display='none';
+  evCtxDate=null;
+}
+
+function renderEvListEdit(){
+  const list=document.getElementById('ev-list');
+  if(!list)return;
+  if(!evTemp.length){list.innerHTML='<div style="font-size:11px;color:var(--t3);padding:4px 0">Aucun événement</div>';return;}
+  list.innerHTML=evTemp.map((e,i)=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+    <span style="flex:1;font-size:12px;background:var(--s2);padding:5px 9px;border-radius:var(--r)">${e}</span>
+    <button onclick="window.evDel(${i})" style="padding:4px 9px;background:var(--rd-l);color:var(--rd);border:1px solid var(--rd-b);border-radius:var(--r);cursor:pointer;font-size:12px">✕</button>
+  </div>`).join('');
+}
+
+function addEvItem(){
+  const inp=document.getElementById('ev-input');
+  const val=inp.value.trim();
+  if(!val)return;
+  evTemp.push(val);
+  inp.value='';
+  renderEvListEdit();
+}
+
+function evDel(i){
+  evTemp.splice(i,1);
+  renderEvListEdit();
+}
+
 async function saveEv(){
   if(!evCtxDate)return;
-  const val=document.getElementById('ev-input').value.trim();
-  if(val) STATE.evenements[evCtxDate]=val;
+  // Ajouter l'input en cours si non vide
+  const inp=document.getElementById('ev-input');
+  if(inp&&inp.value.trim()) evTemp.push(inp.value.trim());
+  const items=evTemp.filter(e=>e.trim());
+  if(items.length>0) STATE.evenements[evCtxDate]=items;
   else delete STATE.evenements[evCtxDate];
   await saveState();
-  toast('Événement enregistré ✓');
+  toast('Événements enregistrés ✓');
   closeEvModal();
   renderPlanning();
 }
@@ -2541,7 +2744,10 @@ window.openEvModal=openEvModal;
 window.submitRetour=submitRetour; window.marquerTraite=marquerTraite; window.exportRetours=exportRetours;
 window.nettoyerScheduleOverrides=nettoyerScheduleOverrides;
 window.saveCoefs=saveCoefs; window.rvoSetPeriod=rvoSetPeriod; window.rvoRender=rvoRender;
+window.openCollabModal=openCollabModal; window.closeCollabModal=closeCollabModal;
+window.saveCollab=saveCollab; window.openDelCollab=openDelCollab; window.confirmDelCollab=confirmDelCollab;
 window.closeEvModal=closeEvModal; window.saveEv=saveEv;
+window.addEvItem=addEvItem; window.renderEvListEdit=renderEvListEdit; window.evDel=evDel;
 // Exposer les fonctions internes pour le script classique
 window._saveState=saveState;
 window._renderPlanning=renderPlanning;
@@ -2575,73 +2781,6 @@ emailjs.init(EMAILJS_KEY);
 startPolling();
 </script>
 
-<!-- Script classique séparé pour les fonctions appelées via onclick HTML -->
-<script>
-function openNotifs(){
-  const nb=document.getElementById('nbox');
-  if(!nb) return;
-  if(nb.classList.contains('open')){nb.classList.remove('open');return;}
-  if(window._state && window._cur){
-    const list=window._state.notifications[window._cur]||[];
-    // Marquer comme lues dans localStorage
-    try{
-      const key='read-notifs-'+window._cur;
-      const existing=new Set(JSON.parse(localStorage.getItem(key)||'[]'));
-      list.forEach(n=>existing.add(String(n.id)));
-      localStorage.setItem(key,JSON.stringify([...existing]));
-    }catch(e){}
-    // Mettre à jour le badge
-    const b=document.getElementById('nbadge');
-    if(b){b.textContent='';b.style.display='none';}
-    // Afficher les notifs
-    let h=list.length===0?'<p style="font-size:12px;color:var(--t3);padding:12px">Aucune notification.</p>':'';
-    list.forEach(n=>{h+=`<div class="nitem">${n.msg}<div class="ndate">${n.date}</div></div>`;});
-    document.getElementById('nlist').innerHTML=h;
-  }
-  nb.classList.add('open');
-}
 
-function closeEvModal(){
-  document.getElementById('modal-ev').style.display='none';
-  if(window._evCtx) window._evCtx.date=null;
-}
-
-// Liste temporaire des événements en cours d'édition
-window._evTemp=[];
-
-function renderEvListEdit(){
-  const el=document.getElementById('ev-list-edit');
-  if(!el)return;
-  if(window._evTemp.length===0){el.innerHTML='<p style="font-size:12px;color:var(--t3)">Aucun événement pour ce jour.</p>';return;}
-  el.innerHTML=window._evTemp.map((e,i)=>`
-    <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
-      <input value="${e.replace(/"/g,'&quot;')}" onchange="window._evTemp[${i}]=this.value"
-        style="flex:1;padding:6px 9px;border:1px solid var(--bm);border-radius:var(--r);font-size:13px;font-family:'IBM Plex Sans',sans-serif"/>
-      <button onclick="window._evTemp.splice(${i},1);renderEvListEdit()"
-        style="padding:4px 9px;background:var(--rd-l);color:var(--rd);border:1px solid var(--rd-b);border-radius:var(--r);cursor:pointer;font-size:12px">✕</button>
-    </div>`).join('');
-}
-
-function addEvItem(){
-  const inp=document.getElementById('ev-input');
-  const val=inp.value.trim();
-  if(!val)return;
-  window._evTemp.push(val);
-  inp.value='';
-  renderEvListEdit();
-}
-
-async function saveEv(){
-  if(!window._evCtx || !window._evCtx.date) return;
-  if(!window._state) return;
-  const items=window._evTemp.filter(e=>e.trim());
-  if(items.length>0) window._state.evenements[window._evCtx.date]=items;
-  else delete window._state.evenements[window._evCtx.date];
-  if(window._saveState) await window._saveState();
-  if(window._toast) window._toast('Événements enregistrés ✓');
-  document.getElementById('modal-ev').style.display='none';
-  if(window._renderPlanning) window._renderPlanning();
-}
-</script>
 </body>
 </html>
