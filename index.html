@@ -854,8 +854,15 @@ function renderAnnual() {
   document.getElementById('ann-sems-sub').textContent = (weeks.length - doneWeeks.length) + ' semaines restantes';
 
   // Taux de transformation moyen — source G2 du Form (MOYENNE officielle du sheet)
-  const txMoyen = window.txMoyenGlobal || null;
-  const nbJoursTx = window.formByDate ? Object.keys(window.formByDate).length : 0;
+  // Taux moyen annuel : calculer depuis Q et S de allRows (source fiable)
+  const txRowsQS = allRows.filter(r => parseNum(r['S']) !== null && parseNum(r['Q']) !== null && parseNum(r['Q']) > 0);
+  const txMoyenQS = txRowsQS.length > 0
+    ? txRowsQS.reduce((s,r) => s + (parseNum(r['S']) / parseNum(r['Q']) * 100), 0) / txRowsQS.length
+    : null;
+  const txMoyenQSValid = txMoyenQS !== null && txMoyenQS > 0 && txMoyenQS <= 100 ? txMoyenQS : null;
+  // Fallback Form si Q/S non disponibles
+  const txMoyen = txMoyenQSValid !== null ? txMoyenQSValid : (window.txMoyenGlobal || null);
+  const nbJoursTx = txRowsQS.length > 0 ? txRowsQS.length : (window.formByDate ? Object.keys(window.formByDate).length : 0);
   const txEl = document.getElementById('ann-tx-transfo');
   const txBarEl = document.getElementById('ann-tx-bar');
   const txSubEl = document.getElementById('ann-tx-sub');
