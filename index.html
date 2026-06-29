@@ -481,12 +481,17 @@ async function loadData() {
     if(moyenneLigne && moyenneLigne.c[6]) {
       window.txMoyenGlobal = normTaux(moyenneLigne.c[6].v);
     }
-    // Si pas de ligne MOYENNE ou valeur aberrante -> fallback moyenne des lignes de données
+    // Si pas de ligne MOYENNE ou valeur aberrante -> calculer depuis NB ventes / NB clients
     if(window.txMoyenGlobal === null) {
       const txVals = [];
       jsForm.table.rows.forEach(r => {
         if(!r || !r.c || !r.c[0] || !r.c[0].v) return;
-        if(r.c[6] && r.c[6].v !== null) {
+        const nbVte = r.c[5] && r.c[5].v !== null ? parseFloat(r.c[5].v) : null;
+        const nbCli = r.c[3] && r.c[3].v !== null ? parseFloat(r.c[3].v) : null;
+        if(nbVte !== null && nbCli !== null && nbCli > 0) {
+          const t = (nbVte / nbCli) * 100;
+          if(t > 0 && t <= 100) txVals.push(t);
+        } else if(r.c[6] && r.c[6].v !== null) {
           const v = normTaux(r.c[6].v);
           if(v !== null) txVals.push(v);
         }
@@ -495,13 +500,24 @@ async function loadData() {
         window.txMoyenGlobal = txVals.reduce((s,v)=>s+v,0) / txVals.length;
       }
     }
-    // Indexer par date les lignes du Form (col A=timestamp, G=taux)
+    // Indexer par date les lignes du Form
+    // Source prioritaire : col F (NB ventes) / col D (NB clients calculé)
+    // Fallback : col G (taux calculé en %)
     jsForm.table.rows.slice(0).forEach(r => {
         if(!r || !r.c || !r.c[0]) return;
         const d = gdate(r.c[0].v);
         if(!d) return;
         const key = d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
-        const taux = r.c[6] ? normTaux(r.c[6].v) : null;
+        // Calculer depuis NB ventes (col F=index 5) et NB clients (col D=index 3)
+        const nbVte = r.c[5] && r.c[5].v !== null ? parseFloat(r.c[5].v) : null;
+        const nbCli = r.c[3] && r.c[3].v !== null ? parseFloat(r.c[3].v) : null;
+        let taux = null;
+        if(nbVte !== null && nbCli !== null && nbCli > 0) {
+          const t = (nbVte / nbCli) * 100;
+          taux = (t > 0 && t <= 100) ? t : null;
+        }
+        // Fallback : col G
+        if(taux === null) taux = r.c[6] ? normTaux(r.c[6].v) : null;
         if(taux !== null) window.formByDate[key] = taux;
       });
     }
@@ -588,10 +604,19 @@ function renderDay() {
 
   // Transfo - source prioritaire : col T du Sheets (=S/Q), fallback formByDate
     // col T peut être décimal (0.155) ou déjà % (15.5) selon format gviz
-    const txRaw = txT !== null ? txT : null;
-    const txFromSheet = txRaw !== null ? (txRaw < 1 ? txRaw * 100 : txRaw) : null;
+    // Taux journalier : 3 sources par ordre de priorité
+    // 1. Col T du Sheets (=S/Q, formule calculée) — décimal < 1
+    const txFromT = txT !== null ? (txT < 1 ? txT * 100 : txT) : null;
+    const txFromTValid = txFromT !== null && txFromT > 0 && txFromT <= 100 ? txFromT : null;
+    // 2. Calculer depuis S (NB ventes) et Q (NB clients) directement
+    const txFromSQ = (nbVte !== null && nbCli !== null && nbCli > 0)
+      ? Math.round(nbVte / nbCli * 1000) / 10 : null;
+    const txFromSQValid = txFromSQ !== null && txFromSQ > 0 && txFromSQ <= 100 ? txFromSQ : null;
+    // 3. Fallback formByDate (Form)
     const txFromForm = window.formByDate && selDate ? window.formByDate[selDate] : null;
-    const txDisplay = (txFromSheet !== null && txFromSheet > 0 && txFromSheet <= 100) ? txFromSheet : txFromForm;
+    const txDisplay = txFromTValid !== null ? txFromTValid
+                    : txFromSQValid !== null ? txFromSQValid
+                    : txFromForm;
     const txPct = txDisplay !== null ? fmt(txDisplay,1)+'%' : '—';
     document.getElementById('tx-transfo').textContent = txPct;
     document.getElementById('tx-transfo-sub').textContent = (nbVte!==null||nbCli!==null) ?
