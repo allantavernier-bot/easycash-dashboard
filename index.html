@@ -464,13 +464,16 @@ async function loadData() {
     let moyenneLigne = null;
     jsForm.table.rows.forEach((r, i) => {
       if(!r || !r.c) return;
-      // La ligne MOYENNE n'a pas de timestamp valide (pas une date)
+      // La ligne MOYENNE : pas de timestamp valide ET valeur en G
       const ts = r.c[0] ? r.c[0].v : null;
-      const hasValidDate = ts && gdate(ts) !== null;
-      if(!hasValidDate && r.c[6] && r.c[6].v !== null && r.c[6].v !== undefined && moyenneLigne === null) {
+      const hasValidDate = ts !== null && ts !== undefined && gdate(ts) !== null;
+      const hasG = r.c[6] !== undefined && r.c[6] !== null && r.c[6].v !== null && r.c[6].v !== undefined;
+      if(!hasValidDate && hasG && moyenneLigne === null) {
         moyenneLigne = r;
+        console.log('[Form] moyenneLigne trouvée, G=', r.c[6].v);
       }
     });
+    if(!moyenneLigne) console.log('[Form] moyenneLigne non trouvée - rows:', jsForm.table.rows.length);
     // Normalise un taux brut gviz -> pourcentage plafonné à 100%
     function normTaux(raw) {
       const v = parseFloat(raw);
@@ -854,21 +857,34 @@ function renderAnnual() {
   document.getElementById('ann-sems-sub').textContent = (weeks.length - doneWeeks.length) + ' semaines restantes';
 
   // Taux de transformation moyen — source G2 du Form (MOYENNE officielle du sheet)
-  // Taux moyen annuel : calculer depuis Q et S de allRows (source fiable)
-  const txRowsQS = allRows.filter(r => parseNum(r['S']) !== null && parseNum(r['Q']) !== null && parseNum(r['Q']) > 0);
-  const txMoyenQS = txRowsQS.length > 0
-    ? txRowsQS.reduce((s,r) => s + (parseNum(r['S']) / parseNum(r['Q']) * 100), 0) / txRowsQS.length
+  // Taux moyen annuel : moyenne simple des taux journaliers (identique à =MOYENNE du Sheet)
+  // Utilise col T (=S/Q) si disponible, sinon calcul depuis S et Q
+  const txRowsValid = allRows.filter(r => {
+    const t = parseNum(r['T']);
+    const s = parseNum(r['S']);
+    const q = parseNum(r['Q']);
+    return (t !== null && t > 0 && t <= 1) || (s !== null && q !== null && q > 0);
+  });
+  const txMoyenQS = txRowsValid.length > 0
+    ? txRowsValid.reduce((s,r) => {
+        const t = parseNum(r['T']);
+        const sv = parseNum(r['S']);
+        const qv = parseNum(r['Q']);
+        const tx = (t !== null && t > 0 && t <= 1) ? t * 100 : (sv / qv * 100);
+        return s + tx;
+      }, 0) / txRowsValid.length
     : null;
   const txMoyenQSValid = txMoyenQS !== null && txMoyenQS > 0 && txMoyenQS <= 100 ? txMoyenQS : null;
-  // Fallback Form si Q/S non disponibles
-  const txMoyen = txMoyenQSValid !== null ? txMoyenQSValid : (window.txMoyenGlobal || null);
-  const nbJoursTx = txRowsQS.length > 0 ? txRowsQS.length : (window.formByDate ? Object.keys(window.formByDate).length : 0);
+  // Priorité : Form (G2 = MOYENNE officielle) > calcul depuis T/S/Q
+  const txMoyen = (window.txMoyenGlobal !== null && window.txMoyenGlobal > 0) ? window.txMoyenGlobal
+                : txMoyenQSValid;
+  const nbJoursTx = txRowsValid.length > 0 ? txRowsValid.length : (window.formByDate ? Object.keys(window.formByDate).length : 0);
   const txEl = document.getElementById('ann-tx-transfo');
   const txBarEl = document.getElementById('ann-tx-bar');
   const txSubEl = document.getElementById('ann-tx-sub');
   if(txEl && txMoyen!==null){
     txEl.textContent = fmt(txMoyen,1)+' %';
-    txEl.style.color = txMoyen>=13&&txMoyen<=18 ? 'var(--green)' : txMoyen<13 ? 'var(--red)' : 'var(--amber)';
+    txEl.style.color = txMoyen>=12.95&&txMoyen<=18.05 ? 'var(--green)' : txMoyen<12.95 ? 'var(--red)' : 'var(--amber)';
     // Date de la dernière saisie Form = dernière ligne avec taux
     let lastFormDate = null;
     if(window.formByDate) {
@@ -887,7 +903,7 @@ function renderAnnual() {
       const pct = Math.min(100, txMoyen/25*100);
       const target13 = 13/25*100;
       const target18 = 18/25*100;
-      const col = txMoyen>=13&&txMoyen<=18?'var(--green)':txMoyen<13?'var(--red)':'var(--amber)';
+      const col = txMoyen>=12.95&&txMoyen<=18.05?'var(--green)':txMoyen<12.95?'var(--red)':'var(--amber)';
       txBarEl.innerHTML = '<div style="position:relative;background:var(--bg3);border-radius:4px;height:8px;overflow:hidden">'
         + '<div style="position:absolute;left:'+target13+'%;width:'+(target18-target13)+'%;height:100%;background:rgba(63,185,80,0.2);border-left:1px solid var(--green);border-right:1px solid var(--green)"></div>'
         + '<div style="position:absolute;left:0;width:'+pct+'%;height:100%;background:'+col+';border-radius:4px;transition:width .8s"></div>'
