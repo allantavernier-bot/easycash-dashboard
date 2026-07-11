@@ -370,16 +370,30 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
 .nett-sel-bar{background:var(--bl-l);border:1px solid var(--bl-b);border-radius:var(--r);padding:8px 14px;margin-bottom:10px;display:none;align-items:center;gap:10px;font-size:12px;color:var(--bl)}
 .nett-sel-bar.on{display:flex}
 .nett-grille-wrap{background:var(--sf);border:1px solid var(--b);border-radius:var(--rl);padding:12px;margin-bottom:12px;overflow-x:auto}
-.gondole .g-rect{fill:#EFEDE9;stroke:#C8C4BC;stroke-width:1;transition:fill .1s}
-.gondole .g-txt{fill:var(--t2);transition:fill .1s;pointer-events:none;user-select:none}
+.gondole .g-rect{fill:#EFEDE9;stroke:#C8C4BC;stroke-width:1;transition:fill .15s,stroke .15s}
+.gondole .g-txt{fill:var(--t2);transition:fill .15s;pointer-events:none;user-select:none}
 .gondole:hover .g-rect{fill:#E0DDD8;stroke:var(--tx)}
-.gondole.fresh .g-rect{fill:#D4EDDE;stroke:#5BAF7B}
-.gondole.fresh .g-txt{fill:var(--gn)}
-.gondole.stale .g-rect{fill:#FDEDC4;stroke:#D4A82A}
-.gondole.stale .g-txt{fill:var(--am)}
-.gondole.old .g-rect{fill:#F9D5D5;stroke:#C45A5A}
-.gondole.old .g-txt{fill:var(--rd)}
+/* Vert vif < 7j */
+.gondole.fresh .g-rect{fill:#C6E8D3;stroke:#3D8A58}
+.gondole.fresh .g-txt{fill:#1A5E35}
+/* Vert clair 7-14j */
+.gondole.fresh2 .g-rect{fill:#DDF2E3;stroke:#7BBF94}
+.gondole.fresh2 .g-txt{fill:#2E7A4A}
+/* Jaune-orange 14-21j */
+.gondole.stale .g-rect{fill:#FDE8B0;stroke:#C9921A}
+.gondole.stale .g-txt{fill:#7A5210}
+/* Orange 21-28j */
+.gondole.stale2 .g-rect{fill:#FAD09A;stroke:#C06A10}
+.gondole.stale2 .g-txt{fill:#7A3E08}
+/* Rouge > 28j */
+.gondole.old .g-rect{fill:#F9D0D0;stroke:#C04040}
+.gondole.old .g-txt{fill:#8C1818}
+/* Jamais nettoyé */
+.gondole.unset .g-rect{fill:#EFEDE9;stroke:#C8C4BC;stroke-dasharray:3,2}
+.gondole.unset .g-txt{fill:var(--t3)}
+/* Assignée */
 .gondole.assigned .g-rect{stroke:var(--bl);stroke-width:2}
+/* Sélectionnée */
 .gondole.nsel .g-rect{fill:#DBEAFE;stroke:var(--bl);stroke-width:2.5}
 .gondole.nsel .g-txt{fill:var(--bl)}
 .nett-det{background:var(--sf);border:1px solid var(--b);border-radius:var(--rl);padding:14px;margin-bottom:12px;display:none}
@@ -810,10 +824,12 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
         </div>
         <div class="nett-ctrl">
           <div class="nett-leg">
-            <div class="nett-li"><div class="nett-dot" style="background:#D4EDDE;border:1px solid #5BAF7B"></div>&lt;2 sem.</div>
-            <div class="nett-li"><div class="nett-dot" style="background:#FDEDC4;border:1px solid #D4A82A"></div>2–4 sem.</div>
-            <div class="nett-li"><div class="nett-dot" style="background:#F9D5D5;border:1px solid #C45A5A"></div>&gt;4 sem.</div>
-            <div class="nett-li"><div class="nett-dot" style="background:#EFEDE9;border:1px solid #C8C4BC"></div>Non fait</div>
+            <div class="nett-li"><div class="nett-dot" style="background:#C6E8D3;border:1px solid #3D8A58"></div>&lt;1 sem.</div>
+            <div class="nett-li"><div class="nett-dot" style="background:#DDF2E3;border:1px solid #7BBF94"></div>1–2 sem.</div>
+            <div class="nett-li"><div class="nett-dot" style="background:#FDE8B0;border:1px solid #C9921A"></div>2–3 sem.</div>
+            <div class="nett-li"><div class="nett-dot" style="background:#FAD09A;border:1px solid #C06A10"></div>3–4 sem.</div>
+            <div class="nett-li"><div class="nett-dot" style="background:#F9D0D0;border:1px solid #C04040"></div>&gt;4 sem.</div>
+            <div class="nett-li"><div class="nett-dot" style="background:#EFEDE9;border:1px dashed #C8C4BC"></div>Jamais</div>
           </div>
           <button class="sbmit" style="font-size:11px;padding:5px 12px" id="btn-nsel" onclick="window.toggleNsel()">☐ Sélectionner</button>
         </div>
@@ -1133,6 +1149,8 @@ async function saveState(){
       retours: STATE.retours,
       coefs: STATE.coefs,
       collabs: STATE.collabs,
+      taches: STATE.taches,
+      nettoyage: STATE.nettoyage,
     }, { merge: true });
     setSyncStatus('ok');
   } catch(e){
@@ -2709,9 +2727,11 @@ function getStatus(n) {
   if(!d.history||!d.history.length) return 'unset';
   const days = getDaysSince(d.history[0]?.dateISO);
   if(days===null) return 'unset';
-  if(days<14) return 'fresh';
-  if(days<28) return 'stale';
-  return 'old';
+  if(days<7)  return 'fresh';    // vert vif < 1 semaine
+  if(days<14) return 'fresh2';   // vert clair < 2 semaines
+  if(days<21) return 'stale';    // jaune-orange 2-3 semaines
+  if(days<28) return 'stale2';   // orange 3-4 semaines
+  return 'old';                  // rouge > 4 semaines
 }
 
 function renderNettoyage() {
@@ -2720,14 +2740,20 @@ function renderNettoyage() {
     if(!el) return;
     const d=getNData(n);
     const st=getStatus(n);
+    const days=getDaysSince(d.history[0]?.dateISO);
     el.className='gondole '+st+(d.assigned?' assigned':'')+(nSelSet.has(n)?' nsel':'');
+    // Tooltip avec info
+    const rect=el.querySelector('.g-rect');
+    if(rect) rect.setAttribute('title', days!==null?`${days}j`:'jamais');
   });
-  // Stats
+  // Stats (fresh + fresh2 = propres)
   let f=0,s=0,o=0,a=0;
   GIDS.forEach(n=>{
     const st=getStatus(n); const d=getNData(n);
-    if(st==='fresh')f++; else if(st==='stale')s++; else if(st==='old')o++;
-    if(d.assigned)a++;
+    if(st==='fresh'||st==='fresh2') f++;
+    else if(st==='stale'||st==='stale2') s++;
+    else if(st==='old') o++;
+    if(d.assigned) a++;
   });
   const setV=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
   setV('nc-fresh',f);setV('nc-stale',s);setV('nc-old',o);setV('nc-asgn',a);
@@ -2766,7 +2792,12 @@ function closeNdet() {
 async function doNclean() {
   if(!nActiveG) return;
   const who=document.getElementById('nett-who').value;
-  const uid = SIDS.find(u=>USERS[u]?.short?.toLowerCase()===who.toLowerCase())||who.toLowerCase();
+  // Trouver l'uid depuis le nom affiché
+  const uid = SIDS.find(u=>{
+    const short=(USERS[u]?.short||'').toLowerCase();
+    const name=(USERS[u]?.name||'').toLowerCase().split(' ')[0];
+    return short===who.toLowerCase()||name===who.toLowerCase()||u===who.toLowerCase();
+  })||who.toLowerCase();
   const dateISO=iso(new Date());
   const d=getNData(nActiveG);
   d.history.unshift({who:uid,dateISO});
