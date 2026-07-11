@@ -831,8 +831,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
             <div class="nett-li"><div class="nett-dot" style="background:#F9D0D0;border:1px solid #C04040"></div>&gt;4 sem.</div>
             <div class="nett-li"><div class="nett-dot" style="background:#EFEDE9;border:1px dashed #C8C4BC"></div>Jamais</div>
           </div>
-          <button class="sbmit" style="font-size:11px;padding:5px 12px" id="btn-nsel" onclick="window.toggleNsel()">☐ Sélectionner</button>
-        </div>
+          <button class="sbmit" style="font-size:11px;padding:5px 12px" id="btn-nsel" onclick="window.toggleNsel()">☐ Sélectionner</button>        </div>
         <div class="nett-sel-bar" id="nett-sel-bar">
           <span id="nsel-cnt">0 sélectionnée(s)</span>
           <button class="sbmit" style="font-size:11px;padding:5px 12px;margin-left:auto" onclick="window.openNassign()">Assigner →</button>
@@ -2720,8 +2719,10 @@ let nSelMode=false, nSelSet=new Set(), nActiveG=null, nPickedCollab='';
 
 function getNData(n) {
   if(!STATE.nettoyage) STATE.nettoyage={};
-  if(!STATE.nettoyage[n]) STATE.nettoyage[n]={history:[],assigned:null};
-  return STATE.nettoyage[n];
+  // Firebase retourne les clés numériques en string — on normalise
+  const key = String(n);
+  if(!STATE.nettoyage[key]) STATE.nettoyage[key]={history:[],assigned:null};
+  return STATE.nettoyage[key];
 }
 
 function getDaysSince(dateISO) {
@@ -2743,6 +2744,10 @@ function getStatus(n) {
 }
 
 function renderNettoyage() {
+  // Afficher/masquer le bouton Sélectionner selon le rôle
+  const btnSel = document.getElementById('btn-nsel');
+  if(btnSel) btnSel.style.display = USERS[cur]?.admin ? 'inline-flex' : 'none';
+
   GIDS.forEach(n=>{
     const el=document.getElementById('gnd'+n);
     if(!el) return;
@@ -2799,13 +2804,18 @@ function closeNdet() {
 
 async function doNclean() {
   if(!nActiveG) return;
-  const who=document.getElementById('nett-who').value;
-  // Trouver l'uid depuis le nom affiché
-  const uid = SIDS.find(u=>{
-    const short=(USERS[u]?.short||'').toLowerCase();
-    const name=(USERS[u]?.name||'').toLowerCase().split(' ')[0];
-    return short===who.toLowerCase()||name===who.toLowerCase()||u===who.toLowerCase();
-  })||who.toLowerCase();
+  // Admin peut choisir qui a nettoyé, sinon c'est l'utilisateur connecté
+  let uid;
+  if(USERS[cur]?.admin) {
+    const who=document.getElementById('nett-who').value;
+    uid = SIDS.find(u=>{
+      const short=(USERS[u]?.short||'').toLowerCase();
+      const name=(USERS[u]?.name||'').toLowerCase().split(' ')[0];
+      return short===who.toLowerCase()||name===who.toLowerCase()||u===who.toLowerCase();
+    })||who.toLowerCase();
+  } else {
+    uid = cur; // Le collaborateur connecté
+  }
   const dateISO=iso(new Date());
   const d=getNData(nActiveG);
   d.history.unshift({who:uid,dateISO});
