@@ -1181,12 +1181,20 @@ function startPolling(){
       if(saved.evenements) STATE.evenements = {...STATE.evenements, ...saved.evenements};
       if(saved.retours) STATE.retours = saved.retours;
       if(saved.coefs) STATE.coefs = {...STATE.coefs, ...saved.coefs};
+      if(saved.taches) STATE.taches = saved.taches;
+      if(saved.nettoyage) STATE.nettoyage = saved.nettoyage;
     }
     setSyncStatus('ok');
     renderPlanning();
     updateNotifBadge();
     if(document.getElementById('view-admin-abs').classList.contains('on')) renderAdminAbs();
     if(document.getElementById('view-signatures').classList.contains('on')) renderSigPage();
+    // Rafraîchir la vue tâches si active
+    if(document.getElementById('view-taches')?.classList.contains('on')){
+      if(document.getElementById('tt-mes-taches')?.style.display!=='none') renderMesTaches();
+      if(document.getElementById('tt-nettoyage')?.style.display!=='none') renderNettoyage();
+      if(document.getElementById('tt-gerer')?.style.display!=='none') renderAdminTaches();
+    }
   });
 }
 
