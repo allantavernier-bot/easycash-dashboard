@@ -2785,7 +2785,7 @@ function renderNettoyage() {
     const d=getNData(n);
     const st=getStatus(n);
     const days=getDaysSince(d.history[0]?.dateISO);
-    el.className='gondole '+st+(d.assigned?' assigned':'')+(nSelSet.has(n)?' nsel':'');
+    el.setAttribute('class','gondole '+st+(d.assigned?' assigned':'')+(nSelSet.has(n)?' nsel':''));
     // Tooltip avec info
     const rect=el.querySelector('.g-rect');
     if(rect) rect.setAttribute('title', days!==null?`${days}j`:'jamais');
