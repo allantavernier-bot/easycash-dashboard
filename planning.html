@@ -1126,7 +1126,10 @@ async function loadState(){
       if(saved.coefs) STATE.coefs = {...STATE.coefs, ...saved.coefs};
       if(saved.collabs) STATE.collabs = saved.collabs;
       if(saved.taches) STATE.taches = saved.taches;
-      if(saved.nettoyage) STATE.nettoyage = saved.nettoyage;
+      if(saved.nettoyage_json) {
+        try { STATE.nettoyage = JSON.parse(saved.nettoyage_json); normalizeNettoyage(); }
+        catch(e) { if(saved.nettoyage) { STATE.nettoyage = saved.nettoyage; normalizeNettoyage(); } }
+      } else if(saved.nettoyage) { STATE.nettoyage = saved.nettoyage; normalizeNettoyage(); }
     }
     setSyncStatus('ok');
   } catch(e){
@@ -1150,6 +1153,8 @@ async function saveState(){
       collabs: STATE.collabs,
       taches: STATE.taches,
       nettoyage: STATE.nettoyage,
+      // Sauvegarder aussi en JSON pour garantir la fidélité des tableaux imbriqués
+      nettoyage_json: JSON.stringify(STATE.nettoyage),
     }, { merge: true });
     setSyncStatus('ok');
   } catch(e){
@@ -1181,7 +1186,10 @@ function startPolling(){
       if(saved.retours) STATE.retours = saved.retours;
       if(saved.coefs) STATE.coefs = {...STATE.coefs, ...saved.coefs};
       if(saved.taches) STATE.taches = saved.taches;
-      if(saved.nettoyage) STATE.nettoyage = saved.nettoyage;
+      if(saved.nettoyage_json) {
+        try { STATE.nettoyage = JSON.parse(saved.nettoyage_json); normalizeNettoyage(); }
+        catch(e) { if(saved.nettoyage) { STATE.nettoyage = saved.nettoyage; normalizeNettoyage(); } }
+      } else if(saved.nettoyage) { STATE.nettoyage = saved.nettoyage; normalizeNettoyage(); }
     }
     setSyncStatus('ok');
     renderPlanning();
@@ -2719,10 +2727,33 @@ let nSelMode=false, nSelSet=new Set(), nActiveG=null, nPickedCollab='';
 
 function getNData(n) {
   if(!STATE.nettoyage) STATE.nettoyage={};
-  // Firebase retourne les clés numériques en string — on normalise
   const key = String(n);
-  if(!STATE.nettoyage[key]) STATE.nettoyage[key]={history:[],assigned:null};
+  // Normaliser l'entrée si elle existe mais avec un format inattendu
+  const existing = STATE.nettoyage[key];
+  if(!existing) {
+    STATE.nettoyage[key]={history:[],assigned:null};
+  } else {
+    // S'assurer que history est bien un tableau
+    if(!Array.isArray(existing.history)) {
+      existing.history = existing.history ? Object.values(existing.history) : [];
+    }
+    if(existing.assigned === undefined) existing.assigned = null;
+  }
   return STATE.nettoyage[key];
+}
+
+// Normaliser nettoyage après chargement Firebase
+function normalizeNettoyage() {
+  if(!STATE.nettoyage) return;
+  Object.keys(STATE.nettoyage).forEach(key => {
+    const d = STATE.nettoyage[key];
+    if(!d) return;
+    if(!Array.isArray(d.history)) {
+      d.history = d.history ? Object.values(d.history) : [];
+    }
+    // S'assurer que chaque entrée history a dateISO
+    d.history = d.history.filter(h => h && h.dateISO);
+  });
 }
 
 function getDaysSince(dateISO) {
