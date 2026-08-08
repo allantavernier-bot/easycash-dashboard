@@ -397,6 +397,63 @@
 <script>
 // SHEET_ID supprimé — données servies via Web App (sécurisé)
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz_om6CHk3CvB4e8dyFqdj0O_rzcVrZvjk1c9Uub1ZAx34J6VsOI5H30IRgtV67iyq1Yw/exec';
+
+// Gestion du token d'accès
+function getToken() { return localStorage.getItem('ec_access_token'); }
+function setToken(t) { localStorage.setItem('ec_access_token', t); }
+function clearToken() { localStorage.removeItem('ec_access_token'); }
+
+function showTokenModal(onSuccess) {
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;font-family:sans-serif';
+  modal.innerHTML = `
+    <div style="background:#161B22;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:32px;width:340px;text-align:center">
+      <div style="font-size:24px;margin-bottom:8px">🔒</div>
+      <div style="color:#E6EDF3;font-size:16px;font-weight:600;margin-bottom:8px">Accès sécurisé</div>
+      <div style="color:#7D8590;font-size:13px;margin-bottom:20px">Saisissez votre code d'accès</div>
+      <input id="tokenInput" type="password" placeholder="Code d'accès"
+        style="width:100%;box-sizing:border-box;padding:10px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:#0D1117;color:#E6EDF3;font-size:14px;margin-bottom:12px;outline:none"/>
+      <button id="tokenBtn"
+        style="width:100%;padding:10px;border-radius:8px;border:none;background:#3FB950;color:#000;font-weight:600;font-size:14px;cursor:pointer">
+        Accéder
+      </button>
+      <div id="tokenErr" style="color:#F85149;font-size:12px;margin-top:10px;display:none">Code incorrect</div>
+    </div>`;
+  document.body.appendChild(modal);
+  const input = modal.querySelector('#tokenInput');
+  const btn = modal.querySelector('#tokenBtn');
+  const err = modal.querySelector('#tokenErr');
+  input.focus();
+  async function tryToken() {
+    const t = input.value.trim();
+    if (!t) return;
+    btn.disabled = true;
+    btn.textContent = '...';
+    // Test du token contre le Web App
+    try {
+      const res = await fetch(SCRIPT_URL + '?action=ping&token=' + encodeURIComponent(t));
+      const data = await res.json();
+      if (data.status === 'ok') {
+        setToken(t);
+        modal.remove();
+        onSuccess();
+      } else {
+        err.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Accéder';
+        input.value = '';
+        input.focus();
+      }
+    } catch(e) {
+      err.textContent = 'Erreur de connexion';
+      err.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Accéder';
+    }
+  }
+  btn.onclick = tryToken;
+  input.onkeydown = e => { if(e.key === 'Enter') tryToken(); };
+}
 const CAT_TAB = 'categories_206';
 const OBJ_ANNUEL = 481000;
 let allRows = [];
@@ -444,11 +501,23 @@ function switchTab(tab) {
 }
 
 async function loadData() {
+  const token = getToken();
+  if (!token) {
+    showTokenModal(() => loadData());
+    return;
+  }
   try {
     // Données servies via Web App Apps Script (Sheet privé, accès sécurisé)
-    const res = await fetch(SCRIPT_URL + '?action=all');
+    const res = await fetch(SCRIPT_URL + '?action=all&token=' + encodeURIComponent(token));
     const raw = await res.json();
-    if (!raw || raw.status === 'error') throw new Error(raw.message || 'Erreur Web App');
+    if (!raw || raw.status === 'error') {
+      if (raw.message === 'Accès non autorisé') {
+        clearToken();
+        showTokenModal(() => loadData());
+        return;
+      }
+      throw new Error(raw.message || 'Erreur Web App');
+    }
 
     // Convertir les tableaux bruts (valeurs) en format compatible avec le reste du code
     function rowsToGviz(rows) {
@@ -1167,8 +1236,7 @@ async function saveSaisie(dateFR) {
   if(status) status.textContent = 'Enregistrement...';
 
   try {
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz_om6CHk3CvB4e8dyFqdj0O_rzcVrZvjk1c9Uub1ZAx34J6VsOI5H30IRgtV67iyq1Yw/exec';
-    const body = { dateFR };
+    const body = { dateFR, token: getToken() };
     if (nbVentes) body.nbVentes = parseInt(nbVentes);
     if (nbAchats) body.nbHA = parseInt(nbAchats);
 
@@ -1230,7 +1298,7 @@ async function loadCategories() {
   wrap.querySelector('.main').insertAdjacentHTML('afterbegin',
     '<div id="catLoader" style="text-align:center;padding:40px;color:var(--muted);font-size:13px">Chargement des catégories...</div>');
   try {
-    const res = await fetch(SCRIPT_URL + '?action=categories');
+    const res = await fetch(SCRIPT_URL + '?action=categories&token=' + encodeURIComponent(getToken()));
     const raw = await res.json();
     if (!raw || raw.status === 'error') throw new Error(raw.message || 'Erreur Web App categories');
     const rows = raw.categories || [];
@@ -1473,7 +1541,7 @@ window.rvoPeriod   = 'jour';
 
 async function loadVendeurData() {
   try {
-    const res = await fetch(SCRIPT_URL + '?action=vendeurs');
+    const res = await fetch(SCRIPT_URL + '?action=vendeurs&token=' + encodeURIComponent(getToken()));
     const raw = await res.json();
     if (!raw || raw.status === 'error') throw new Error(raw.message || 'Erreur Web App vendeurs');
     const rows = raw.vendeurs || [];

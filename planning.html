@@ -2143,10 +2143,14 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
 // ═══════════════════════════════════════════════════════
 //  OBJECTIFS MARGE
 // ═══════════════════════════════════════════════════════
-const GVIZ_URL = `https://docs.google.com/spreadsheets/d/1wBm0SyeqC-4HBKZ7J7KefcNfdLiJ7cL2KIf3VEgcp1M/gviz/tq?tqx=out:json&sheet=${encodeURIComponent('Données journalières')}`;
-const GVIZ_VENDEUR_URL = `https://docs.google.com/spreadsheets/d/1wBm0SyeqC-4HBKZ7J7KefcNfdLiJ7cL2KIf3VEgcp1M/gviz/tq?tqx=out:json&sheet=${encodeURIComponent('Marge_par_vendeur')}`;
+// Web App sécurisé (remplace les URLs gviz directes)
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbz_om6CHk3CvB4e8dyFqdj0O_rzcVrZvjk1c9Uub1ZAx34J6VsOI5H30IRgtV67iyq1Yw/exec';
 let margeData = {};
 let vendeurData = {};
+
+// Gestion du token (partagé avec index.html via localStorage)
+function getMargeToken() { return localStorage.getItem('ec_access_token'); }
+function setMargeToken(t) { localStorage.setItem('ec_access_token', t); }
 
 function parseNumGviz(v){ if(v===null||v===undefined||v==='') return null; const n=parseFloat(String(v).replace(',','.').replace(/\s/g,'')); return isNaN(n)?null:n; }
 function gdateGviz(raw){
@@ -2157,32 +2161,91 @@ function gdateGviz(raw){
   return null;
 }
 
+function showMargeTokenModal(onSuccess) {
+  const modal = document.createElement('div');
+  modal.id = 'margeTokenModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:12px;padding:28px;width:300px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.2)">
+      <div style="font-size:22px;margin-bottom:8px">🔒</div>
+      <div style="font-weight:600;font-size:15px;margin-bottom:6px">Code d'accès requis</div>
+      <div style="color:#666;font-size:13px;margin-bottom:16px">Pour afficher les objectifs de marge</div>
+      <input id="margeTokenInput" type="password" placeholder="Code d'accès"
+        style="width:100%;box-sizing:border-box;padding:9px 12px;border-radius:7px;border:1px solid #ddd;font-size:14px;margin-bottom:10px;outline:none"/>
+      <button id="margeTokenBtn"
+        style="width:100%;padding:9px;border-radius:7px;border:none;background:#22c55e;color:#fff;font-weight:600;font-size:14px;cursor:pointer">
+        Valider
+      </button>
+      <div id="margeTokenErr" style="color:#ef4444;font-size:12px;margin-top:8px;display:none">Code incorrect</div>
+    </div>`;
+  document.body.appendChild(modal);
+  const input = modal.querySelector('#margeTokenInput');
+  const btn = modal.querySelector('#margeTokenBtn');
+  const err = modal.querySelector('#margeTokenErr');
+  input.focus();
+  async function tryToken() {
+    const t = input.value.trim();
+    if (!t) return;
+    btn.disabled = true; btn.textContent = '...';
+    try {
+      const res = await fetch(WEBAPP_URL + '?action=ping&token=' + encodeURIComponent(t));
+      const data = await res.json();
+      if (data.status === 'ok') {
+        setMargeToken(t);
+        modal.remove();
+        onSuccess();
+      } else {
+        err.style.display = 'block';
+        btn.disabled = false; btn.textContent = 'Valider';
+        input.value = ''; input.focus();
+      }
+    } catch(e) {
+      err.textContent = 'Erreur réseau'; err.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Valider';
+    }
+  }
+  btn.onclick = tryToken;
+  input.onkeydown = e => { if(e.key==='Enter') tryToken(); };
+}
+
 async function loadMargeData(){
+  const token = getMargeToken();
+  if (!token) {
+    showMargeTokenModal(() => loadMargeData());
+    return;
+  }
   try {
-    const res = await fetch(GVIZ_URL);
-    const txt = await res.text();
-    const js  = JSON.parse(txt.substring(47, txt.length-2));
+    const res = await fetch(WEBAPP_URL + '?action=all&token=' + encodeURIComponent(token));
+    const raw = await res.json();
+    if (!raw || raw.status === 'error') {
+      if (raw.message === 'Accès non autorisé') {
+        localStorage.removeItem('ec_access_token');
+        showMargeTokenModal(() => loadMargeData());
+        return;
+      }
+      throw new Error(raw.message || 'Erreur Web App');
+    }
+
+    // Parser Données journalières (col F = index 5 = Marge cible)
     margeData = {};
-    (js.table.rows||[]).forEach(r => {
-      if(!r||!r.c) return;
-      const d = gdateGviz(r.c[0]?r.c[0].v:null);
+    const mainRows = raw.main || [];
+    mainRows.slice(1).forEach(r => {
+      const d = gdateGviz(r[0]);
       if(!d) return;
       const dISO = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-      const marge = parseNumGviz(r.c[5]?r.c[5].v:null);
+      const marge = parseNumGviz(r[5]);
       if(marge!==null) margeData[dISO] = marge;
     });
 
-    const res2 = await fetch(GVIZ_VENDEUR_URL);
-    const txt2 = await res2.text();
-    const js2  = JSON.parse(txt2.substring(47, txt2.length-2));
+    // Parser Marge_par_vendeur
     vendeurData = {};
-    (js2.table.rows||[]).forEach(r => {
-      if(!r||!r.c) return;
-      const d = gdateGviz(r.c[0]?r.c[0].v:null);
+    const vendRows = raw.vendeurs || [];
+    vendRows.slice(1).forEach(r => {
+      const d = gdateGviz(r[0]);
       if(!d) return;
       const dISO = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-      const uid   = r.c[1]?String(r.c[1].v):null;
-      const marge = parseNumGviz(r.c[4]?r.c[4].v:null);
+      const uid   = r[1] ? String(r[1]) : null;
+      const marge = parseNumGviz(r[4]);
       if(uid&&marge!==null) vendeurData[`${dISO}|${uid}`] = marge;
     });
 
