@@ -1638,7 +1638,9 @@ function rvoRender(){
   const ecartMag =totalReal-totalObj;
   const pctMag   =totalObj>0?Math.min(totalReal/totalObj*100,100):0;
   document.getElementById('rvo-mag-real').textContent=fmtE(totalReal);
-  document.getElementById('rvo-mag-obj').textContent =fmtE(totalObj);
+  document.getElementById('rvo-mag-obj').textContent = fmtE(totalObj);
+  document.getElementById('rvo-obj-equipe').textContent  = fmtE(totalObj * (1 - INTERNET_SHARE));
+  document.getElementById('rvo-obj-internet').textContent = fmtE(totalObj * INTERNET_SHARE);
   document.getElementById('rvo-mag-ecart').textContent=(ecartMag>=0?'+':'')+fmt(ecartMag)+' €';
   document.getElementById('rvo-mag-ecart').style.color=ecartMag>=0?'var(--green)':'var(--red)';
   document.getElementById('rvo-mag-jours').textContent=main.length;
@@ -1748,7 +1750,14 @@ function rvoRender(){
     </div>
     <div class="rvo-stats-row">
       <div class="rvo-stat"><div class="rvo-stat-label">Réalisé</div><div class="rvo-stat-val" id="rvo-mag-real" style="color:var(--green)">—</div></div>
-      <div class="rvo-stat"><div class="rvo-stat-label">Objectif</div><div class="rvo-stat-val" id="rvo-mag-obj">—</div></div>
+      <div class="rvo-stat">
+        <div class="rvo-stat-label">Objectif global</div>
+        <div class="rvo-stat-val" id="rvo-mag-obj">—</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px">
+          Équipe <span id="rvo-obj-equipe" style="color:var(--text);font-weight:600">—</span>
+          &nbsp;·&nbsp; Internet <span id="rvo-obj-internet" style="color:var(--text);font-weight:600">—</span>
+        </div>
+      </div>
       <div class="rvo-stat"><div class="rvo-stat-label">Écart</div><div class="rvo-stat-val" id="rvo-mag-ecart">—</div></div>
       <div class="rvo-stat"><div class="rvo-stat-label">Jours</div><div class="rvo-stat-val" id="rvo-mag-jours" style="color:var(--muted)">—</div></div>
     </div>
