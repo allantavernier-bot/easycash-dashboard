@@ -520,18 +520,51 @@ async function loadData() {
     }
 
     // Convertir les tableaux bruts (valeurs) en format compatible avec le reste du code
-    function rowsToGviz(rows) {
+    // Convertir les tableaux bruts Apps Script en format attendu par le code existant
+    // Les dates arrivent comme strings DD/MM/YYYY depuis getValues()
+    function rawToRows(rows) {
+      if (!rows || rows.length < 2) return [];
+      // Retourner les lignes de données (sans en-tête) comme tableaux de valeurs
+      return rows.slice(1);
+    }
+
+    // allRows attend des objets {A: val, B: val, ...} indexés par lettre de colonne
+    function rawToAllRows(rows) {
+      if (!rows || rows.length < 2) return [];
+      const headers = rows[0]; // ex: ["Date", "Jour", "Sem.", ...]
+      const colLetters = headers.map((h, i) => String.fromCharCode(65 + i)); // A, B, C...
+      return rows.slice(1).map(row => {
+        const obj = {};
+        colLetters.forEach((letter, i) => {
+          const v = row[i];
+          obj[letter] = (v === '' || v === null || v === undefined) ? null : v;
+        });
+        return obj;
+      });
+    }
+
+    // Pour le Form : même logique
+    function rawFormToRows(rows) {
       if (!rows || rows.length < 2) return { table: { cols: [], rows: [] } };
       const headers = rows[0];
       const cols = headers.map(h => ({ label: String(h) }));
       const dataRows = rows.slice(1).map(row => ({
-        c: row.map(v => ({ v: v === '' || v === null ? null : v }))
+        c: row.map(v => ({ v: (v === '' || v === null || v === undefined) ? null : v }))
       }));
       return { table: { cols, rows: dataRows } };
     }
 
-    const js = rowsToGviz(raw.main);
-    const jsForm = rowsToGviz(raw.form);
+    const jsForm = rawFormToRows(raw.form);
+
+    // Simuler js.table.rows pour compatibilité avec le reste du code
+    const js = {
+      table: {
+        cols: (raw.main[0] || []).map((h, i) => ({ id: String.fromCharCode(65+i), label: String(h) })),
+        rows: (raw.main || []).slice(1).map(row => ({
+          c: row.map(v => ({ v: (v === '' || v === null || v === undefined) ? null : v }))
+        }))
+      }
+    };
     // G2 = taux moyen global (ligne index 1 = ligne 2, col G = index 6)
     window.txMoyenGlobal = null;
     window.formByDate = {};
