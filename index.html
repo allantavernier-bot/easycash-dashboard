@@ -1706,7 +1706,7 @@ function rvoRender(){
           <div style="font-size:10px;color:var(--muted);margin-top:2px">${rows.length} jour(s) · ${fmt(partTotal,1)}% de la marge totale</div>
         </div>
         <div style="text-align:right">
-          <div style="font-size:11px;color:var(--muted)">${c.uid==='libre_service'?'Objectif implicite : '+fmtE(margeTotal*INTERNET_SHARE):'Pas d'objectif'}</div>
+          <div style="font-size:11px;color:var(--muted)">${c.uid==='libre_service' ? 'Objectif implicite : '+fmtE(margeTotal*INTERNET_SHARE) : 'Sans objectif'}</div>
         </div>
       </div>
     </div>`;
