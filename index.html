@@ -1561,13 +1561,18 @@ loadData();
 //  RÉALISÉ VS OBJECTIF
 // ═══════════════════════════════════════════════════════
 const VENDEUR_TAB = 'Marge_par_vendeur';
-const COEFS_RVO = { anthony:20, cathy:50, hubert:100, manon:100, lucie:100 };
-const COLLABS_RVO = [
+const COEFS_RVO = { anthony:20, cathy:50, hubert:100, manon:100 };
+// COLLABS_EQUIPE : salariés avec objectif de vente pondéré
+const COLLABS_EQUIPE = [
   {uid:'anthony',nom:'Anthony',coef:20},
   {uid:'cathy',  nom:'Cathy',  coef:50},
   {uid:'hubert', nom:'Hubert', coef:100},
   {uid:'manon',  nom:'Manon',  coef:100},
-  {uid:'lucie',  nom:'Lucie',  coef:100},
+];
+// COLLABS_AUTRES : Allan + Libre Service, affichés en info sans objectif
+const COLLABS_AUTRES = [
+  {uid:'allan',        nom:'Allan (direction)', coef:null},
+  {uid:'libre_service',nom:'Libre service / Internet', coef:null},
 ];
 window.vendeurRows = null;
 window.rvoPeriod   = 'jour';
@@ -1649,30 +1654,35 @@ function rvoRender(){
   }
   const vend=window.vendeurRows.filter(r=>r.date>=from&&r.date<=to);
 
-  grid.innerHTML=COLLABS_RVO.map(c=>{
-    const rows=vend.filter(r=>r.uid===c.uid);
-    const realMarge=rows.reduce((s,r)=>s+(r.marge||0),0);
-    let objMarge=0;
-    main.forEach(dayRow=>{
-      const dISO=toISO(gdate(dayRow['A']));
-      const dayObj=parseNum(dayRow['F'])||0;
-      if(!dayObj) return;
-      const presentUIDs=vend.filter(v=>v.dateISO===dISO).map(v=>v.uid);
-      const totalPart=presentUIDs.reduce((s,uid)=>s+(COEFS_RVO[uid]||0)/100,0);
-      if(presentUIDs.includes(c.uid)&&totalPart>0)
-        objMarge+=(c.coef/100/totalPart)*dayObj;
+  // Marge totale réalisée sur la période (pour calcul des parts)
+  const margeTotal = vend.reduce((s,r) => s + (r.marge||0), 0);
+
+  // Rendu équipe (avec objectifs)
+  const cardsEquipe = COLLABS_EQUIPE.map(c => {
+    const rows = vend.filter(r => r.uid === c.uid);
+    const realMarge = rows.reduce((s,r) => s + (r.marge||0), 0);
+    let objMarge = 0;
+    main.forEach(dayRow => {
+      const dISO = toISO(gdate(dayRow['A']));
+      const dayObj = parseNum(dayRow['F']) || 0;
+      if (!dayObj) return;
+      const presentUIDs = vend.filter(v => v.dateISO === dISO).map(v => v.uid);
+      const totalPart = presentUIDs.reduce((s,uid) => s + (COEFS_RVO[uid]||0)/100, 0);
+      if (presentUIDs.includes(c.uid) && totalPart > 0)
+        objMarge += (c.coef/100/totalPart) * dayObj;
     });
-    const ecart=realMarge-objMarge;
-    const pct=objMarge>0?Math.min(realMarge/objMarge*100,100):0;
-    const cl=pct>=100?'gn':pct>=75?'am':'rd';
+    const ecart = realMarge - objMarge;
+    const pct = objMarge > 0 ? Math.min(realMarge/objMarge*100, 100) : 0;
+    const partTotal = margeTotal > 0 ? (realMarge/margeTotal*100) : 0;
+    const cl = pct>=100?'gn':pct>=75?'am':'rd';
     return `<div class="rvo-card">
       <div class="rvo-card-name">${c.nom}<span class="rvo-card-coef">${c.coef}% vente</span></div>
       <div class="rvo-gauge-wrap">
-        <div class="rvo-gauge-label"><span>Marge réalisée</span><span style="font-weight:600;color:var(--text)">${fmt(pct,1)}%</span></div>
+        <div class="rvo-gauge-label"><span>Vs objectif</span><span style="font-weight:600;color:var(--text)">${fmt(pct,1)}%</span></div>
         <div class="rvo-gauge-track"><div class="rvo-gauge-fill ${cl}" style="width:${pct}%"></div></div>
       </div>
       <div class="rvo-nums">
-        <div><div class="rvo-real">${fmtE(realMarge)}</div><div style="font-size:10px;color:var(--muted);margin-top:2px">${rows.length} jour(s)</div></div>
+        <div><div class="rvo-real">${fmtE(realMarge)}</div><div style="font-size:10px;color:var(--muted);margin-top:2px">${fmt(partTotal,1)}% de la marge totale</div></div>
         <div style="text-align:right">
           <div class="rvo-obj">Obj : ${fmtE(objMarge)}</div>
           <div class="${ecart>=0?'rvo-ecart-pos':'rvo-ecart-neg'}">${ecart>=0?'+':''}${fmt(ecart)} €</div>
@@ -1680,6 +1690,33 @@ function rvoRender(){
       </div>
     </div>`;
   }).join('');
+
+  // Rendu Allan + Libre Service (sans objectif, juste info)
+  const cardsAutres = COLLABS_AUTRES.map(c => {
+    const rows = vend.filter(r => r.uid === c.uid);
+    const realMarge = rows.reduce((s,r) => s + (r.marge||0), 0);
+    const partTotal = margeTotal > 0 ? (realMarge/margeTotal*100) : 0;
+    const icon = c.uid === 'allan' ? '👤' : '🌐';
+    return `<div class="rvo-card" style="border-left:3px solid var(--blue)">
+      <div class="rvo-card-name">${icon} ${c.nom}</div>
+      <div class="rvo-nums" style="margin-top:8px">
+        <div>
+          <div class="rvo-real">${fmtE(realMarge)}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">${rows.length} jour(s) · ${fmt(partTotal,1)}% de la marge totale</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:11px;color:var(--muted)">Pas d'objectif</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Séparateur entre équipe et direction/internet
+  const separator = COLLABS_AUTRES.some(c => vend.some(r => r.uid === c.uid))
+    ? `<div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:16px 0 10px">Direction & Internet</div>`
+    : '';
+
+  grid.innerHTML = cardsEquipe + separator + cardsAutres;
 }
 </script>
 
