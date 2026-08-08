@@ -395,9 +395,8 @@
 </div>
 
 <script>
-const SHEET_ID = '1wBm0SyeqC-4HBKZ7J7KefcNfdLiJ7cL2KIf3VEgcp1M';
-const SHEET_TAB = 'Données journalières';
-const FORM_TAB = 'Réponses au formulaire 1';
+// SHEET_ID supprimé — données servies via Web App (sécurisé)
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz_om6CHk3CvB4e8dyFqdj0O_rzcVrZvjk1c9Uub1ZAx34J6VsOI5H30IRgtV67iyq1Yw/exec';
 const CAT_TAB = 'categories_206';
 const OBJ_ANNUEL = 481000;
 let allRows = [];
@@ -446,14 +445,24 @@ function switchTab(tab) {
 
 async function loadData() {
   try {
-    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_TAB)}`;
-    const urlForm = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(FORM_TAB)}`;
-    const [res, resForm] = await Promise.all([fetch(url), fetch(urlForm)]);
-    const txt = await res.text();
-    const js = JSON.parse(txt.substring(47, txt.length-2));
-    // Charger les données Form
-    const txtForm = await resForm.text();
-    const jsForm = JSON.parse(txtForm.substring(47, txtForm.length-2));
+    // Données servies via Web App Apps Script (Sheet privé, accès sécurisé)
+    const res = await fetch(SCRIPT_URL + '?action=all');
+    const raw = await res.json();
+    if (!raw || raw.status === 'error') throw new Error(raw.message || 'Erreur Web App');
+
+    // Convertir les tableaux bruts (valeurs) en format compatible avec le reste du code
+    function rowsToGviz(rows) {
+      if (!rows || rows.length < 2) return { table: { cols: [], rows: [] } };
+      const headers = rows[0];
+      const cols = headers.map(h => ({ label: String(h) }));
+      const dataRows = rows.slice(1).map(row => ({
+        c: row.map(v => ({ v: v === '' || v === null ? null : v }))
+      }));
+      return { table: { cols, rows: dataRows } };
+    }
+
+    const js = rowsToGviz(raw.main);
+    const jsForm = rowsToGviz(raw.form);
     // G2 = taux moyen global (ligne index 1 = ligne 2, col G = index 6)
     window.txMoyenGlobal = null;
     window.formByDate = {};
@@ -1221,11 +1230,20 @@ async function loadCategories() {
   wrap.querySelector('.main').insertAdjacentHTML('afterbegin',
     '<div id="catLoader" style="text-align:center;padding:40px;color:var(--muted);font-size:13px">Chargement des catégories...</div>');
   try {
-    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(CAT_TAB)}`;
-    const res = await fetch(url);
-    const txt = await res.text();
-    const js = JSON.parse(txt.substring(47, txt.length - 2));
-    const ids = js.table.cols.map(c => c.id);
+    const res = await fetch(SCRIPT_URL + '?action=categories');
+    const raw = await res.json();
+    if (!raw || raw.status === 'error') throw new Error(raw.message || 'Erreur Web App categories');
+    const rows = raw.categories || [];
+    if (rows.length < 2) throw new Error('Pas de données catégories');
+    const headers = rows[0];
+    // Simuler le format gviz avec ids = index numérique (A=col0, B=col1...)
+    const ids = headers.map((h, i) => String.fromCharCode(65 + i));
+    const js = {
+      table: {
+        cols: headers.map((h, i) => ({ id: String.fromCharCode(65 + i), label: String(h) })),
+        rows: rows.slice(1).map(row => ({ c: row.map(v => ({ v: v === '' || v === null ? null : v })) }))
+      }
+    };
 
     catRows = js.table.rows.map(r => {
       const o = {};
@@ -1455,18 +1473,19 @@ window.rvoPeriod   = 'jour';
 
 async function loadVendeurData() {
   try {
-    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(VENDEUR_TAB)}`;
-    const res = await fetch(url);
-    const txt = await res.text();
-    const js  = JSON.parse(txt.substring(47, txt.length-2));
-    window.vendeurRows = (js.table.rows||[]).map(r => {
-      if(!r||!r.c) return null;
-      const d = gdate(r.c[0]?r.c[0].v:null);
+    const res = await fetch(SCRIPT_URL + '?action=vendeurs');
+    const raw = await res.json();
+    if (!raw || raw.status === 'error') throw new Error(raw.message || 'Erreur Web App vendeurs');
+    const rows = raw.vendeurs || [];
+    // rows[0] = headers, rows[1..] = données
+    window.vendeurRows = rows.slice(1).map(r => {
+      if(!r || r.length < 5) return null;
+      const d = gdate(r[0]);
       return {
         date:    d,
         dateISO: d ? d.toISOString().substring(0,10) : null,
-        uid:     r.c[1] ? String(r.c[1].v) : null,
-        marge:   parseNum(r.c[4]?r.c[4].v:null),
+        uid:     r[1] ? String(r[1]) : null,
+        marge:   parseNum(r[4]),
       };
     }).filter(r => r && r.date && r.uid);
   } catch(e) {
