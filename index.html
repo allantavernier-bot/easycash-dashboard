@@ -1562,6 +1562,7 @@ loadData();
 // ═══════════════════════════════════════════════════════
 const VENDEUR_TAB = 'Marge_par_vendeur';
 const COEFS_RVO = { anthony:20, cathy:50, hubert:100, manon:100 };
+const INTERNET_SHARE = 0.15; // 15% de la marge réalisée par Libre Service/Internet
 // COLLABS_EQUIPE : salariés avec objectif de vente pondéré
 const COLLABS_EQUIPE = [
   {uid:'anthony',nom:'Anthony',coef:20},
@@ -1664,7 +1665,7 @@ function rvoRender(){
     let objMarge = 0;
     main.forEach(dayRow => {
       const dISO = toISO(gdate(dayRow['A']));
-      const dayObj = parseNum(dayRow['F']) || 0;
+      const dayObj = (parseNum(dayRow['F']) || 0) * (1 - INTERNET_SHARE); // -15% internet
       if (!dayObj) return;
       const presentUIDs = vend.filter(v => v.dateISO === dISO).map(v => v.uid);
       const totalPart = presentUIDs.reduce((s,uid) => s + (COEFS_RVO[uid]||0)/100, 0);
@@ -1705,7 +1706,7 @@ function rvoRender(){
           <div style="font-size:10px;color:var(--muted);margin-top:2px">${rows.length} jour(s) · ${fmt(partTotal,1)}% de la marge totale</div>
         </div>
         <div style="text-align:right">
-          <div style="font-size:11px;color:var(--muted)">Pas d'objectif</div>
+          <div style="font-size:11px;color:var(--muted)">${c.uid==='libre_service'?'Objectif implicite : '+fmtE(margeTotal*INTERNET_SHARE):'Pas d'objectif'}</div>
         </div>
       </div>
     </div>`;
