@@ -423,20 +423,20 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
       <div class="lbadge">EC</div>
       <div><div class="ltitle">Easy Cash Berck</div><div class="lsub">Espace planning équipe</div></div>
     </div>
+    <label class="fl">Magasin</label>
+    <select class="fsel" id="msel" onchange="window.onMagasinChange()">
+      <option value="berck">Easy Cash Berck</option>
+      <option value="abbeville">Easy Cash Abbeville</option>
+    </select>
     <label class="fl">Qui êtes-vous ?</label>
-    <select class="fsel" id="usel">
+    <select class="fsel" id="usel" onchange="window.resetPin()">
       <option value="">— Sélectionner —</option>
-      <option value="allan">Allan Tavernier · Directeur</option>
-      <option value="anthony">Anthony Vantorre</option>
-      <option value="cathy">Cathy Matturel</option>
-      <option value="hubert">Hubert Poidevin</option>
-      <option value="manon">Manon Vivien</option>
-      <option value="lucie" style="display:none">Lucie Bridoux (inactif)</option>
     </select>
     <label class="fl">Code PIN</label>
     <div class="pdots" id="pdots">
       <div class="pd" id="pd0"></div><div class="pd" id="pd1"></div>
       <div class="pd" id="pd2"></div><div class="pd" id="pd3"></div>
+      <div class="pd" id="pd4"></div><div class="pd" id="pd5"></div>
     </div>
     <div class="lerr" id="lerr">Code incorrect — réessayez.</div>
     <div class="npad">
@@ -1030,12 +1030,12 @@ const STATE_DOC = doc(db, "easycash", "state");
 // ═══════════════════════════════════════════════════════
 
 const USERS = {
-  allan:   {name:'Allan Tavernier', short:'Allan',   role:'Directeur Général',              pin:'084809', admin:true,  bg:'#EFEFED',ct:'#2A2A28'},
-  anthony: {name:'Anthony Vantorre',short:'Anthony', role:'Acheteur principal · Adjoint',   pin:'2001', admin:false, bg:'#E8F0FF',ct:'#1A4BAA'},
-  cathy:   {name:'Cathy Matturel',  short:'Cathy',   role:'Bijoutière',                     pin:'2002', admin:false, bg:'#FCEAF2',ct:'#7A2040'},
-  hubert:  {name:'Hubert Poidevin', short:'Hubert',  role:'Vendeur téléphonie',             pin:'2003', admin:false, bg:'#FFF5E8',ct:'#7A4808'},
-  manon:   {name:'Manon Vivien',    short:'Manon',   role:'Vendeuse JV & Culture',          pin:'2004', admin:false, bg:'#EAFAF2',ct:'#0F6830'},
-  lucie:   {name:'Lucie Bridoux',   short:'Lucie',   role:'Vendeuse générale · Alternance', pin:'2005', admin:false, bg:'#EEEEFF',ct:'#3D2DA0'}
+  allan:   {name:'Allan Tavernier', short:'Allan',   role:'Directeur Général',              pin:'084809', admin:true,  bg:'#EFEFED',ct:'#2A2A28', magasin:'all'},
+  anthony: {name:'Anthony Vantorre',short:'Anthony', role:'Acheteur principal · Adjoint',   pin:'2001', admin:false, bg:'#E8F0FF',ct:'#1A4BAA', magasin:'berck'},
+  cathy:   {name:'Cathy Matturel',  short:'Cathy',   role:'Bijoutière',                     pin:'2002', admin:false, bg:'#FCEAF2',ct:'#7A2040', magasin:'berck'},
+  hubert:  {name:'Hubert Poidevin', short:'Hubert',  role:'Vendeur téléphonie',             pin:'2003', admin:false, bg:'#FFF5E8',ct:'#7A4808', magasin:'berck'},
+  manon:   {name:'Manon Vivien',    short:'Manon',   role:'Vendeuse JV & Culture',          pin:'2004', admin:false, bg:'#EAFAF2',ct:'#0F6830', magasin:'berck'},
+  lucie:   {name:'Lucie Bridoux',   short:'Lucie',   role:'Vendeuse générale · Alternance', pin:'2005', admin:false, bg:'#EEEEFF',ct:'#3D2DA0', magasin:'berck', active:false}
 };
 const SIDS = ['anthony','cathy','hubert','manon'];
 const SKILLS = {
@@ -1406,9 +1406,43 @@ function openNotifs(){
 // ═══════════════════════════════════════════════════════
 //  LOGIN / LOGOUT
 // ═══════════════════════════════════════════════════════
-function pp(d){if(pinbuf.length>=4)return;pinbuf+=d;upd();if(pinbuf.length===4)tryLogin();}
+function populateUserSelect(){
+  const msel=document.getElementById('msel');
+  const magasin=msel?msel.value:'berck';
+  const usel=document.getElementById('usel');
+  let h='<option value="">— Sélectionner —</option>';
+  let count=0;
+  Object.keys(USERS).forEach(uid=>{
+    const u=USERS[uid];
+    if(u.active===false)return;
+    if(u.magasin!=='all'&&u.magasin!==magasin)return;
+    count++;
+    h+=`<option value="${uid}">${u.name}${u.role?' · '+u.role.split(' · ')[0]:''}</option>`;
+  });
+  if(count===0)h+='<option value="" disabled>Aucun salarié enregistré pour ce magasin</option>';
+  usel.innerHTML=h;
+}
+function onMagasinChange(){populateUserSelect();resetPin();}
+function pinLen(){const uid=document.getElementById('usel').value;return (uid&&USERS[uid]&&USERS[uid].pin)?USERS[uid].pin.length:6;}
+function resetPin(){pinbuf='';document.getElementById('lerr').style.display='none';upd();}
+function pp(d){
+  const uid=document.getElementById('usel').value;
+  if(!uid)return;
+  const len=pinLen();
+  if(pinbuf.length>=len)return;
+  pinbuf+=d;upd();
+  if(pinbuf.length===len)tryLogin();
+}
 function pdel(){pinbuf=pinbuf.slice(0,-1);upd();document.getElementById('lerr').style.display='none';}
-function upd(){for(let i=0;i<4;i++)document.getElementById('pd'+i).classList.toggle('on',i<pinbuf.length);}
+function upd(){
+  const len=pinLen();
+  for(let i=0;i<6;i++){
+    const el=document.getElementById('pd'+i);
+    if(!el)continue;
+    el.style.display=i<len?'inline-block':'none';
+    el.classList.toggle('on',i<pinbuf.length);
+  }
+}
 function tryLogin(){
   const uid=document.getElementById('usel').value;
   if(!uid){pinbuf='';upd();return;}
@@ -3430,7 +3464,7 @@ window.allerSignatures = function() {
 // ═══════════════════════════════════════════════════════
 //  EXPOSITION GLOBALE (nécessaire avec type="module")
 // ═══════════════════════════════════════════════════════
-window.pp=pp; window.pdel=pdel; window.logout=logout;
+window.pp=pp; window.pdel=pdel; window.logout=logout; window.resetPin=resetPin; window.onMagasinChange=onMagasinChange;
 window.showTab=showTab; window.cw=cw; window.gotoday=gotoday;
 // ═══════════════════════════════════════════════════════
 //  DUPLICATION
@@ -3564,6 +3598,7 @@ window.openNotifs=function(){
 const now=new Date();
 document.getElementById('astart').value=iso(now);
 document.getElementById('aend').value=iso(now);
+populateUserSelect();
 emailjs.init(EMAILJS_KEY);
 startPolling();
 </script>
