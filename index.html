@@ -298,6 +298,39 @@
       </table>
     </div>
   </div>
+
+  <!-- GRAPHIQUE CA PAR MOIS -->
+  <div class="row1" style="margin-top:16px">
+    <div class="card">
+      <div class="card-title">📅 CA & Marge par mois</div>
+      <div style="position:relative"><canvas id="monthChart" height="160"></canvas></div>
+      <div class="chart-legend" style="margin-top:8px">
+        <div class="legend-item"><div style="width:12px;height:8px;background:rgba(248,81,73,0.6);border-radius:2px"></div>CA mensuel</div>
+        <div class="legend-item"><div style="width:12px;height:8px;background:rgba(63,185,80,0.7);border-radius:2px"></div>Marge mensuelle</div>
+        <div class="legend-item"><div style="width:12px;height:8px;background:rgba(88,166,255,0.25);border-radius:2px;border:1px dashed var(--blue)"></div>Obj. marge mensuel</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DETAIL PAR MOIS -->
+  <div class="row2" style="margin-top:16px">
+    <div class="card" style="overflow:auto">
+      <div class="card-title">Détail par mois</div>
+      <table class="week-table">
+        <thead><tr>
+          <th>Mois</th><th>CA</th><th>Marge</th><th>Obj. marge</th><th>Écart</th><th>Tx%</th><th>Jours</th>
+        </tr></thead>
+        <tbody id="month-tbody"></tbody>
+        <tfoot id="month-tfoot"></tfoot>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">Meilleur mois</div>
+      <div id="best-month-card" style="margin-top:8px"></div>
+      <div class="card-title" style="margin-top:20px">Tendance</div>
+      <div id="month-trend" style="margin-top:8px;font-size:12px;color:var(--muted)"></div>
+    </div>
+  </div>
 </div>
 </div>
 
@@ -1034,6 +1067,7 @@ function renderAnnual() {
   drawAnnualChart(weeks, ytdM);
   drawWeekChart(doneWeeks);
   renderWeekTable(weeks, doneWeeks, ytdM);
+  renderMonthly(allRows);
 }
 
 function drawAnnualChart(weeks, ytdM) {
@@ -1292,6 +1326,163 @@ async function saveSaisie(dateFR) {
     }
   } catch(e) {
     if(status) status.textContent = '❌ ' + e.message;
+  }
+}
+
+/* ============================================================
+ *  GRAPHIQUE & TABLEAU PAR MOIS
+ * ============================================================ */
+let monthChartInstance = null;
+
+function renderMonthly(rows) {
+  const MOIS = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+
+  // Agréger par mois
+  const monthMap = {};
+  for(const row of rows) {
+    const dateStr = row['A'];
+    if(!dateStr) continue;
+    const parts = String(dateStr).split('/');
+    if(parts.length !== 3) continue;
+    const m = parseInt(parts[1]) - 1; // 0-11
+    const y = parseInt(parts[2]);
+    const key = `${y}-${String(m).padStart(2,'0')}`;
+    if(!monthMap[key]) monthMap[key] = {m, y, label: MOIS[m]+' '+y, ca:0, marge:0, caObj:0, margeObj:0, jours:0, hasData:false};
+    monthMap[key].caObj   += parseNum(row['E'])||0;
+    monthMap[key].margeObj += parseNum(row['F'])||0;
+    const ca = parseNum(row['G']);
+    const marge = parseNum(row['I']);
+    if(ca !== null) {
+      monthMap[key].ca    += ca;
+      monthMap[key].marge += marge||0;
+      monthMap[key].jours++;
+      monthMap[key].hasData = true;
+    }
+  }
+
+  const months = Object.values(monthMap).sort((a,b)=> a.y!==b.y ? a.y-b.y : a.m-b.m);
+  const done   = months.filter(m=>m.hasData);
+
+  // --- Graphique ---
+  const canvas = document.getElementById('monthChart');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio||1;
+  canvas.width  = canvas.offsetWidth  * dpr;
+  canvas.height = canvas.offsetHeight * dpr;
+  ctx.scale(dpr,dpr);
+  const W = canvas.offsetWidth, H = canvas.offsetHeight;
+  const PAD = {t:20,r:20,b:40,l:70};
+  const cW = W-PAD.l-PAD.r, cH = H-PAD.t-PAD.b;
+
+  if(monthChartInstance) { monthChartInstance.destroy(); monthChartInstance=null; }
+
+  const labels = months.map(m=>m.label);
+  const caData     = months.map(m=>m.hasData?m.ca:null);
+  const margeData  = months.map(m=>m.hasData?m.marge:null);
+  const objData    = months.map(m=>m.margeObj);
+
+  const style = getComputedStyle(document.documentElement);
+  const grd = document.createElement('canvas');
+  grd.width=1; grd.height=1; // dummy
+
+  monthChartInstance = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        {label:'CA mensuel',      data:caData,    backgroundColor:'rgba(248,81,73,0.55)',  borderRadius:3, order:2},
+        {label:'Marge mensuelle', data:margeData, backgroundColor:'rgba(63,185,80,0.65)', borderRadius:3, order:1},
+        {label:'Obj. marge',      data:objData,   type:'line', borderColor:'rgba(88,166,255,0.7)',
+         backgroundColor:'rgba(88,166,255,0.08)', borderDash:[5,3], pointRadius:3,
+         pointBackgroundColor:'rgba(88,166,255,0.8)', tension:0.3, fill:false, order:0},
+      ]
+    },
+    options:{
+      responsive:false,
+      maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'rgba(13,17,23,0.9)',
+          titleColor:'#e6edf3',bodyColor:'#8b949e',
+          callbacks:{
+            label: ctx => {
+              const v = ctx.raw;
+              if(v===null||v===undefined) return null;
+              return `${ctx.dataset.label}: ${fmtE(v)}`;
+            }
+          }
+        }
+      },
+      scales:{
+        x:{ticks:{color:'#7D8590',font:{size:10}},grid:{color:'rgba(255,255,255,0.04)'}},
+        y:{beginAtZero:true,ticks:{color:'#7D8590',callback:v=>fmtE(v)},grid:{color:'rgba(255,255,255,0.04)'}}
+      }
+    }
+  });
+
+  // --- Tableau détail ---
+  const tbody = document.getElementById('month-tbody');
+  const tfoot = document.getElementById('month-tfoot');
+  if(!tbody||!tfoot) return;
+
+  let totCA=0,totMarge=0,totObj=0,totJours=0;
+  tbody.innerHTML = months.map(mo=>{
+    const ecart  = mo.hasData ? mo.marge - mo.margeObj : null;
+    const tx     = mo.hasData && mo.ca>0 ? mo.marge/mo.ca*100 : null;
+    if(mo.hasData){totCA+=mo.ca;totMarge+=mo.marge;totObj+=mo.margeObj;totJours+=mo.jours;}
+    const ec = ecart!==null ? `<span style="color:${ecart>=0?'var(--green)':'var(--red)'}">${ecart>=0?'+':''}${fmtE(ecart)}</span>` : '—';
+    const row_style = !mo.hasData ? 'opacity:.4' : '';
+    return `<tr style="${row_style}">
+      <td style="font-weight:500;white-space:nowrap">${mo.label}</td>
+      <td style="font-family:'DM Mono',monospace">${mo.hasData?fmtE(mo.ca):'—'}</td>
+      <td style="font-family:'DM Mono',monospace;color:var(--green)">${mo.hasData?fmtE(mo.marge):'—'}</td>
+      <td style="font-family:'DM Mono',monospace;color:var(--muted)">${fmtE(mo.margeObj)}</td>
+      <td>${ec}</td>
+      <td style="font-family:'DM Mono',monospace">${tx!==null?fmt(tx,1)+' %':'—'}</td>
+      <td style="font-family:'DM Mono',monospace;color:var(--muted)">${mo.hasData?mo.jours:'—'}</td>
+    </tr>`;
+  }).join('');
+
+  const totEcart = totMarge - totObj;
+  const totTx = totCA>0 ? totMarge/totCA*100 : null;
+  tfoot.innerHTML = `<tr style="font-weight:600;border-top:1px solid var(--border)">
+    <td>Total YTD</td>
+    <td style="font-family:'DM Mono',monospace">${fmtE(totCA)}</td>
+    <td style="font-family:'DM Mono',monospace;color:var(--green)">${fmtE(totMarge)}</td>
+    <td style="font-family:'DM Mono',monospace;color:var(--muted)">${fmtE(totObj)}</td>
+    <td><span style="color:${totEcart>=0?'var(--green)':'var(--red)'}">${totEcart>=0?'+':''}${fmtE(totEcart)}</span></td>
+    <td style="font-family:'DM Mono',monospace">${totTx!==null?fmt(totTx,1)+' %':'—'}</td>
+    <td style="font-family:'DM Mono',monospace;color:var(--muted)">${totJours}</td>
+  </tr>`;
+
+  // --- Meilleur mois & tendance ---
+  const bestCard = document.getElementById('best-month-card');
+  const trendDiv = document.getElementById('month-trend');
+  if(bestCard && done.length>0){
+    const best = done.reduce((a,b)=>a.ca>b.ca?a:b);
+    const bestTx = best.ca>0?best.marge/best.ca*100:null;
+    bestCard.innerHTML = `
+      <div style="font-size:20px;font-weight:700;color:var(--red);font-family:'DM Mono',monospace">${fmtE(best.ca)}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">${best.label}</div>
+      <div style="font-size:11px;color:var(--green);margin-top:6px">Marge : ${fmtE(best.marge)}${bestTx!==null?' ('+fmt(bestTx,1)+' %)':''}</div>`;
+  }
+  if(trendDiv && done.length>=2){
+    const last = done[done.length-1];
+    const prev = done[done.length-2];
+    const diffCA = last.ca - prev.ca;
+    const pctCA  = prev.ca>0 ? diffCA/prev.ca*100 : null;
+    const diffM  = last.marge - prev.marge;
+    const arrow  = diffCA>=0 ? '↑' : '↓';
+    const col    = diffCA>=0 ? 'var(--green)' : 'var(--red)';
+    trendDiv.innerHTML = `
+      <div style="margin-bottom:8px">CA <b>${last.label}</b> vs <b>${prev.label}</b> :
+        <span style="color:${col};font-weight:600">${arrow} ${fmtE(Math.abs(diffCA))}${pctCA!==null?' ('+fmt(Math.abs(pctCA),1)+' %)':''}</span>
+      </div>
+      <div>Marge : <span style="color:${diffM>=0?'var(--green)':'var(--red)'};font-weight:600">${diffM>=0?'+':''}${fmtE(diffM)}</span></div>
+      ${done.length>=3 ? `<div style="margin-top:8px;color:var(--muted)">Moyenne 3 derniers mois CA : ${fmtE(Math.round(done.slice(-3).reduce((s,m)=>s+m.ca,0)/3))}</div>` : ''}`;
   }
 }
 
