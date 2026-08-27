@@ -1504,7 +1504,6 @@ function showTab(name,btn){
 // ═══════════════════════════════════════════════════════
 function cw(dir){
   const isAdm=USERS[cur].admin;const n=woff+dir;
-  if(!isAdm&&n<0){toast('Semaines passées non accessibles.');return;}
   if(!isAdm&&n>5){toast('Seules les 5 prochaines semaines sont visibles.');return;}
   woff=n;renderPlanning();
   if(document.getElementById('view-signatures').classList.contains('on'))renderSigPage();
