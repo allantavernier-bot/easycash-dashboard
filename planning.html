@@ -1116,13 +1116,13 @@ async function loadState(){
     if(snap.exists()){
       const saved = snap.data();
       if(saved.absences) STATE.absences = saved.absences;
-      if(saved.slotOverrides) STATE.slotOverrides = {...STATE.slotOverrides, ...saved.slotOverrides};
+      if(saved.slotOverrides) STATE.slotOverrides = saved.slotOverrides;
       if(saved.signatures) STATE.signatures = saved.signatures;
       if(saved.notifications) STATE.notifications = saved.notifications;
       if(saved.scheduleOverrides) STATE.scheduleOverrides = saved.scheduleOverrides;
-      if(saved.evenements) STATE.evenements = {...STATE.evenements, ...saved.evenements};
+      if(saved.evenements) STATE.evenements = saved.evenements;
       if(saved.retours) STATE.retours = saved.retours;
-      if(saved.coefs) STATE.coefs = {...STATE.coefs, ...saved.coefs};
+      if(saved.coefs) STATE.coefs = saved.coefs;
       if(saved.collabs) STATE.collabs = saved.collabs;
       if(saved.taches) STATE.taches = saved.taches;
       if(saved.nettoyage_json) {
@@ -1177,13 +1177,13 @@ function startPolling(){
     if(snap.exists()){
       const saved = snap.data();
       if(saved.absences) STATE.absences = saved.absences;
-      if(saved.slotOverrides) STATE.slotOverrides = {...STATE.slotOverrides, ...saved.slotOverrides};
+      if(saved.slotOverrides) STATE.slotOverrides = saved.slotOverrides;
       if(saved.signatures) STATE.signatures = saved.signatures;
       if(saved.notifications) STATE.notifications = saved.notifications;
       if(saved.scheduleOverrides) STATE.scheduleOverrides = saved.scheduleOverrides;
-      if(saved.evenements) STATE.evenements = {...STATE.evenements, ...saved.evenements};
+      if(saved.evenements) STATE.evenements = saved.evenements;
       if(saved.retours) STATE.retours = saved.retours;
-      if(saved.coefs) STATE.coefs = {...STATE.coefs, ...saved.coefs};
+      if(saved.coefs) STATE.coefs = saved.coefs;
       if(saved.taches) STATE.taches = saved.taches;
       if(saved.nettoyage_json) {
         try { STATE.nettoyage = JSON.parse(saved.nettoyage_json); normalizeNettoyage(); }
@@ -1281,6 +1281,23 @@ function ferieChomeMinsForWeek(uid,off){
   let c=0;
   DAYS.forEach((_,i)=>{const dt=new Date(mon);dt.setDate(mon.getDate()+i);if(isFerieChome(uid,iso(dt)))c++;});
   return c*ferieChomeMins(uid);
+}
+
+// Minutes de congé/absence indemnisée (CP, maladie, perso, autre) sur la semaine — hors repos_echange (non payé)
+function congeMinsForWeek(uid,off){
+  const mon=monday(off);
+  let c=0;
+  DAYS.forEach((_,i)=>{
+    const dt=new Date(mon);dt.setDate(mon.getDate()+i);
+    const dateISO=iso(dt);
+    const abs=absStatus(uid,dateISO);
+    if(abs==='approved'){
+      const absInfo=STATE.absences.find(x=>x.uid===uid&&dateISO>=x.start&&dateISO<=x.end&&x.status==='approved');
+      const type=absInfo?.type||'';
+      if(type!=='repos_echange') c+=cpMinsForDay(uid);
+    }
+  });
+  return c;
 }
 
 // Retourne les minutes correspondant à 1 journée de CP (contrat / 5 jours ouvrés)
@@ -1701,10 +1718,13 @@ function renderPlanning(){
     bH+='</div>';
     // Bande signature pour le salarié connecté
     if(!isAdm&&cur===uid){
-      const wm=weekMins(uid,woff),cm=BASE_SCHEDULE[uid].h*60,ft=ferieChomeMinsForWeek(uid,woff),bg=weekBudget(uid,woff),diff=wm-cm;
+      const wm=weekMins(uid,woff),cm=BASE_SCHEDULE[uid].h*60,ft=ferieChomeMinsForWeek(uid,woff),cg=congeMinsForWeek(uid,woff),wk=wm-ft-cg,bg=weekBudget(uid,woff),diff=wm-cm;
       const cls=diff>0?'hbad':diff<-30?'hwrn':'hok';
       const dtxt=diff===0?`<span class="hok">✓ Conforme (${mh(cm)})</span>`:diff>0?`<span class="hbad">⚠ +${mh(diff)} — dépasse le contrat</span>`:`<span class="hwrn">−${mh(Math.abs(diff))} sous le contrat</span>`;
-      let det=ft>0?`<span style="font-size:10px;color:var(--am);margin-left:8px">Dont ${mh(ft)} férié · Budget : ${mh(bg)}</span>`:'';
+      let detParts=[`Travaillé : ${mh(wk)}`];
+      if(cg>0)detParts.push(`Congés/repos : ${mh(cg)}`);
+      if(ft>0)detParts.push(`Férié : ${mh(ft)}`);
+      let det=(cg>0||ft>0)?`<span style="font-size:10px;color:var(--t2);margin-left:8px">${detParts.join(' · ')}</span>`:'';
       const sigPart=signed
         ?`<span class="signed">✓ Planning signé — <a href="#" onclick="window.showTab('signatures',document.querySelector('.tab:nth-child(2))'));return false" style="color:var(--bl)">voir</a></span>`
         :`<button class="sbtn" onclick="window.showTab('signatures',document.querySelectorAll('.tab')[1])">Signer ce planning ✓</button>`;
@@ -1724,12 +1744,14 @@ function renderPlanning(){
   if(isAdm){
     let gH='',al='';
     SIDS.forEach(uid=>{
-      const wm=weekMins(uid,woff),cm=BASE_SCHEDULE[uid].h*60,ft=ferieChomeMinsForWeek(uid,woff),bg=weekBudget(uid,woff),diff=wm-cm;
+      const wm=weekMins(uid,woff),cm=BASE_SCHEDULE[uid].h*60,ft=ferieChomeMinsForWeek(uid,woff),cg=congeMinsForWeek(uid,woff),wk=wm-ft-cg,bg=weekBudget(uid,woff),diff=wm-cm;
       const cls=diff>0?'hitem-bad':diff<-60?'hitem-warn':'hitem-ok';
       const vcls=diff>0?'hbad2':diff<-60?'hwrn2':'hok2';
       const dtxt=diff===0?'✓':diff>0?`+${mh(diff)} ⚠`:`−${mh(Math.abs(diff))}`;
-      let sub=`Contrat ${mh(cm)} · ${dtxt}`;
-      if(ft>0)sub+=`<br>Férié: ${mh(ft)} · Planifiable: ${mh(bg)}`;
+      let sub=`Travaillé ${mh(wk)}`;
+      if(cg>0)sub+=` · Congés ${mh(cg)}`;
+      if(ft>0)sub+=` · Férié ${mh(ft)}`;
+      sub+=`<br>Contrat ${mh(cm)} · ${dtxt}`;
       gH+=`<div class="hitem ${cls}"><div class="hlbl">${USERS[uid].short}</div><div class="hval ${vcls}">${mh(wm)}</div><div class="hsub">${sub}</div></div>`;
       if(diff>0)al+=`<div>⚠ <b>${USERS[uid].short}</b> dépasse de +${mh(diff)}</div>`;
     });
