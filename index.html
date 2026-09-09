@@ -1773,7 +1773,7 @@ const COLLABS_AUTRES = [
   {uid:'libre_service',nom:'Libre service / Internet', coef:null},
 ];
 window.vendeurRows = null;
-window.rvoPeriod   = 'jour';
+window.rvoPeriod   = 'hier';
 
 async function loadVendeurData() {
   try {
@@ -1800,16 +1800,33 @@ async function loadVendeurData() {
 
 function rvoGetRange(period) {
   const today = new Date(); today.setHours(0,0,0,0);
-  if(period==='jour')   return {from:today,to:today};
-  if(period==='semaine'){const dow=today.getDay()===0?6:today.getDay()-1;const m=new Date(today);m.setDate(today.getDate()-dow);return{from:m,to:today};}
-  if(period==='mois')   return {from:new Date(today.getFullYear(),today.getMonth(),1),to:today};
-  if(period==='annee')  return {from:new Date(today.getFullYear(),0,1),to:today};
+  // Hier
+  if(period==='hier'){const h=new Date(today);h.setDate(today.getDate()-1);return{from:h,to:h};}
+  // Semaine dernière : lundi→samedi de S-1
+  if(period==='semaine_last'){
+    const dow=today.getDay()===0?6:today.getDay()-1;
+    const lun=new Date(today); lun.setDate(today.getDate()-dow-7);
+    const sam=new Date(lun);   sam.setDate(lun.getDate()+5);
+    return{from:lun,to:sam};
+  }
+  // Mois dernier
+  if(period==='mois_last'){
+    const from=new Date(today.getFullYear(),today.getMonth()-1,1);
+    const to=new Date(today.getFullYear(),today.getMonth(),0);
+    return{from,to};
+  }
+  // Personnalisé
   if(period==='custom'){
     const f=document.getElementById('rvo-from').value, t=document.getElementById('rvo-to').value;
     if(!f||!t) return {from:today,to:today};
     const [fy,fm,fd]=f.split('-').map(Number), [ty,tm,td]=t.split('-').map(Number);
     return {from:new Date(fy,fm-1,fd),to:new Date(ty,tm-1,td)};
   }
+  // Compatibilité
+  if(period==='jour')   return {from:today,to:today};
+  if(period==='semaine'){const dow=today.getDay()===0?6:today.getDay()-1;const m=new Date(today);m.setDate(today.getDate()-dow);return{from:m,to:today};}
+  if(period==='mois')   return {from:new Date(today.getFullYear(),today.getMonth(),1),to:today};
+  if(period==='annee')  return {from:new Date(today.getFullYear(),0,1),to:today};
   return {from:today,to:today};
 }
 
@@ -1864,12 +1881,18 @@ function rvoRender(){
     let objMarge = 0;
     main.forEach(dayRow => {
       const dISO = toISO(gdate(dayRow['A']));
-      const dayObj = (parseNum(dayRow['F']) || 0) * (1 - INTERNET_SHARE); // -15% internet
+      const dayObj = parseNum(dayRow['F']) || 0;
       if (!dayObj) return;
-      const presentUIDs = vend.filter(v => v.dateISO === dISO).map(v => v.uid);
-      const totalPart = presentUIDs.reduce((s,uid) => s + (COEFS_RVO[uid]||0)/100, 0);
+      // Objectif dynamique : déduire ce qu'Allan et Libre Service ont réellement fait
+      const allanMarge  = vend.filter(v=>v.dateISO===dISO&&v.uid==='allan').reduce((s,r)=>s+(r.marge||0),0);
+      const libreMarge  = vend.filter(v=>v.dateISO===dISO&&v.uid==='libre_service').reduce((s,r)=>s+(r.marge||0),0);
+      const autresMarge = allanMarge + libreMarge;
+      // Reste à faire par l'équipe = max(0, objectif - réalisé Allan - réalisé Libre Service)
+      const objEquipe   = Math.max(0, dayObj - autresMarge);
+      const presentUIDs = vend.filter(v => v.dateISO === dISO && COEFS_RVO[v.uid]).map(v => v.uid);
+      const totalPart   = presentUIDs.reduce((s,uid) => s + (COEFS_RVO[uid]||0)/100, 0);
       if (presentUIDs.includes(c.uid) && totalPart > 0)
-        objMarge += (c.coef/100/totalPart) * dayObj;
+        objMarge += (c.coef/100/totalPart) * objEquipe;
     });
     const ecart = realMarge - objMarge;
     const pct = objMarge > 0 ? Math.min(realMarge/objMarge*100, 100) : 0;
@@ -1905,7 +1928,7 @@ function rvoRender(){
           <div style="font-size:10px;color:var(--muted);margin-top:2px">${rows.length} jour(s) · ${fmt(partTotal,1)}% de la marge totale</div>
         </div>
         <div style="text-align:right">
-          <div style="font-size:11px;color:var(--muted)">${c.uid==='libre_service' ? 'Objectif implicite : '+fmtE(margeTotal*INTERNET_SHARE) : 'Sans objectif'}</div>
+          <div style="font-size:11px;color:var(--muted)">${c.uid==='libre_service' ? 'Ref. : '+fmtE(totalObj*INTERNET_SHARE)+' (15% obj)' : 'Sans objectif'}</div>
         </div>
       </div>
     </div>`;
@@ -1924,10 +1947,9 @@ function rvoRender(){
 <div id="page-realise" class="page" style="display:none">
 <div class="main">
   <div class="rvo-period-bar">
-    <button class="rvo-period-btn active" onclick="rvoSetPeriod('jour',this)">Aujourd'hui</button>
-    <button class="rvo-period-btn" onclick="rvoSetPeriod('semaine',this)">Cette semaine</button>
-    <button class="rvo-period-btn" onclick="rvoSetPeriod('mois',this)">Ce mois</button>
-    <button class="rvo-period-btn" onclick="rvoSetPeriod('annee',this)">Cette année</button>
+    <button class="rvo-period-btn active" onclick="rvoSetPeriod('hier',this)">Hier</button>
+    <button class="rvo-period-btn" onclick="rvoSetPeriod('semaine_last',this)">Semaine dernière</button>
+    <button class="rvo-period-btn" onclick="rvoSetPeriod('mois_last',this)">Mois dernier</button>
     <button class="rvo-period-btn" onclick="rvoSetPeriod('custom',this)">Personnalisé</button>
     <div class="rvo-custom" id="rvo-custom-wrap">
       <span style="font-size:12px;color:var(--muted)">Du</span>
