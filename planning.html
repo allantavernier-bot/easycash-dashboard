@@ -2425,14 +2425,14 @@ function renderObjectifs(){
     <div class="marge-stat unit"><div class="marge-val">${Object.keys(margeData).length} jours</div><div class="marge-lbl">Données chargées</div></div>`;
 
   // Tableau de proratisation
-  const tbody = document.getElementById('coef-table-body');
-  if(tbody) {
+  const coefTbody = document.getElementById('coef-table-body');
+  if(coefTbody) {
     const totalPoids = SIDS.reduce((s, uid) => {
       const h = BASE_SCHEDULE[uid]?.h || 35;
       const pct = (STATE.coefs?.[uid] || 0) / 100;
       return s + h * pct;
     }, 0);
-    tbody.innerHTML = SIDS.map(uid => {
+    coefTbody.innerHTML = SIDS.map(uid => {
       const u = USERS[uid];
       const h = BASE_SCHEDULE[uid]?.h || 35;
       const pct = STATE.coefs?.[uid] || 0;
