@@ -2419,6 +2419,19 @@ function renderObjectifs(){
       <td style="text-align:right;font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--bl);border-left:2px solid var(--bm)">${totalCollab>0?Math.round(totalCollab).toLocaleString('fr-FR')+' €':'—'}</td>
       <td style="text-align:right;font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--tx)">${hasReal?Math.round(realCollab).toLocaleString('fr-FR')+' €':'—'}</td>
       <td style="text-align:right;font-family:'IBM Plex Mono',monospace;font-weight:600;color:${ecartCollab>=0?'var(--gn)':'var(--rd)'}">${hasReal?(ecartCollab>=0?'+':'')+Math.round(ecartCollab).toLocaleString('fr-FR')+' €':'—'}</td>
+    </tr>
+    <tr style="font-size:10px;color:var(--t2);border-bottom:1px solid var(--brd)">
+      <td colspan="3" style="padding:2px 8px 6px;font-style:italic">↳ réalisé</td>
+      ${dates.map((d,i) => {
+        const dISO = iso(d);
+        const real = vendeurData[\`\${dISO}|\${uid}\`];
+        if(real === undefined) return \`<td style="text-align:center;color:var(--t3)">—</td>\`;
+        const col = real >= 0 ? 'var(--gn)' : 'var(--rd)';
+        return \`<td style="text-align:center;font-family:'IBM Plex Mono',monospace;color:\${col};font-weight:500">\${Math.round(real).toLocaleString('fr-FR')} €</td>\`;
+      }).join('')}
+      <td style="border-left:2px solid var(--bm)"></td>
+      <td></td>
+      <td></td>
     </tr>`;
   }).join('');
 
