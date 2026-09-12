@@ -433,18 +433,15 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
       <option value="">— Sélectionner —</option>
     </select>
     <label class="fl">Code PIN</label>
-    <div class="pdots" id="pdots">
-      <div class="pd" id="pd0"></div><div class="pd" id="pd1"></div>
-      <div class="pd" id="pd2"></div><div class="pd" id="pd3"></div>
-      <div class="pd" id="pd4"></div><div class="pd" id="pd5"></div>
-    </div>
     <div class="lerr" id="lerr">Code incorrect — réessayez.</div>
-    <div class="npad">
-      <div class="nb" onclick="window.pp('1')">1</div><div class="nb" onclick="window.pp('2')">2</div><div class="nb" onclick="window.pp('3')">3</div>
-      <div class="nb" onclick="window.pp('4')">4</div><div class="nb" onclick="window.pp('5')">5</div><div class="nb" onclick="window.pp('6')">6</div>
-      <div class="nb" onclick="window.pp('7')">7</div><div class="nb" onclick="window.pp('8')">8</div><div class="nb" onclick="window.pp('9')">9</div>
-      <div class="nb z" onclick="window.pp('0')">0</div><div class="nb del" onclick="window.pdel()">⌫</div>
-    </div>
+    <input type="password" id="pin-input" class="fsel"
+      placeholder="Saisissez votre code PIN"
+      inputmode="numeric"
+      autocomplete="current-password"
+      style="letter-spacing:.2em;font-size:18px;text-align:center;margin-bottom:8px"
+      oninput="window.onPinInput(this.value)"
+      onkeydown="if(event.key==='Enter') window.tryLoginInput()">
+    <button class="sbmit" style="width:100%;margin-top:4px" onclick="window.tryLoginInput()">Connexion</button>
   </div>
 </div>
 
@@ -1423,25 +1420,26 @@ function populateUserSelect(){
 }
 function onMagasinChange(){populateUserSelect();resetPin();}
 function pinLen(){const uid=document.getElementById('usel').value;return (uid&&USERS[uid]&&USERS[uid].pin)?USERS[uid].pin.length:6;}
-function resetPin(){pinbuf='';document.getElementById('lerr').style.display='none';upd();}
+function resetPin(){
+  pinbuf='';
+  const inp=document.getElementById('pin-input');
+  if(inp){inp.value='';setTimeout(()=>inp.focus(),100);}
+  document.getElementById('lerr').style.display='none';
+}
 function pp(d){
-  const uid=document.getElementById('usel').value;
-  if(!uid)return;
+  const inp=document.getElementById('pin-input');
+  if(inp){inp.value+=d;pinbuf=inp.value;}else{pinbuf+=d;}
   const len=pinLen();
-  if(pinbuf.length>=len)return;
-  pinbuf+=d;upd();
-  if(pinbuf.length===len)tryLogin();
+  if(pinbuf.length>=len)tryLogin();
 }
-function pdel(){pinbuf=pinbuf.slice(0,-1);upd();document.getElementById('lerr').style.display='none';}
-function upd(){
-  const len=pinLen();
-  for(let i=0;i<6;i++){
-    const el=document.getElementById('pd'+i);
-    if(!el)continue;
-    el.style.display=i<len?'inline-block':'none';
-    el.classList.toggle('on',i<pinbuf.length);
-  }
+function pdel(){
+  const inp=document.getElementById('pin-input');
+  if(inp){inp.value=inp.value.slice(0,-1);pinbuf=inp.value;}else{pinbuf=pinbuf.slice(0,-1);}
+  document.getElementById('lerr').style.display='none';
 }
+function upd(){/* input natif */}
+window.onPinInput=function(val){pinbuf=val;document.getElementById('lerr').style.display='none';};
+window.tryLoginInput=function(){const inp=document.getElementById('pin-input');if(inp)pinbuf=inp.value;tryLogin();};
 function tryLogin(){
   const uid=document.getElementById('usel').value;
   if(!uid){pinbuf='';upd();return;}
@@ -1454,7 +1452,9 @@ function tryLogin(){
     loadState().then(()=>{renderAll();updateNotifBadge();verifierSignatureAuLogin(uid);});
   }else{
     document.getElementById('lerr').style.display='block';
-    pinbuf='';upd();
+    pinbuf='';
+    const inp2=document.getElementById('pin-input');
+    if(inp2)inp2.value='';
     setTimeout(()=>document.getElementById('lerr').style.display='none',2200);
   }
 }
@@ -2421,17 +2421,16 @@ function renderObjectifs(){
       <td style="text-align:right;font-family:'IBM Plex Mono',monospace;font-weight:600;color:${ecartCollab>=0?'var(--gn)':'var(--rd)'}">${hasReal?(ecartCollab>=0?'+':'')+Math.round(ecartCollab).toLocaleString('fr-FR')+' €':'—'}</td>
     </tr>
     <tr style="font-size:10px;color:var(--t2);border-bottom:1px solid var(--brd)">
-      <td colspan="3" style="padding:2px 8px 6px;font-style:italic">↳ réalisé</td>
-      ${dates.map((d,i) => {
-        const dISO = iso(d);
-        const real = vendeurData[\`\${dISO}|\${uid}\`];
-        if(real === undefined) return \`<td style="text-align:center;color:var(--t3)">—</td>\`;
-        const col = real >= 0 ? 'var(--gn)' : 'var(--rd)';
-        return \`<td style="text-align:center;font-family:'IBM Plex Mono',monospace;color:\${col};font-weight:500">\${Math.round(real).toLocaleString('fr-FR')} €</td>\`;
+      <td colspan="3" style="padding:2px 8px 6px;font-style:italic;color:var(--t3)">↳ réalisé</td>
+      ${dates.map(function(d2){
+        var dISO2=iso(d2);
+        var key=dISO2+'|'+uid;
+        var real2=vendeurData[key];
+        if(real2===undefined) return '<td style="text-align:center;color:var(--t3)">—</td>';
+        var col2=real2>=0?'var(--gn)':'var(--rd)';
+        return '<td style="text-align:center;font-family:'IBM Plex Mono',monospace;color:'+col2+';font-weight:500">'+Math.round(real2).toLocaleString('fr-FR')+' €</td>';
       }).join('')}
-      <td style="border-left:2px solid var(--bm)"></td>
-      <td></td>
-      <td></td>
+      <td style="border-left:2px solid var(--bm)"></td><td></td><td></td>
     </tr>`;
   }).join('');
 
