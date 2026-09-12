@@ -1438,8 +1438,6 @@ function pdel(){
   document.getElementById('lerr').style.display='none';
 }
 function upd(){/* input natif */}
-window.onPinInput=function(val){pinbuf=val;document.getElementById('lerr').style.display='none';};
-window.tryLoginInput=function(){const inp=document.getElementById('pin-input');if(inp)pinbuf=inp.value;tryLogin();};
 function tryLogin(){
   const uid=document.getElementById('usel').value;
   if(!uid){pinbuf='';upd();return;}
@@ -2428,7 +2426,7 @@ function renderObjectifs(){
         var real2=vendeurData[key];
         if(real2===undefined) return '<td style="text-align:center;color:var(--t3)">—</td>';
         var col2=real2>=0?'var(--gn)':'var(--rd)';
-        return '<td style="text-align:center;font-family:'IBM Plex Mono',monospace;color:'+col2+';font-weight:500">'+Math.round(real2).toLocaleString('fr-FR')+' €</td>';
+        return '<td style="text-align:center;font-family:IBM Plex Mono,monospace;color:'+col2+';font-weight:500">'+Math.round(real2).toLocaleString('fr-FR')+' €</td>';
       }).join('')}
       <td style="border-left:2px solid var(--bm)"></td><td></td><td></td>
     </tr>`;
@@ -3644,6 +3642,8 @@ window.allerSignatures = function() {
 //  EXPOSITION GLOBALE (nécessaire avec type="module")
 // ═══════════════════════════════════════════════════════
 window.pp=pp; window.pdel=pdel; window.logout=logout; window.resetPin=resetPin; window.onMagasinChange=onMagasinChange;
+window.onPinInput=function(val){pinbuf=val;const el=document.getElementById('lerr');if(el)el.style.display='none';};
+window.tryLoginInput=function(){const inp=document.getElementById('pin-input');if(inp)pinbuf=inp.value;tryLogin();};
 window.showTab=showTab; window.cw=cw; window.gotoday=gotoday;
 // ═══════════════════════════════════════════════════════
 //  DUPLICATION
