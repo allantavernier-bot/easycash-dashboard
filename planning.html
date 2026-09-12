@@ -685,9 +685,8 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
           <span id="marge-week-label" style="font-size:12px;font-weight:600"></span>
         </div>
         <!-- Stats globales semaine -->
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px" id="marge-stats"></div>
-        <!-- Info objectif dynamique Allan + Internet -->
-        <div id="dyn-obj-info" style="display:none;background:var(--s2);border-radius:var(--r);padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--t2);line-height:1.7"></div>
+        <!-- Bloc objectif dynamique semaine -->
+        <div id="marge-stats"></div>
         <!-- Tableau fusionné : objectifs + proratisation -->
         <div style="overflow-x:auto">
           <table class="marge-table" style="min-width:700px">
@@ -2393,13 +2392,7 @@ function renderObjectifs(){
   const totalAllan  = dates.reduce((s,d) => s + (vendeurData[`${iso(d)}|allan`] || 0), 0);
   const totalLibre  = dates.reduce((s,d) => s + (vendeurData[`${iso(d)}|libre_service`] || 0), 0);
   const totalObjSem = dates.reduce((s,d) => s + (margeData[iso(d)] || 0), 0);
-  const dynInfo = document.getElementById('dyn-obj-info');
-  if(dynInfo && (totalAllan + totalLibre) > 0) {
-    dynInfo.style.display = 'block';
-    dynInfo.innerHTML = `<strong>Objectif dynamique :</strong> Allan <strong>${Math.round(totalAllan).toLocaleString('fr-FR')} €</strong> · Internet <strong>${Math.round(totalLibre).toLocaleString('fr-FR')} €</strong> → Reste équipe : <strong>${Math.round(Math.max(0, totalObjSem - totalAllan - totalLibre)).toLocaleString('fr-FR')} €</strong> sur ${Math.round(totalObjSem).toLocaleString('fr-FR')} € d'objectif global`;
-  } else if(dynInfo) {
-    dynInfo.style.display = 'none';
-  }
+
 
   const tbody2 = document.getElementById('marge-tbody');
   const tfoot = document.getElementById('marge-tfoot');
@@ -2471,10 +2464,39 @@ function renderObjectifs(){
     const p = totalPoidsEquipe > 0 ? Math.round(getPoids(uid)/totalPoidsEquipe*100) : 0;
     return `${USERS[uid].short} ${p}%`;
   }).join(' · ');
+  const resteEquipe = Math.max(0, totalObjSem - totalAllan - totalLibre);
+  const pctAllan  = totalObjSem > 0 ? Math.round(totalAllan  / totalObjSem * 100) : 0;
+  const pctLibre  = totalObjSem > 0 ? Math.round(totalLibre  / totalObjSem * 100) : 0;
+  const pctEquipe = totalObjSem > 0 ? Math.round(resteEquipe / totalObjSem * 100) : 0;
+
   document.getElementById('marge-stats').innerHTML = `
-    <div class="marge-stat target"><div class="marge-val">${totalObj>0?totalObj.toLocaleString('fr-FR')+' €':'—'}</div><div class="marge-lbl">Objectif global semaine</div></div>
-    <div class="marge-stat real"><div class="marge-val">${Math.round(Math.max(0,totalObj-totalAllan-totalLibre)).toLocaleString('fr-FR')} €</div><div class="marge-lbl">Reste à faire (équipe)</div></div>
-    <div class="marge-stat unit" style="font-size:10px;padding:10px"><div class="marge-val" style="font-size:11px;line-height:1.6">${partTheorStr}</div><div class="marge-lbl">Répartition théorique</div></div>`;
+    <div style="background:var(--s2);border-radius:var(--r);padding:14px 18px;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--t2);margin-bottom:12px">Décomposition de l'objectif semaine</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;text-align:center">
+        <div style="border-radius:8px;padding:12px;background:var(--s3);border-top:3px solid var(--bl)">
+          <div style="font-size:18px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--bl)">${totalObjSem>0?totalObjSem.toLocaleString('fr-FR')+' €':'—'}</div>
+          <div style="font-size:10px;color:var(--t2);margin-top:4px;text-transform:uppercase;letter-spacing:.04em">🎯 Objectif global</div>
+        </div>
+        <div style="border-radius:8px;padding:12px;background:var(--s3);border-top:3px solid var(--gn)">
+          <div style="font-size:18px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--gn)">${resteEquipe.toLocaleString('fr-FR')} €</div>
+          <div style="font-size:10px;color:var(--t2);margin-top:4px;text-transform:uppercase;letter-spacing:.04em">👥 Équipe (${pctEquipe}%)</div>
+        </div>
+        <div style="border-radius:8px;padding:12px;background:var(--s3);border-top:3px solid var(--am)">
+          <div style="font-size:18px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--am)">${totalAllan>0?totalAllan.toLocaleString('fr-FR')+' €':'—'}</div>
+          <div style="font-size:10px;color:var(--t2);margin-top:4px;text-transform:uppercase;letter-spacing:.04em">👤 Allan (${pctAllan}%)</div>
+        </div>
+        <div style="border-radius:8px;padding:12px;background:var(--s3);border-top:3px solid var(--rd)">
+          <div style="font-size:18px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--rd)">${totalLibre>0?totalLibre.toLocaleString('fr-FR')+' €':'—'}</div>
+          <div style="font-size:10px;color:var(--t2);margin-top:4px;text-transform:uppercase;letter-spacing:.04em">🌐 Internet (${pctLibre}%)</div>
+        </div>
+      </div>
+      <div style="margin-top:10px;height:6px;border-radius:3px;background:var(--s3);overflow:hidden;display:flex">
+        <div style="width:${pctEquipe}%;background:var(--gn);transition:width .3s"></div>
+        <div style="width:${pctAllan}%;background:var(--am);transition:width .3s"></div>
+        <div style="width:${pctLibre}%;background:var(--rd);transition:width .3s"></div>
+      </div>
+      <div style="font-size:10px;color:var(--t2);margin-top:6px;text-align:right">Répartition théorique équipe : ${partTheorStr}</div>
+    </div>`;
 }
 
 async function saveCoefs(){
