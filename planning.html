@@ -702,10 +702,31 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
       </div>
 
       <div class="acard adm">
-        <div class="actitle">⚙️ Coefficients vente par collaborateur</div>
-        <p style="font-size:12px;color:var(--t2);margin-bottom:14px;line-height:1.6">Ces coefficients pondèrent la part de marge. Un acheteur à 20% contribue 20% de son temps à la vente.</p>
-        <div id="coef-grid" style="display:flex;flex-wrap:wrap;gap:14px;margin-bottom:14px"></div>
-        <button class="sbmit" style="font-size:12px;padding:8px 16px" onclick="window.saveCoefs()">Enregistrer les coefficients</button>
+        <div class="actitle">⚙️ Proratisation des objectifs</div>
+        <p style="font-size:12px;color:var(--t2);margin-bottom:14px;line-height:1.6">
+          Le poids effectif = Contrat (h) × % vente. Il détermine la part d'objectif attribuée à chaque collaborateur présent.
+        </p>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px">
+          <thead>
+            <tr style="border-bottom:1px solid var(--brd);color:var(--t2);text-align:left">
+              <th style="padding:6px 8px;font-weight:500">Collaborateur</th>
+              <th style="padding:6px 8px;font-weight:500;text-align:center">Contrat (h)</th>
+              <th style="padding:6px 8px;font-weight:500;text-align:center">% vente</th>
+              <th style="padding:6px 8px;font-weight:500;text-align:center">Part théorique</th>
+            </tr>
+          </thead>
+          <tbody id="coef-table-body"></tbody>
+          <tfoot>
+            <tr style="border-top:2px solid var(--brd);font-weight:600">
+              <td style="padding:6px 8px">Total</td>
+              <td></td>
+              <td></td>
+              <td style="padding:6px 8px;text-align:center">100%</td>
+            </tr>
+          </tfoot>
+        </table>
+        <div id="coef-grid" style="display:none"></div>
+        <button class="sbmit" style="font-size:12px;padding:8px 16px" onclick="window.saveCoefs()">Enregistrer</button>
       </div>
 
       <!-- RÉALISÉ VS OBJECTIF -->
@@ -1123,6 +1144,13 @@ async function loadState(){
       if(saved.evenements) STATE.evenements = saved.evenements;
       if(saved.retours) STATE.retours = saved.retours;
       if(saved.coefs) STATE.coefs = saved.coefs;
+      if(saved.contrats) {
+        STATE.contrats = saved.contrats;
+        // Appliquer les heures sauvegardées à BASE_SCHEDULE
+        Object.entries(saved.contrats).forEach(([uid, h]) => {
+          if(BASE_SCHEDULE[uid]) BASE_SCHEDULE[uid].h = h;
+        });
+      }
       if(saved.collabs) STATE.collabs = saved.collabs;
       if(saved.taches) STATE.taches = saved.taches;
       if(saved.nettoyage_json) {
@@ -1184,6 +1212,13 @@ function startPolling(){
       if(saved.evenements) STATE.evenements = saved.evenements;
       if(saved.retours) STATE.retours = saved.retours;
       if(saved.coefs) STATE.coefs = saved.coefs;
+      if(saved.contrats) {
+        STATE.contrats = saved.contrats;
+        // Appliquer les heures sauvegardées à BASE_SCHEDULE
+        Object.entries(saved.contrats).forEach(([uid, h]) => {
+          if(BASE_SCHEDULE[uid]) BASE_SCHEDULE[uid].h = h;
+        });
+      }
       if(saved.taches) STATE.taches = saved.taches;
       if(saved.nettoyage_json) {
         try { STATE.nettoyage = JSON.parse(saved.nettoyage_json); normalizeNettoyage(); }
@@ -2389,24 +2424,76 @@ function renderObjectifs(){
     <div class="marge-stat real"><div class="marge-val">${SIDS.length}</div><div class="marge-lbl">Collaborateurs actifs</div></div>
     <div class="marge-stat unit"><div class="marge-val">${Object.keys(margeData).length} jours</div><div class="marge-lbl">Données chargées</div></div>`;
 
-  const coefGrid = document.getElementById('coef-grid');
-  if(coefGrid) coefGrid.innerHTML = SIDS.map(uid => `
-    <div style="display:flex;align-items:center;gap:6px;font-size:12px">
-      <span style="width:65px;font-weight:500">${USERS[uid].short}</span>
-      <input type="number" class="coef-edit-input" id="coef-${uid}" value="${STATE.coefs?.[uid]||0}" min="0" max="100"> %
-    </div>`).join('');
+  // Tableau de proratisation
+  const tbody = document.getElementById('coef-table-body');
+  if(tbody) {
+    const totalPoids = SIDS.reduce((s, uid) => {
+      const h = BASE_SCHEDULE[uid]?.h || 35;
+      const pct = (STATE.coefs?.[uid] || 0) / 100;
+      return s + h * pct;
+    }, 0);
+    tbody.innerHTML = SIDS.map(uid => {
+      const u = USERS[uid];
+      const h = BASE_SCHEDULE[uid]?.h || 35;
+      const pct = STATE.coefs?.[uid] || 0;
+      const poids = h * pct / 100;
+      const part = totalPoids > 0 ? Math.round(poids / totalPoids * 100) : 0;
+      return `<tr style="border-bottom:1px solid var(--brd)">
+        <td style="padding:6px 8px;font-weight:500">${u.short}</td>
+        <td style="padding:6px 8px;text-align:center">
+          <input type="number" id="contrat-${uid}" value="${h}" min="1" max="48"
+            style="width:48px;text-align:center;border:1px solid var(--brd);border-radius:4px;padding:2px 4px;font-size:12px"
+            onchange="window.updatePoidsRow('${uid}')">
+        </td>
+        <td style="padding:6px 8px;text-align:center">
+          <input type="number" class="coef-edit-input" id="coef-${uid}" value="${pct}" min="0" max="100"
+            style="width:48px;text-align:center;border:1px solid var(--brd);border-radius:4px;padding:2px 4px;font-size:12px"
+            onchange="window.updatePoidsRow('${uid}')"> %
+        </td>
+        <td style="padding:6px 8px;text-align:center;font-weight:500" id="part-${uid}">${part}%</td>
+      </tr>`;
+    }).join('');
+    document.getElementById('coef-total-poids').textContent = totalPoids.toFixed(1);
+  }
 }
 
 async function saveCoefs(){
   if(!STATE.coefs) STATE.coefs={};
+  if(!STATE.contrats) STATE.contrats={};
   SIDS.forEach(uid => {
     const inp = document.getElementById(`coef-${uid}`);
+    const hInp = document.getElementById(`contrat-${uid}`);
     if(inp) STATE.coefs[uid] = parseInt(inp.value) || 0;
+    if(hInp) STATE.contrats[uid] = parseInt(hInp.value) || 35;
+    // Mettre à jour BASE_SCHEDULE en mémoire
+    if(hInp && BASE_SCHEDULE[uid]) BASE_SCHEDULE[uid].h = parseInt(hInp.value) || 35;
   });
   await saveState();
-  toast('Coefficients enregistrés ✓');
+  toast('Proratisation enregistrée ✓');
   renderObjectifs();
 }
+
+window.updatePoidsRow = function(uid) {
+  const h = parseInt(document.getElementById(`contrat-${uid}`)?.value) || 35;
+  const pct = parseInt(document.getElementById(`coef-${uid}`)?.value) || 0;
+  const poids = h * pct / 100;
+  // Recalculer le total
+  const totalPoids = SIDS.reduce((s, u2) => {
+    const h2 = parseInt(document.getElementById(`contrat-${u2}`)?.value) || BASE_SCHEDULE[u2]?.h || 35;
+    const p2 = parseInt(document.getElementById(`coef-${u2}`)?.value) || 0;
+    return s + h2 * p2 / 100;
+  }, 0);
+  if(document.getElementById(`poids-${uid}`)) document.getElementById(`poids-${uid}`).textContent = poids.toFixed(1);
+
+  // Mettre à jour toutes les parts
+  SIDS.forEach(u2 => {
+    const h2 = parseInt(document.getElementById(`contrat-${u2}`)?.value) || BASE_SCHEDULE[u2]?.h || 35;
+    const p2 = parseInt(document.getElementById(`coef-${u2}`)?.value) || 0;
+    const po2 = h2 * p2 / 100;
+    const part2 = totalPoids > 0 ? Math.round(po2 / totalPoids * 100) : 0;
+    if(document.getElementById(`part-${u2}`)) document.getElementById(`part-${u2}`).textContent = part2 + '%';
+  });
+};
 
 // ═══════════════════════════════════════════════════════
 //  RÉALISÉ VS OBJECTIF
@@ -2502,7 +2589,8 @@ function rvoRender(){
 
   grid.innerHTML = collabs.map(uid => {
     const u = USERS[uid];
-    const coef = (STATE.coefs?.[uid]||0)/100;
+    const h_contrat = STATE.contrats?.[uid] || BASE_SCHEDULE[uid]?.h || 35;
+    const coef = (STATE.coefs?.[uid]||0)/100 * h_contrat;
     const realMarge = datesInRange.reduce((s,dISO)=>s+(vendeurData[`${dISO}|${uid}`]||0),0);
 
     let objMarge = 0;
@@ -2511,7 +2599,8 @@ function rvoRender(){
       if(!dayObj) return;
       const totalPart = SIDS.filter(u2=>u2!=='allan').reduce((s,u2)=>{
         const hasDonnees = vendeurData[`${dISO}|${u2}`]!==undefined;
-        return s + (hasDonnees ? (STATE.coefs?.[u2]||0)/100 : 0);
+        const h2 = STATE.contrats?.[u2] || BASE_SCHEDULE[u2]?.h || 35;
+        return s + (hasDonnees ? (STATE.coefs?.[u2]||0)/100 * h2 : 0);
       },0);
       const wasThere = vendeurData[`${dISO}|${uid}`]!==undefined;
       if(wasThere && totalPart>0) objMarge += (coef/totalPart)*dayObj;
