@@ -684,12 +684,18 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
           <span style="font-size:11px;color:var(--t2);font-weight:500">Semaine :</span>
           <span id="marge-week-label" style="font-size:12px;font-weight:600"></span>
         </div>
+        <!-- Stats globales semaine -->
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px" id="marge-stats"></div>
+        <!-- Info objectif dynamique Allan + Internet -->
+        <div id="dyn-obj-info" style="display:none;background:var(--s2);border-radius:var(--r);padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--t2);line-height:1.7"></div>
+        <!-- Tableau fusionné : objectifs + proratisation -->
         <div style="overflow-x:auto">
-          <table class="marge-table" style="min-width:620px">
+          <table class="marge-table" style="min-width:700px">
             <thead>
               <tr>
-                <th>Collaborateur</th>
+                <th style="min-width:110px">Collaborateur</th>
+                <th style="text-align:center;font-size:10px;color:var(--t2);font-weight:500">H sem.</th>
+                <th style="text-align:center;font-size:10px;color:var(--t2);font-weight:500">% vente</th>
                 <th style="text-align:center">Lun</th><th style="text-align:center">Mar</th><th style="text-align:center">Mer</th>
                 <th style="text-align:center">Jeu</th><th style="text-align:center">Ven</th><th style="text-align:center">Sam</th>
                 <th style="text-align:right">Total sem.</th>
@@ -699,35 +705,11 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
             <tfoot><tr id="marge-tfoot" style="background:var(--s2);font-weight:600"></tr></tfoot>
           </table>
         </div>
-      </div>
-
-      <div class="acard adm">
-        <div class="actitle">⚙️ Proratisation des objectifs</div>
-        <p style="font-size:12px;color:var(--t2);margin-bottom:14px;line-height:1.6">
-          Le poids effectif = Contrat (h) × % vente. Il détermine la part d'objectif attribuée à chaque collaborateur présent.
-        </p>
-        <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px">
-          <thead>
-            <tr style="border-bottom:1px solid var(--brd);color:var(--t2);text-align:left">
-              <th style="padding:6px 8px;font-weight:500">Collaborateur</th>
-              <th style="padding:6px 8px;font-weight:500;text-align:center">Contrat (h)</th>
-              <th style="padding:6px 8px;font-weight:500;text-align:center">% vente</th>
-              <th style="padding:6px 8px;font-weight:500;text-align:center">Part théorique</th>
-            </tr>
-          </thead>
-          <tbody id="coef-table-body"></tbody>
-          <tfoot>
-            <tr style="border-top:2px solid var(--brd);font-weight:600">
-              <td style="padding:6px 8px">Total</td>
-              <td></td>
-              <td></td>
-              <td style="padding:6px 8px;text-align:center">100%</td>
-            </tr>
-          </tfoot>
-        </table>
+        <div style="display:flex;justify-content:flex-end;margin-top:10px">
+          <button class="sbmit" style="font-size:12px;padding:8px 16px" onclick="window.saveCoefs()">Enregistrer les coefficients</button>
+        </div>
         <div id="coef-grid" style="display:none"></div>
-        <button class="sbmit" style="font-size:12px;padding:8px 16px" onclick="window.saveCoefs()">Enregistrer</button>
-      </div>
+        <div id="coef-table-body" style="display:none"></div>
 
       <!-- RÉALISÉ VS OBJECTIF -->
       <div class="acard" style="margin-top:14px;margin-bottom:14px">
@@ -2373,39 +2355,103 @@ function renderObjectifs(){
   const dates = DAYS.map((_,i)=>{ const d=new Date(mon); d.setDate(mon.getDate()+i); return d; });
   document.getElementById('marge-week-label').textContent = `S${wknum(mon)} — ${fmt(mon)} au ${fmt(dates[5])}`;
 
-  const tbody = document.getElementById('marge-tbody');
+  const VIERGE_FROM = '2026-06-29';
+
+  // Calculer les heures réelles de la semaine depuis le planning Firestore
+  function getHeuresSemaine(uid) {
+    return dates.reduce((total, d, i) => {
+      const dISO = iso(d);
+      const dayKey = DAYS[i];
+      const absS = absStatus(uid, dISO);
+      const slot = getSlot(uid, dayKey, dISO);
+      const isVierge = dISO >= VIERGE_FROM && !STATE.slotOverrides[`${uid}-${dISO}`] && !STATE.scheduleOverrides[`${uid}-${dayKey}`];
+      const present = !isVierge && absS !== 'approved' && slot && slot.type !== 'off' && slot.type !== 'cp' && slot.type !== 'am';
+      return total + (present && slot?.mins ? slot.mins / 60 : 0);
+    }, 0);
+  }
+
+  // Calculer le poids effectif : heures réelles × % vente
+  function getPoids(uid) {
+    const h = getHeuresSemaine(uid);
+    const pct = (STATE.coefs?.[uid] || 0) / 100;
+    return h * pct;
+  }
+
+  // Poids total de l'équipe présente
+  const totalPoidsEquipe = SIDS.reduce((s, uid) => s + getPoids(uid), 0);
+
+  // Objectif dynamique : déduire Allan + Libre Service
+  function getObjEquipeJour(dISO) {
+    const objTotal = margeData[dISO] || 0;
+    if (!objTotal) return 0;
+    const allanMarge = vendeurData[`${dISO}|allan`] || 0;
+    const libreMarge = vendeurData[`${dISO}|libre_service`] || 0;
+    return Math.max(0, objTotal - allanMarge - libreMarge);
+  }
+
+  // Info dynamique Allan + Libre Service
+  const totalAllan  = dates.reduce((s,d) => s + (vendeurData[`${iso(d)}|allan`] || 0), 0);
+  const totalLibre  = dates.reduce((s,d) => s + (vendeurData[`${iso(d)}|libre_service`] || 0), 0);
+  const totalObjSem = dates.reduce((s,d) => s + (margeData[iso(d)] || 0), 0);
+  const dynInfo = document.getElementById('dyn-obj-info');
+  if(dynInfo && (totalAllan + totalLibre) > 0) {
+    dynInfo.style.display = 'block';
+    dynInfo.innerHTML = `<strong>Objectif dynamique :</strong> Allan <strong>${Math.round(totalAllan).toLocaleString('fr-FR')} €</strong> · Internet <strong>${Math.round(totalLibre).toLocaleString('fr-FR')} €</strong> → Reste équipe : <strong>${Math.round(Math.max(0, totalObjSem - totalAllan - totalLibre)).toLocaleString('fr-FR')} €</strong> sur ${Math.round(totalObjSem).toLocaleString('fr-FR')} € d'objectif global`;
+  } else if(dynInfo) {
+    dynInfo.style.display = 'none';
+  }
+
+  const tbody2 = document.getElementById('marge-tbody');
   const tfoot = document.getElementById('marge-tfoot');
   let totalSemaine = 0;
 
-  tbody.innerHTML = SIDS.map(uid => {
+  tbody2.innerHTML = SIDS.map(uid => {
     const u = USERS[uid];
-    const coef = (STATE.coefs?.[uid] || 0) / 100;
+    const poids = getPoids(uid);
+    const hSem = getHeuresSemaine(uid);
+    const pct = STATE.coefs?.[uid] || 0;
+    const partTheor = totalPoidsEquipe > 0 ? Math.round(poids / totalPoidsEquipe * 100) : 0;
     let totalCollab = 0;
+
     const cells = dates.map((d, i) => {
       const dISO = iso(d);
       const dayKey = DAYS[i];
       const absS = absStatus(uid, dISO);
       const slot = getSlot(uid, dayKey, dISO);
-      const VIERGE_FROM = '2026-06-29';
       const isVierge = dISO >= VIERGE_FROM && !STATE.slotOverrides[`${uid}-${dISO}`] && !STATE.scheduleOverrides[`${uid}-${dayKey}`];
       const present = !isVierge && absS !== 'approved' && slot && slot.type !== 'off' && slot.type !== 'cp' && slot.type !== 'am';
-      const obj = margeData[dISO] || 0;
-      if(!obj) return `<td style="text-align:center;color:var(--t3);font-size:10px">—</td>`;
-      const totalPart = SIDS.reduce((acc, u2) => {
+      const objEquipe = getObjEquipeJour(dISO);
+      if(!objEquipe) return `<td style="text-align:center;color:var(--t3);font-size:10px">—</td>`;
+
+      // Poids de l'équipe présente CE jour (basé sur les heures journalières)
+      const totalPartJour = SIDS.reduce((acc, u2) => {
         const s2 = getSlot(u2, dayKey, dISO);
         const a2 = absStatus(u2, dISO);
         const iv2 = dISO >= VIERGE_FROM && !STATE.slotOverrides[`${u2}-${dISO}`] && !STATE.scheduleOverrides[`${u2}-${dayKey}`];
         const p2 = !iv2 && a2 !== 'approved' && s2 && s2.type !== 'off' && s2.type !== 'cp' && s2.type !== 'am';
-        return acc + (p2 ? (STATE.coefs?.[u2] || 0) / 100 : 0);
+        const mins2 = p2 && s2?.mins ? s2.mins / 60 : 0;
+        return acc + mins2 * ((STATE.coefs?.[u2] || 0) / 100);
       }, 0);
-      if(!present || coef === 0) return `<td style="text-align:center;color:var(--t3);font-size:10px">—</td>`;
-      const part = totalPart > 0 ? (coef / totalPart) * obj : 0;
+
+      if(!present || pct === 0) return `<td style="text-align:center;color:var(--t3);font-size:10px">—</td>`;
+      const hJour = slot?.mins ? slot.mins / 60 : 0;
+      const poidsJour = hJour * pct / 100;
+      const part = totalPartJour > 0 ? (poidsJour / totalPartJour) * objEquipe : 0;
       totalCollab += part;
       return `<td style="text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500">${Math.round(part).toLocaleString('fr-FR')} €</td>`;
     });
+
     totalSemaine += totalCollab;
     return `<tr>
-      <td style="font-weight:500;font-size:12px">${u.short} <span class="marge-coef" style="margin-left:4px">${STATE.coefs?.[uid]||0}%</span></td>
+      <td style="font-weight:500;font-size:12px;white-space:nowrap">
+        ${u.short}
+      </td>
+      <td style="text-align:center;font-size:11px;color:var(--t2)">${hSem.toFixed(1)}h</td>
+      <td style="text-align:center;padding:4px 6px">
+        <input type="number" id="coef-${uid}" value="${pct}" min="0" max="100"
+          style="width:42px;text-align:center;border:1px solid var(--bm);border-radius:6px;padding:2px 4px;font-size:11px;background:var(--am-l);color:var(--am);font-weight:600;font-family:'IBM Plex Mono',monospace"
+          onchange="window.updatePoidsRow('${uid}')"> %
+      </td>
       ${cells.join('')}
       <td style="text-align:right;font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--bl)">${totalCollab>0?Math.round(totalCollab).toLocaleString('fr-FR')+' €':'—'}</td>
     </tr>`;
@@ -2414,85 +2460,37 @@ function renderObjectifs(){
   const footCells = dates.map(d => {
     const dISO = iso(d);
     const obj = margeData[dISO];
-    return `<td style="text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11px;padding:9px 10px">${obj?obj.toLocaleString('fr-FR')+' €':'—'}</td>`;
+    const objEq = getObjEquipeJour(dISO);
+    const txt = obj ? `<div style="font-size:10px">${Math.round(objEq).toLocaleString('fr-FR')} €</div><div style="font-size:9px;color:var(--t2);opacity:.7">(${Math.round(obj).toLocaleString('fr-FR')} glob.)</div>` : '—';
+    return `<td style="text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11px;padding:9px 10px">${txt}</td>`;
   });
-  tfoot.innerHTML = `<td style="padding:9px 10px;font-size:11px">🎯 Objectif magasin</td>${footCells.join('')}<td style="text-align:right;font-family:'IBM Plex Mono',monospace;padding:9px 10px;color:var(--gn)">${totalSemaine>0?Math.round(totalSemaine).toLocaleString('fr-FR')+' €':'—'}</td>`;
+  tfoot.innerHTML = `<td style="padding:9px 10px;font-size:11px" colspan="3">🎯 Objectif équipe (dyn.)</td>${footCells.join('')}<td style="text-align:right;font-family:'IBM Plex Mono',monospace;padding:9px 10px;color:var(--gn)">${totalSemaine>0?Math.round(totalSemaine).toLocaleString('fr-FR')+' €':'—'}</td>`;
 
   const totalObj = dates.reduce((a, d) => a + (margeData[iso(d)] || 0), 0);
+  const partTheorStr = SIDS.map(uid => {
+    const p = totalPoidsEquipe > 0 ? Math.round(getPoids(uid)/totalPoidsEquipe*100) : 0;
+    return `${USERS[uid].short} ${p}%`;
+  }).join(' · ');
   document.getElementById('marge-stats').innerHTML = `
-    <div class="marge-stat target"><div class="marge-val">${totalObj>0?totalObj.toLocaleString('fr-FR')+' €':'—'}</div><div class="marge-lbl">Objectif semaine</div></div>
-    <div class="marge-stat real"><div class="marge-val">${SIDS.length}</div><div class="marge-lbl">Collaborateurs actifs</div></div>
-    <div class="marge-stat unit"><div class="marge-val">${Object.keys(margeData).length} jours</div><div class="marge-lbl">Données chargées</div></div>`;
-
-  // Tableau de proratisation
-  const coefTbody = document.getElementById('coef-table-body');
-  if(coefTbody) {
-    const totalPoids = SIDS.reduce((s, uid) => {
-      const h = BASE_SCHEDULE[uid]?.h || 35;
-      const pct = (STATE.coefs?.[uid] || 0) / 100;
-      return s + h * pct;
-    }, 0);
-    coefTbody.innerHTML = SIDS.map(uid => {
-      const u = USERS[uid];
-      const h = BASE_SCHEDULE[uid]?.h || 35;
-      const pct = STATE.coefs?.[uid] || 0;
-      const poids = h * pct / 100;
-      const part = totalPoids > 0 ? Math.round(poids / totalPoids * 100) : 0;
-      return `<tr style="border-bottom:1px solid var(--brd)">
-        <td style="padding:6px 8px;font-weight:500">${u.short}</td>
-        <td style="padding:6px 8px;text-align:center">
-          <input type="number" id="contrat-${uid}" value="${h}" min="1" max="48"
-            style="width:48px;text-align:center;border:1px solid var(--brd);border-radius:4px;padding:2px 4px;font-size:12px"
-            onchange="window.updatePoidsRow('${uid}')">
-        </td>
-        <td style="padding:6px 8px;text-align:center">
-          <input type="number" class="coef-edit-input" id="coef-${uid}" value="${pct}" min="0" max="100"
-            style="width:48px;text-align:center;border:1px solid var(--brd);border-radius:4px;padding:2px 4px;font-size:12px"
-            onchange="window.updatePoidsRow('${uid}')"> %
-        </td>
-        <td style="padding:6px 8px;text-align:center;font-weight:500" id="part-${uid}">${part}%</td>
-      </tr>`;
-    }).join('');
-    document.getElementById('coef-total-poids').textContent = totalPoids.toFixed(1);
-  }
+    <div class="marge-stat target"><div class="marge-val">${totalObj>0?totalObj.toLocaleString('fr-FR')+' €':'—'}</div><div class="marge-lbl">Objectif global semaine</div></div>
+    <div class="marge-stat real"><div class="marge-val">${Math.round(Math.max(0,totalObj-totalAllan-totalLibre)).toLocaleString('fr-FR')} €</div><div class="marge-lbl">Reste à faire (équipe)</div></div>
+    <div class="marge-stat unit" style="font-size:10px;padding:10px"><div class="marge-val" style="font-size:11px;line-height:1.6">${partTheorStr}</div><div class="marge-lbl">Répartition théorique</div></div>`;
 }
 
 async function saveCoefs(){
   if(!STATE.coefs) STATE.coefs={};
-  if(!STATE.contrats) STATE.contrats={};
   SIDS.forEach(uid => {
     const inp = document.getElementById(`coef-${uid}`);
-    const hInp = document.getElementById(`contrat-${uid}`);
     if(inp) STATE.coefs[uid] = parseInt(inp.value) || 0;
-    if(hInp) STATE.contrats[uid] = parseInt(hInp.value) || 35;
-    // Mettre à jour BASE_SCHEDULE en mémoire
-    if(hInp && BASE_SCHEDULE[uid]) BASE_SCHEDULE[uid].h = parseInt(hInp.value) || 35;
   });
   await saveState();
-  toast('Proratisation enregistrée ✓');
+  toast('Coefficients enregistrés ✓');
   renderObjectifs();
 }
 
 window.updatePoidsRow = function(uid) {
-  const h = parseInt(document.getElementById(`contrat-${uid}`)?.value) || 35;
-  const pct = parseInt(document.getElementById(`coef-${uid}`)?.value) || 0;
-  const poids = h * pct / 100;
-  // Recalculer le total
-  const totalPoids = SIDS.reduce((s, u2) => {
-    const h2 = parseInt(document.getElementById(`contrat-${u2}`)?.value) || BASE_SCHEDULE[u2]?.h || 35;
-    const p2 = parseInt(document.getElementById(`coef-${u2}`)?.value) || 0;
-    return s + h2 * p2 / 100;
-  }, 0);
-  if(document.getElementById(`poids-${uid}`)) document.getElementById(`poids-${uid}`).textContent = poids.toFixed(1);
-
-  // Mettre à jour toutes les parts
-  SIDS.forEach(u2 => {
-    const h2 = parseInt(document.getElementById(`contrat-${u2}`)?.value) || BASE_SCHEDULE[u2]?.h || 35;
-    const p2 = parseInt(document.getElementById(`coef-${u2}`)?.value) || 0;
-    const po2 = h2 * p2 / 100;
-    const part2 = totalPoids > 0 ? Math.round(po2 / totalPoids * 100) : 0;
-    if(document.getElementById(`part-${u2}`)) document.getElementById(`part-${u2}`).textContent = part2 + '%';
-  });
+  // Re-render le tableau complet pour recalculer tout
+  renderObjectifs();
 };
 
 // ═══════════════════════════════════════════════════════
