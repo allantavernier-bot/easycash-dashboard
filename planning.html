@@ -697,7 +697,9 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
                 <th style="text-align:center;font-size:10px;color:var(--t2);font-weight:500">% vente</th>
                 <th style="text-align:center">Lun</th><th style="text-align:center">Mar</th><th style="text-align:center">Mer</th>
                 <th style="text-align:center">Jeu</th><th style="text-align:center">Ven</th><th style="text-align:center">Sam</th>
-                <th style="text-align:right">Total sem.</th>
+                <th style="text-align:right;border-left:2px solid var(--bm)">Obj. sem.</th>
+                <th style="text-align:right">Réalisé</th>
+                <th style="text-align:right">Écart</th>
               </tr>
             </thead>
             <tbody id="marge-tbody"></tbody>
@@ -710,43 +712,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
         <div id="coef-grid" style="display:none"></div>
         <div id="coef-table-body" style="display:none"></div>
 
-      <!-- RÉALISÉ VS OBJECTIF -->
-      <div class="acard" style="margin-top:14px;margin-bottom:14px">
-        <div class="actitle" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-          <span>🎯 Réalisé vs Objectif</span>
-          <span id="rvo-period-label" style="font-size:11px;color:var(--t3);background:var(--s2);padding:3px 9px;border-radius:10px"></span>
-        </div>
-        <div class="rvo-period-bar">
-          <button class="rvo-period-btn" onclick="window.rvoSetPeriod('hier',this)">Hier</button>
-          <button class="rvo-period-btn" onclick="window.rvoSetPeriod('semaine',this)">Semaine dernière</button>
-          <button class="rvo-period-btn" onclick="window.rvoSetPeriod('mois',this)">Mois dernier</button>
-          <button class="rvo-period-btn" onclick="window.rvoSetPeriod('custom',this)">Personnalisé</button>
-        </div>
-        <div class="rvo-custom-wrap" id="rvo-custom-wrap">
-          <span style="font-size:11px;color:var(--t2)">Du</span>
-          <input type="date" id="rvo-from" onchange="window.rvoRender()">
-          <span style="font-size:11px;color:var(--t2)">au</span>
-          <input type="date" id="rvo-to" onchange="window.rvoRender()">
-        </div>
-        <div class="rvo-mag-card" id="rvo-mag-card">
-          <div style="font-size:12px;font-weight:600;margin-bottom:6px">🏪 Magasin — Marge réalisée</div>
-          <div class="rvo-big-track"><div class="rvo-big-fill" id="rvo-mag-fill" style="width:0%;background:var(--gn)"></div></div>
-          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--t3)">
-            <span>0 €</span><span id="rvo-mag-pct" style="font-weight:600;color:var(--tx)">—</span><span id="rvo-mag-obj-lbl">—</span>
-          </div>
-          <div class="rvo-stats-row">
-            <div class="rvo-stat"><div class="rvo-stat-lbl">Réalisé</div><div class="rvo-stat-val" id="rvo-mag-real" style="color:var(--gn)">—</div></div>
-            <div class="rvo-stat"><div class="rvo-stat-lbl">Objectif</div><div class="rvo-stat-val" id="rvo-mag-obj">—</div></div>
-            <div class="rvo-stat"><div class="rvo-stat-lbl">Écart</div><div class="rvo-stat-val" id="rvo-mag-ecart">—</div></div>
-            <div class="rvo-stat"><div class="rvo-stat-lbl">Jours</div><div class="rvo-stat-val" id="rvo-mag-jours" style="color:var(--t3)">—</div></div>
-          </div>
-        </div>
-        <div style="font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Par collaborateur</div>
-        <div class="rvo-grid" id="rvo-collabs-grid"><div class="rvo-no-data">Sélectionnez une période ci-dessus</div></div>
-        <div style="font-size:10px;color:var(--t3);margin-top:6px;line-height:1.6">
-          Objectifs calculés au prorata présence × coefficient vente · Réalisé issu du PDF <em>CA_des-vendeurs</em>
-        </div>
-      </div>
+
     </div>
 
     <!-- RETOURS -->
@@ -2435,10 +2401,14 @@ function renderObjectifs(){
     });
 
     totalSemaine += totalCollab;
+    // Réalisé depuis vendeurData
+    const realCollab = dates.reduce((s, d) => {
+      return s + (vendeurData[`${iso(d)}|${uid}`] || 0);
+    }, 0);
+    const ecartCollab = realCollab - totalCollab;
+    const hasReal = dates.some(d => vendeurData[`${iso(d)}|${uid}`] !== undefined);
     return `<tr>
-      <td style="font-weight:500;font-size:12px;white-space:nowrap">
-        ${u.short}
-      </td>
+      <td style="font-weight:500;font-size:12px;white-space:nowrap">${u.short}</td>
       <td style="text-align:center;font-size:11px;color:var(--t2)">${hSem.toFixed(1)}h</td>
       <td style="text-align:center;padding:4px 6px">
         <input type="number" id="coef-${uid}" value="${pct}" min="0" max="100"
@@ -2446,7 +2416,9 @@ function renderObjectifs(){
           onchange="window.updatePoidsRow('${uid}')"> %
       </td>
       ${cells.join('')}
-      <td style="text-align:right;font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--bl)">${totalCollab>0?Math.round(totalCollab).toLocaleString('fr-FR')+' €':'—'}</td>
+      <td style="text-align:right;font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--bl);border-left:2px solid var(--bm)">${totalCollab>0?Math.round(totalCollab).toLocaleString('fr-FR')+' €':'—'}</td>
+      <td style="text-align:right;font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--tx)">${hasReal?Math.round(realCollab).toLocaleString('fr-FR')+' €':'—'}</td>
+      <td style="text-align:right;font-family:'IBM Plex Mono',monospace;font-weight:600;color:${ecartCollab>=0?'var(--gn)':'var(--rd)'}">${hasReal?(ecartCollab>=0?'+':'')+Math.round(ecartCollab).toLocaleString('fr-FR')+' €':'—'}</td>
     </tr>`;
   }).join('');
 
@@ -2457,7 +2429,13 @@ function renderObjectifs(){
     const txt = obj ? `<div style="font-size:10px">${Math.round(objEq).toLocaleString('fr-FR')} €</div><div style="font-size:9px;color:var(--t2);opacity:.7">(${Math.round(obj).toLocaleString('fr-FR')} glob.)</div>` : '—';
     return `<td style="text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11px;padding:9px 10px">${txt}</td>`;
   });
-  tfoot.innerHTML = `<td style="padding:9px 10px;font-size:11px" colspan="3">🎯 Objectif équipe (dyn.)</td>${footCells.join('')}<td style="text-align:right;font-family:'IBM Plex Mono',monospace;padding:9px 10px;color:var(--gn)">${totalSemaine>0?Math.round(totalSemaine).toLocaleString('fr-FR')+' €':'—'}</td>`;
+  // Totaux réalisé et écart équipe
+  const totalRealEquipe = SIDS.reduce((s, uid) => {
+    return s + dates.reduce((s2, d) => s2 + (vendeurData[`${iso(d)}|${uid}`] || 0), 0);
+  }, 0);
+  const totalEcartEquipe = totalRealEquipe - totalSemaine;
+  const hasAnyReal = SIDS.some(uid => dates.some(d => vendeurData[`${iso(d)}|${uid}`] !== undefined));
+  tfoot.innerHTML = `<td style="padding:9px 10px;font-size:11px" colspan="3">🎯 Objectif équipe (dyn.)</td>${footCells.join('')}<td style="text-align:right;font-family:'IBM Plex Mono',monospace;padding:9px 10px;color:var(--bl);border-left:2px solid var(--bm)">${totalSemaine>0?Math.round(totalSemaine).toLocaleString('fr-FR')+' €':'—'}</td><td style="text-align:right;font-family:'IBM Plex Mono',monospace;padding:9px 10px;font-weight:700">${hasAnyReal?Math.round(totalRealEquipe).toLocaleString('fr-FR')+' €':'—'}</td><td style="text-align:right;font-family:'IBM Plex Mono',monospace;padding:9px 10px;font-weight:700;color:${totalEcartEquipe>=0?'var(--gn)':'var(--rd)'}">${hasAnyReal?(totalEcartEquipe>=0?'+':'')+Math.round(totalEcartEquipe).toLocaleString('fr-FR')+' €':'—'}</td>`;
 
   const totalObj = dates.reduce((a, d) => a + (margeData[iso(d)] || 0), 0);
   const partTheorStr = SIDS.map(uid => {
