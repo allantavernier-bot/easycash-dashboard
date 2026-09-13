@@ -678,8 +678,11 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
           <span class="source-tag" id="marge-source-tag">🔗 Chargement...</span>
         </div>
         <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+          <button onclick="window.changeWeek(-1)" style="border:1px solid var(--brd);background:var(--s2);border-radius:6px;padding:3px 10px;cursor:pointer;font-size:14px;line-height:1">◀</button>
           <span style="font-size:11px;color:var(--t2);font-weight:500">Semaine :</span>
           <span id="marge-week-label" style="font-size:12px;font-weight:600"></span>
+          <button onclick="window.changeWeek(1)" style="border:1px solid var(--brd);background:var(--s2);border-radius:6px;padding:3px 10px;cursor:pointer;font-size:14px;line-height:1">▶</button>
+          <button onclick="window.changeWeek(0)" style="border:1px solid var(--brd);background:var(--s2);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:11px;color:var(--t2)">Aujourd'hui</button>
         </div>
         <!-- Stats globales semaine -->
         <!-- Bloc objectif dynamique semaine -->
@@ -705,6 +708,14 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
         </div>
         <div style="display:flex;justify-content:flex-end;margin-top:10px">
           <button class="sbmit" style="font-size:12px;padding:8px 16px" onclick="window.saveCoefs()">Enregistrer les coefficients</button>
+        </div>
+      </div>
+
+      <!-- Vue mensuelle des performances -->
+      <div class="acard" style="margin-top:14px">
+        <div class="actitle">📅 Performance mensuelle — Réalisé vs Objectif</div>
+        <div id="monthly-perf-wrap" style="overflow-x:auto">
+          <div style="font-size:12px;color:var(--t2);padding:20px;text-align:center">Chargement...</div>
         </div>
         <div id="coef-grid" style="display:none"></div>
         <div id="coef-table-body" style="display:none"></div>
@@ -1487,12 +1498,9 @@ function showTab(name,btn){
     switchTachesTab('mes-taches', document.querySelector('#taches-tabs .tab'));
   }
   if(name==='objectifs'){
-    loadMargeData().then(()=>{
-      renderObjectifs();
-      const btnHier=document.querySelector('.rvo-period-btn');
-      if(btnHier) rvoSetPeriod('hier', btnHier);
-      else rvoRender();
-    });
+    // Forcer le rechargement à chaque visite
+    margeData={};vendeurData={};
+    loadMargeData().then(()=>{ renderObjectifs(); renderMonthlyPerf(); });
   }
 }
 
@@ -2269,7 +2277,8 @@ async function loadMargeData(){
   const token = getMargeToken();
   if (!token) { showMargeTokenModal(() => loadMargeData()); return; }
   try {
-    const res = await fetch(WEBAPP_URL + '?action=all&token=' + encodeURIComponent(token));
+    // Utiliser action=planning : payload réduit (objectifs + vendeurs 60j seulement)
+    const res = await fetch(WEBAPP_URL + '?action=planning&token=' + encodeURIComponent(token));
     const raw = await res.json();
     if (!raw || raw.status === 'error') {
       if (raw.message === 'Accès non autorisé') {
@@ -2280,13 +2289,14 @@ async function loadMargeData(){
       throw new Error(raw.message || 'Erreur Web App');
     }
 
+    // main_planning : [Date, CA cible, Marge cible]
     margeData = {};
-    const mainRows = raw.main || [];
+    const mainRows = raw.main_planning || [];
     mainRows.slice(1).forEach(r => {
       const d = gdateGviz(r[0]);
       if(!d) return;
       const dISO = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-      const marge = parseNumGviz(r[5]);
+      const marge = parseNumGviz(r[2]); // index 2 = Marge cible (col F)
       if(marge!==null) margeData[dISO] = marge;
     });
 
@@ -2298,7 +2308,7 @@ async function loadMargeData(){
       const dISO = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
       const uid   = r[1] ? String(r[1]) : null;
       const marge = parseNumGviz(r[4]);
-      if(uid&&marge!==null) vendeurData[`${dISO}|${uid}`] = marge;
+      if(uid&&marge!==null) vendeurData[dISO+'|'+uid] = marge;
     });
 
     const tag=document.getElementById('marge-source-tag');
@@ -2489,19 +2499,43 @@ function renderObjectifs(){
 
 async function saveCoefs(){
   if(!STATE.coefs) STATE.coefs={};
+  if(!STATE.coefs_history) STATE.coefs_history=[];
+  const newCoefs={};
   SIDS.forEach(uid => {
     const inp = document.getElementById(`coef-${uid}`);
-    if(inp) STATE.coefs[uid] = parseInt(inp.value) || 0;
+    if(inp) newCoefs[uid] = parseInt(inp.value) || 0;
   });
+  STATE.coefs = newCoefs;
+  // Historiser avec la date du lundi de la semaine en cours
+  const mon = monday(woff);
+  const dateKey = iso(mon);
+  // Remplacer si même date, sinon ajouter
+  const existIdx = STATE.coefs_history.findIndex(e => e.date === dateKey);
+  const entry = Object.assign({date: dateKey}, newCoefs);
+  if(existIdx >= 0) STATE.coefs_history[existIdx] = entry;
+  else STATE.coefs_history.push(entry);
   await saveState();
   toast('Coefficients enregistrés ✓');
   renderObjectifs();
+  renderMonthlyPerf();
 }
 
 window.updatePoidsRow = function(uid) {
-  // Re-render le tableau complet pour recalculer tout
   renderObjectifs();
 };
+
+// Retourne la config de coefficients active à une date ISO donnée
+function getCoefsAtDate(dateISO) {
+  if(!STATE.coefs_history || STATE.coefs_history.length === 0) return STATE.coefs || {};
+  // Trier par date et prendre la dernière entrée <= dateISO
+  const sorted = [...STATE.coefs_history].sort((a,b) => a.date.localeCompare(b.date));
+  let active = sorted[0];
+  for(const entry of sorted) {
+    if(entry.date <= dateISO) active = entry;
+    else break;
+  }
+  return active || STATE.coefs || {};
+}
 
 // ═══════════════════════════════════════════════════════
 //  RÉALISÉ VS OBJECTIF
@@ -3641,7 +3675,143 @@ window.allerSignatures = function() {
 // ═══════════════════════════════════════════════════════
 //  EXPOSITION GLOBALE (nécessaire avec type="module")
 // ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+//  VUE MENSUELLE DES PERFORMANCES
+// ═══════════════════════════════════════════════════════
+function renderMonthlyPerf() {
+  const wrap = document.getElementById('monthly-perf-wrap');
+  if(!wrap || !Object.keys(margeData).length) return;
+
+  // Construire la liste des mois avec données (depuis vendeurData et margeData)
+  const allDates = Object.keys(margeData).sort();
+  if(!allDates.length) { wrap.innerHTML='<div style="padding:20px;text-align:center;color:var(--t2);font-size:12px">Pas de données disponibles</div>'; return; }
+
+  const firstDate = allDates[0];
+  const today = new Date();
+  const months = [];
+  let d = new Date(firstDate);
+  d.setDate(1);
+  while(d <= today) {
+    months.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'));
+    d.setMonth(d.getMonth()+1);
+  }
+
+  // Pour chaque mois, calculer réalisé et objectif par collaborateur
+  function getMonthData(monthKey) {
+    const [yr, mo] = monthKey.split('-').map(Number);
+    const daysInMonth = [];
+    Object.keys(margeData).forEach(dISO => {
+      const [y,m] = dISO.split('-').map(Number);
+      if(y===yr && m===mo) daysInMonth.push(dISO);
+    });
+
+    const result = {};
+    SIDS.forEach(uid => {
+      let objTotal = 0;
+      let realTotal = 0;
+      // Grouper par semaine pour appliquer la bonne config de coefs
+      const weeksSeen = new Set();
+      daysInMonth.forEach(dISO => {
+        const d2 = new Date(dISO);
+        const dow = d2.getDay()===0?6:d2.getDay()-1;
+        const mon2 = new Date(d2); mon2.setDate(d2.getDate()-dow);
+        const weekKey = iso(mon2);
+        // Config active pour cette semaine
+        const coefs = getCoefsAtDate(weekKey);
+        const pct = (coefs[uid]||0)/100;
+        if(pct===0) return;
+        // Objectif magasin ce jour
+        const dayObj = margeData[dISO]||0;
+        if(!dayObj) return;
+        // Estimer les heures depuis BASE_SCHEDULE (simplifié - pas de Firestore pour le passé)
+        const h = BASE_SCHEDULE[uid]?.h || 35;
+        const dayOfWeek = new Date(dISO).getDay();
+        const isSat = dayOfWeek===6;
+        // Poids approximatif : h/5 pour un jour semaine, h/5*1.6 pour samedi
+        const hJour = isSat ? (h/5)*1.4 : h/5;
+        const poidsUid = hJour * pct;
+        // Poids total équipe ce jour (simplifié)
+        const totalPoids = SIDS.reduce((s,u2) => {
+          const c2 = (getCoefsAtDate(weekKey)[u2]||0)/100;
+          const h2 = BASE_SCHEDULE[u2]?.h || 35;
+          const hj2 = isSat ? (h2/5)*1.4 : h2/5;
+          return s + hj2*c2;
+        }, 0);
+        // Objectif dynamique (déduction Allan + Internet)
+        const allanDay = vendeurData[dISO+'|allan']||0;
+        const libreDay = vendeurData[dISO+'|libre_service']||0;
+        const objEquipe = Math.max(0, dayObj - allanDay - libreDay);
+        objTotal += totalPoids>0 ? (poidsUid/totalPoids)*objEquipe : 0;
+        // Réalisé depuis vendeurData
+        const real = vendeurData[dISO+'|'+uid];
+        if(real!==undefined) realTotal += real;
+      });
+      result[uid] = {obj: Math.round(objTotal), real: Math.round(realTotal), hasData: daysInMonth.some(d=>vendeurData[d+'|'+uid]!==undefined)};
+    });
+    // Total équipe
+    const objTeam = Object.values(result).reduce((s,v)=>s+v.obj,0);
+    const realTeam = Object.values(result).reduce((s,v)=>s+(v.hasData?v.real:0),0);
+    const hasTeam = Object.values(result).some(v=>v.hasData);
+    result._team = {obj:objTeam, real:realTeam, hasData:hasTeam};
+    return result;
+  }
+
+  function pctCell(obj, real, hasData, isCurrent) {
+    if(!hasData) return '<td style="text-align:center;color:var(--t3);font-size:11px">—</td>';
+    if(!obj) return '<td style="text-align:center;color:var(--t3);font-size:11px">—</td>';
+    const pct = Math.round(real/obj*100);
+    const col = pct>=90?'#22c55e':pct>=75?'#f59e0b':'#ef4444';
+    const bg  = pct>=90?'rgba(34,197,94,.12)':pct>=75?'rgba(245,158,11,.12)':'rgba(239,68,68,.12)';
+    const cur = isCurrent?' style="font-style:italic"':'';
+    return `<td style="text-align:center;padding:5px 6px;background:${bg}">
+      <span style="font-weight:700;color:${col};font-size:12px"${cur}>${pct}%</span>
+      <div style="font-size:9px;color:var(--t2);line-height:1.2;margin-top:1px">${real.toLocaleString('fr-FR')} / ${obj.toLocaleString('fr-FR')} €</div>
+    </td>`;
+  }
+
+  const currentMonth = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0');
+  const monthLabels = months.map(m => {
+    const [y,mo] = m.split('-').map(Number);
+    const label = new Date(y,mo-1,1).toLocaleDateString('fr-FR',{month:'short'});
+    return m===currentMonth ? label+'*' : label;
+  });
+
+  const monthData = months.map(m => getMonthData(m));
+
+  let html = `<table style="border-collapse:collapse;font-size:11px;width:100%">
+    <thead><tr>
+      <th style="padding:6px 8px;text-align:left;font-weight:500;color:var(--t2);min-width:80px">Collaborateur</th>
+      ${monthLabels.map(l=>`<th style="padding:6px 8px;text-align:center;font-weight:500;color:var(--t2)">${l}</th>`).join('')}
+    </tr></thead>
+    <tbody>`;
+
+  SIDS.forEach(uid => {
+    const u = USERS[uid];
+    html += `<tr style="border-top:1px solid var(--brd)">
+      <td style="padding:6px 8px;font-weight:600">${u.short}</td>
+      ${months.map((m,i) => pctCell(monthData[i][uid]?.obj, monthData[i][uid]?.real, monthData[i][uid]?.hasData, m===currentMonth)).join('')}
+    </tr>`;
+  });
+
+  // Ligne équipe
+  html += `<tr style="border-top:2px solid var(--bm);background:var(--s2)">
+    <td style="padding:6px 8px;font-weight:700">👥 Équipe</td>
+    ${months.map((m,i) => pctCell(monthData[i]._team?.obj, monthData[i]._team?.real, monthData[i]._team?.hasData, m===currentMonth)).join('')}
+  </tr>`;
+
+  html += `</tbody></table>
+    <div style="font-size:10px;color:var(--t2);margin-top:8px">* mois en cours · 🟢 ≥90% · 🟡 75-89% · 🔴 &lt;75% · Objectifs calculés au prorata présence × coefficient</div>`;
+
+  wrap.innerHTML = html;
+}
+
+window.renderMonthlyPerf = renderMonthlyPerf;
+
 window.pp=pp; window.pdel=pdel; window.logout=logout; window.resetPin=resetPin; window.onMagasinChange=onMagasinChange;
+window.changeWeek=function(delta){
+  if(delta===0){woff=0;}else{woff+=delta;}
+  renderObjectifs();
+};
 window.onPinInput=function(val){pinbuf=val;const el=document.getElementById('lerr');if(el)el.style.display='none';};
 window.tryLoginInput=function(){const inp=document.getElementById('pin-input');if(inp)pinbuf=inp.value;tryLogin();};
 window.showTab=showTab; window.cw=cw; window.gotoday=gotoday;
