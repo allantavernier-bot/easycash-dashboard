@@ -2407,7 +2407,10 @@ function renderObjectifs(){
     const u = USERS[uid];
     const poids = getPoids(uid);
     const hSem = getHeuresSemaine(uid);
-    const pct = STATE.coefs?.[uid] || 0;
+    // Lire le coef depuis l'historique si disponible (sinon fallback STATE.coefs)
+    const weekMon = iso(mon);
+    const activeCoefs = getCoefsAtDate(weekMon);
+    const pct = activeCoefs[uid] !== undefined ? (activeCoefs[uid] || 0) : (STATE.coefs?.[uid] || 0);
     const partTheor = totalPoidsEquipe > 0 ? Math.round(poids / totalPoidsEquipe * 100) : 0;
     let totalCollab = 0;
 
@@ -2538,7 +2541,7 @@ async function saveCoefs(){
     const inp = document.getElementById(`coef-${uid}`);
     if(inp) newCoefs[uid] = parseInt(inp.value) || 0;
   });
-  STATE.coefs = newCoefs;
+  STATE.coefs = newCoefs; // Sync STATE.coefs pour compatibilité
   // Historiser avec la date du lundi de la semaine en cours
   const mon = monday(woff);
   const dateKey = iso(mon);
