@@ -1186,14 +1186,15 @@ function syncCollabsFromState() {
     }
     // Ajouter dans BASE_SCHEDULE si absent
     if (!BASE_SCHEDULE[c.id]) {
+      const hj = Math.round((c.h||35)/5*60);
       BASE_SCHEDULE[c.id] = {
-        h: c.h || 35,
-        lundi:    {type:'work', start:'09:00', end:'18:00', mins:(c.h||35)/5*60},
-        mardi:    {type:'work', start:'09:00', end:'18:00', mins:(c.h||35)/5*60},
-        mercredi: {type:'work', start:'09:00', end:'18:00', mins:(c.h||35)/5*60},
-        jeudi:    {type:'work', start:'09:00', end:'18:00', mins:(c.h||35)/5*60},
-        vendredi: {type:'work', start:'09:00', end:'18:00', mins:(c.h||35)/5*60},
-        samedi:   {type:'off', start:'', end:'', mins:0}
+        h:   c.h || 35,
+        lun: {type:'work', start:'09:00', end:'18:00', mins:hj},
+        mar: {type:'work', start:'09:00', end:'18:00', mins:hj},
+        mer: {type:'work', start:'09:00', end:'18:00', mins:hj},
+        jeu: {type:'work', start:'09:00', end:'18:00', mins:hj},
+        ven: {type:'work', start:'09:00', end:'18:00', mins:hj},
+        sam: {type:'off', start:'', end:'', mins:0}
       };
     } else {
       BASE_SCHEDULE[c.id].h = c.h || BASE_SCHEDULE[c.id].h || 35;
