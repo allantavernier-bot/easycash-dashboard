@@ -1953,7 +1953,8 @@ function renderAdminAbs(){
   hist.slice().reverse().forEach(a=>{
     const sc={approved:'p-ok',refused:'p-no'}[a.status];
     const sl={approved:'Approuvée',refused:'Refusée'}[a.status];
-    hH+=`<div class="aitem" style="margin-bottom:5px"><div><div class="adate">${USERS[a.uid].short} · ${ALBL[a.type]||a.type}</div><div class="areason">${a.start} → ${a.end}</div></div><span class="pill ${sc}">${sl}</span></div>`;
+    const editBtn=a.status==='approved'?`<button onclick="window.editAbs(${a.id})" style="font-size:10px;padding:2px 8px;border:1px solid var(--brd);background:var(--s2);border-radius:4px;cursor:pointer;margin-left:6px">✏️ Corriger</button>`:''
+    hH+=`<div class="aitem" style="margin-bottom:5px"><div><div class="adate">${USERS[a.uid].short} · ${ALBL[a.type]||a.type}</div><div class="areason">${a.start} → ${a.end}</div></div><div style="display:flex;align-items:center"><span class="pill ${sc}">${sl}</span>${editBtn}</div></div>`;
   });
   document.getElementById('histlist').innerHTML=hH;
 }
@@ -1968,6 +1969,36 @@ function decide(id,status){
   addNotif(a.uid,msg);
   saveState().then(()=>{toast(status==='approved'?'Approuvée ✓':'Refusée.');renderAdminAbs();renderPlanning();});
 }
+
+window.editAbs = function(id) {
+  const a = STATE.absences.find(x=>x.id===id);
+  if(!a) return;
+  const types = Object.entries(ALBL).map(([k,v])=>`<option value="${k}" ${k===a.type?'selected':''}>${v}</option>`).join('');
+  const modal = document.createElement('div');
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML=`<div style="background:#fff;border-radius:12px;padding:24px;width:340px;font-family:sans-serif">
+    <div style="font-weight:700;font-size:15px;margin-bottom:16px">✏️ Corriger l'absence — ${USERS[a.uid].name}</div>
+    <label style="font-size:12px;color:#666">Type</label>
+    <select id="ea-type" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;margin-bottom:10px;font-size:13px">${types}</select>
+    <label style="font-size:12px;color:#666">Date début</label>
+    <input type="date" id="ea-start" value="${a.start}" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;margin-bottom:10px;font-size:13px;box-sizing:border-box">
+    <label style="font-size:12px;color:#666">Date fin</label>
+    <input type="date" id="ea-end" value="${a.end}" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;margin-bottom:16px;font-size:13px;box-sizing:border-box">
+    <div style="display:flex;gap:8px">
+      <button onclick="this.closest('div[style*=fixed]').remove()" style="flex:1;padding:9px;border:1px solid #ddd;border-radius:6px;cursor:pointer;font-size:13px">Annuler</button>
+      <button id="ea-save" style="flex:1;padding:9px;background:#22c55e;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">Enregistrer</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+  modal.querySelector('#ea-save').onclick = function() {
+    a.type  = modal.querySelector('#ea-type').value;
+    a.start = modal.querySelector('#ea-start').value;
+    a.end   = modal.querySelector('#ea-end').value;
+    modal.remove();
+    saveState().then(()=>{ toast('Absence corrigée ✓'); renderAdminAbs(); renderPlanning(); });
+  };
+  modal.onclick = function(e){ if(e.target===modal) modal.remove(); };
+};
 
 // ═══════════════════════════════════════════════════════
 //  ADMIN ÉQUIPE
@@ -2419,7 +2450,9 @@ function renderObjectifs(){
       <td style="font-weight:500;font-size:12px;white-space:nowrap">${u.short}</td>
       <td style="text-align:center;font-size:11px;color:var(--t2)">${hSem.toFixed(1)}h</td>
       <td style="text-align:center;padding:4px 6px">
-        <input type="number" id="coef-${uid}" value="${pct}" min="0" max="100"
+        <input type="number" id="coef-${uid}"
+          value="${(()=>{const ex=document.getElementById('coef-'+uid);return(ex&&document.activeElement===ex)?ex.value:pct;})()}"
+          min="0" max="100"
           style="width:42px;text-align:center;border:1px solid var(--bm);border-radius:6px;padding:2px 4px;font-size:11px;background:var(--am-l);color:var(--am);font-weight:600;font-family:'IBM Plex Mono',monospace"
           onchange="window.updatePoidsRow('${uid}')"> %
       </td>
