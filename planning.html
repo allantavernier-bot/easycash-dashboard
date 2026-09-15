@@ -1154,6 +1154,63 @@ function setSyncStatus(s){
 }
 
 // Écoute temps réel Firebase — mise à jour automatique pour tous les utilisateurs
+// Synchroniser USERS/SIDS depuis STATE.collabs (collabs dynamiques)
+function syncCollabsFromState() {
+  if (!STATE.collabs || !STATE.collabs.length) return;
+  STATE.collabs.forEach(c => {
+    if (!c.id || c.id === 'allan') return; // allan reste en dur
+    // Ajouter dans USERS si absent
+    if (!USERS[c.id]) {
+      USERS[c.id] = {
+        name: c.nom,
+        short: c.short || c.nom.split(' ')[0],
+        role: c.role || '',
+        pin: c.pin || '',
+        admin: false,
+        bg: c.bg || '#EFEFED',
+        ct: c.ct || '#2A2A28',
+        magasin: c.magasin || 'berck',
+        active: c.active !== false
+      };
+    } else {
+      // Mettre à jour les champs modifiables
+      USERS[c.id].name  = c.nom;
+      USERS[c.id].short = c.short || c.nom.split(' ')[0];
+      USERS[c.id].role  = c.role || '';
+      USERS[c.id].pin   = c.pin || '';
+      USERS[c.id].active = c.active !== false;
+    }
+    // Ajouter dans SIDS si actif et absent
+    if (c.active !== false && !SIDS.includes(c.id)) {
+      SIDS.push(c.id);
+    }
+    // Ajouter dans BASE_SCHEDULE si absent
+    if (!BASE_SCHEDULE[c.id]) {
+      BASE_SCHEDULE[c.id] = {
+        h: c.h || 35,
+        lundi:    {type:'work', start:'09:00', end:'18:00', mins:(c.h||35)/5*60},
+        mardi:    {type:'work', start:'09:00', end:'18:00', mins:(c.h||35)/5*60},
+        mercredi: {type:'work', start:'09:00', end:'18:00', mins:(c.h||35)/5*60},
+        jeudi:    {type:'work', start:'09:00', end:'18:00', mins:(c.h||35)/5*60},
+        vendredi: {type:'work', start:'09:00', end:'18:00', mins:(c.h||35)/5*60},
+        samedi:   {type:'off', start:'', end:'', mins:0}
+      };
+    } else {
+      BASE_SCHEDULE[c.id].h = c.h || BASE_SCHEDULE[c.id].h || 35;
+    }
+    // Mettre à jour le coef dans STATE.coefs
+    if (!STATE.coefs) STATE.coefs = {};
+    if (STATE.coefs[c.id] === undefined) STATE.coefs[c.id] = c.coef ?? 0;
+  });
+  // Retirer les collabs désactivés de SIDS
+  STATE.collabs.forEach(c => {
+    if (c.active === false && SIDS.includes(c.id)) {
+      const idx = SIDS.indexOf(c.id);
+      if (idx > -1) SIDS.splice(idx, 1);
+    }
+  });
+}
+
 function startPolling(){
   onSnapshot(STATE_DOC, (snap) => {
     if(!cur) return;
@@ -1458,7 +1515,7 @@ function tryLogin(){
     document.getElementById('app').style.display='block';
     document.getElementById('huser').textContent=USERS[uid].short;
     if(USERS[uid].admin)document.querySelectorAll('.adm').forEach(e=>e.style.display='block');
-    loadState().then(()=>{renderAll();updateNotifBadge();verifierSignatureAuLogin(uid);});
+    loadState().then(()=>{syncCollabsFromState();renderAll();updateNotifBadge();verifierSignatureAuLogin(uid);});
   }else{
     document.getElementById('lerr').style.display='block';
     pinbuf='';
@@ -2818,6 +2875,7 @@ async function saveCollab(){
   await saveState();
   closeCollabModal();
   renderCollabMgr();
+  syncCollabsFromState();
   toast(collabEditId?'✓ Collaborateur modifié':'✓ Nouveau collaborateur ajouté');
 }
 
