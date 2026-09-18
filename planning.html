@@ -2817,8 +2817,6 @@ function renderCollabMgr(){
 function openCollabModal(mode, id){
   collabEditId = mode==='edit' ? id : null;
   document.getElementById('collab-modal-title').textContent = mode==='edit'?'Modifier le collaborateur':'Nouveau collaborateur';
-  const adminChk = document.getElementById('cm-admin');
-  if(adminChk) adminChk.checked = mode==='edit' && collabData ? (collabData.admin||false) : false;
   if(mode==='edit'){
     const collabs=getActiveCollabs();
     const c=collabs.find(x=>x.id===id);
@@ -2828,6 +2826,8 @@ function openCollabModal(mode, id){
     document.getElementById('cm-h').value=c.h??35;
     document.getElementById('cm-pin').value=c.pin||'';
     document.getElementById('cm-coef').value=c.coef??100;
+    const adminChk = document.getElementById('cm-admin');
+    if(adminChk) adminChk.checked = c.admin||false;
     document.getElementById('cm-email').value=c.email||USER_EMAILS[id]||'';
   } else {
     ['cm-nom','cm-poste','cm-pin','cm-email'].forEach(i=>document.getElementById(i).value='');
@@ -2864,7 +2864,7 @@ async function saveCollab(){
     email: document.getElementById('cm-email').value,
     bg: collabEditId ? (collabs.find(c=>c.id===collabEditId)?.bg||'#EEE') : '#EFEFED',
     ct: collabEditId ? (collabs.find(c=>c.id===collabEditId)?.ct||'#333') : '#2A2A28',
-    admin: collabEditId==='allan',
+    admin: document.getElementById('cm-admin')?.checked||false,
   };
 
   // Mettre à jour coefs
