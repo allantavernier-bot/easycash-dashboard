@@ -644,6 +644,10 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
             <div class="mrow"><label>Code PIN</label><input type="text" id="cm-pin" placeholder="2006" maxlength="4" style="width:100%;padding:7px 9px;border:1px solid var(--bm);border-radius:var(--r);font-family:'IBM Plex Sans',sans-serif;font-size:13px;outline:none"></div>
             <div class="mrow"><label>Coeff vente (%)</label><input type="number" id="cm-coef" value="100" min="0" max="100" style="width:100%;padding:7px 9px;border:1px solid var(--bm);border-radius:var(--r);font-family:'IBM Plex Sans',sans-serif;font-size:13px;outline:none"></div>
             <div class="mrow"><label>Email</label><input type="email" id="cm-email" placeholder="prenom@gmail.com" style="width:100%;padding:7px 9px;border:1px solid var(--bm);border-radius:var(--r);font-family:'IBM Plex Sans',sans-serif;font-size:13px;outline:none"></div>
+            <div class="mrow" style="grid-column:1/-1;display:flex;align-items:center;gap:10px;padding:8px 0">
+              <input type="checkbox" id="cm-admin" style="width:16px;height:16px;cursor:pointer">
+              <label for="cm-admin" style="margin:0;cursor:pointer;font-size:13px">Accès administrateur (peut modifier le planning et gérer les demandes)</label>
+            </div>
           </div>
         </div>
         <div class="mfoot">
@@ -1166,7 +1170,7 @@ function syncCollabsFromState() {
         short: c.short || c.nom.split(' ')[0],
         role: c.role || '',
         pin: c.pin || '',
-        admin: false,
+        admin: c.admin || false,
         bg: c.bg || '#EFEFED',
         ct: c.ct || '#2A2A28',
         magasin: c.magasin || 'berck',
@@ -1178,6 +1182,7 @@ function syncCollabsFromState() {
       USERS[c.id].short = c.short || c.nom.split(' ')[0];
       USERS[c.id].role  = c.role || '';
       USERS[c.id].pin   = c.pin || '';
+      USERS[c.id].admin = c.admin || false;
       USERS[c.id].active = c.active !== false;
     }
     // Ajouter dans SIDS si actif et absent
@@ -2812,6 +2817,8 @@ function renderCollabMgr(){
 function openCollabModal(mode, id){
   collabEditId = mode==='edit' ? id : null;
   document.getElementById('collab-modal-title').textContent = mode==='edit'?'Modifier le collaborateur':'Nouveau collaborateur';
+  const adminChk = document.getElementById('cm-admin');
+  if(adminChk) adminChk.checked = mode==='edit' && collabData ? (collabData.admin||false) : false;
   if(mode==='edit'){
     const collabs=getActiveCollabs();
     const c=collabs.find(x=>x.id===id);
