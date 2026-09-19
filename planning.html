@@ -2706,20 +2706,8 @@ function getCoefsAtDateRaw(dateISO) {
 }
 
 function getCoefsAtDate(dateISO) {
-  // Lire les inputs live si on est sur la semaine affichée
-  const mon = monday(woff);
-  const weekISO = iso(mon);
-  const weekEnd = iso(new Date(mon.getFullYear(), mon.getMonth(), mon.getDate()+5));
-  if (dateISO >= weekISO && dateISO <= weekEnd) {
-    const liveCoefs = {};
-    let hasLive = false;
-    SIDS.forEach(uid => {
-      const inp = document.getElementById('coef-'+uid);
-      if (inp) { liveCoefs[uid] = parseInt(inp.value)||0; hasLive = true; }
-    });
-    if (hasLive) return liveCoefs;
-  }
-  // Sinon historique
+  // Toujours lire depuis l'historique — les inputs n'affectent pas les calculs
+  // avant que l'utilisateur clique "Enregistrer"
   return getCoefsAtDateRaw(dateISO);
 }
 
