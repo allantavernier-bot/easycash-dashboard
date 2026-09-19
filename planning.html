@@ -690,6 +690,10 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
           <button onclick="window.changeWeek(0)" style="border:1px solid var(--brd);background:var(--s2);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:11px;color:var(--t2)">Aujourd'hui</button>
         </div>
         <!-- Stats globales semaine -->
+        <!-- Message mise à jour en cours -->
+        <div id="obj-update-msg" style="display:none;background:#fef3c7;border:1px solid #f59e0b;border-radius:var(--r);padding:10px 16px;margin-bottom:12px;font-size:12px;color:#92400e;font-weight:500">
+          ⏳ Vous venez de modifier un coefficient — le tableau va se mettre à jour dans quelques instants...
+        </div>
         <!-- Bloc objectif dynamique semaine -->
         <div id="marge-stats"></div>
         <!-- Tableau fusionné : objectifs + proratisation -->
@@ -901,7 +905,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
     </div>
   
     <!-- PAGE BRIEFS -->
-    <div id="view-briefs" class="view" class="page" style="display:none">
+    <div id="view-briefs" class="view" style="display:none">
       <div class="acard">
         <div class="actitle" style="display:flex;justify-content:space-between;align-items:center">
           <span>📋 Briefs du samedi</span>
@@ -2664,7 +2668,11 @@ async function saveCoefs(){
 }
 
 window.updatePoidsRow = function(uid) {
+  const msg = document.getElementById('obj-update-msg');
+  if(msg) msg.style.display = 'block';
   renderObjectifs();
+  // Masquer le message après le rendu (court délai pour que l'user le voie)
+  setTimeout(() => { if(msg) msg.style.display = 'none'; }, 1500);
 };
 
 // Retourne la config de coefficients active à une date ISO donnée
