@@ -901,7 +901,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
     </div>
   
     <!-- PAGE BRIEFS -->
-    <div id="page-briefs" class="page" style="display:none">
+    <div id="view-briefs" class="view" class="page" style="display:none">
       <div class="acard">
         <div class="actitle" style="display:flex;justify-content:space-between;align-items:center">
           <span>📋 Briefs du samedi</span>
@@ -930,7 +930,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
           </div>
         </div>
       </div>
-    </div><!-- end page-briefs -->
+    </div><!-- end view-briefs -->
 
 </main>
 </div>
@@ -2681,6 +2681,21 @@ function isAdmin(uid) {
   return USERS[uid]?.admin === true;
 }
 
+
+// Version de getCoefsAtDate qui ne lit PAS les inputs
+function getCoefsAtDateRaw(dateISO) {
+  if (STATE.coefs_history && STATE.coefs_history.length > 0) {
+    const sorted = [...STATE.coefs_history].sort((a,b) => a.date.localeCompare(b.date));
+    let active = sorted[0];
+    for (const entry of sorted) {
+      if (entry.date <= dateISO) active = entry;
+      else break;
+    }
+    return active || STATE.coefs || {};
+  }
+  return STATE.coefs || {};
+}
+
 function getCoefsAtDate(dateISO) {
   // Lire les inputs live si on est sur la semaine affichée
   const mon = monday(woff);
@@ -2696,16 +2711,7 @@ function getCoefsAtDate(dateISO) {
     if (hasLive) return liveCoefs;
   }
   // Sinon historique
-  if (STATE.coefs_history && STATE.coefs_history.length > 0) {
-    const sorted = [...STATE.coefs_history].sort((a,b) => a.date.localeCompare(b.date));
-    let active = sorted[0];
-    for (const entry of sorted) {
-      if (entry.date <= dateISO) active = entry;
-      else break;
-    }
-    return active || STATE.coefs || {};
-  }
-  return STATE.coefs || {};
+  return getCoefsAtDateRaw(dateISO);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -4081,8 +4087,17 @@ window.saveBrief = async function() {
 window.pp=pp; window.pdel=pdel; window.logout=logout; window.resetPin=resetPin; window.onMagasinChange=onMagasinChange;
 window.changeWeek=function(delta){
   if(delta===0){woff=0;}else{woff+=delta;}
+  // Réinitialiser les inputs depuis la config de la nouvelle semaine
+  const newMon = monday(woff);
+  const newWeekISO = iso(newMon);
+  const weekCoefs = getCoefsAtDateRaw(newWeekISO);
+  SIDS.forEach(uid => {
+    const inp = document.getElementById('coef-'+uid);
+    if(inp) inp.value = weekCoefs[uid] !== undefined ? weekCoefs[uid] : (STATE.coefs?.[uid] || 0);
+  });
   renderObjectifs();
 };
+
 window.onPinInput=function(val){pinbuf=val;const el=document.getElementById('lerr');if(el)el.style.display='none';};
 window.tryLoginInput=function(){const inp=document.getElementById('pin-input');if(inp)pinbuf=inp.value;tryLogin();};
 window.showTab=showTab; window.cw=cw; window.gotoday=gotoday;
