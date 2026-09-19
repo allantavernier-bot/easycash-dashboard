@@ -1555,7 +1555,13 @@ function tryLogin(){
     document.getElementById('app').style.display='block';
     document.getElementById('huser').textContent=USERS[uid].short;
     if(isAdmin(uid))document.querySelectorAll('.adm').forEach(e=>e.style.display='block');
-    loadState().then(()=>{syncCollabsFromState();renderAll();updateNotifBadge();verifierSignatureAuLogin(uid);});
+    loadState().then(()=>{
+      syncCollabsFromState();
+      // Afficher les éléments admin si l'utilisateur est admin
+      if(isAdmin(uid)) document.querySelectorAll('.adm').forEach(e=>e.style.display='block');
+      else document.querySelectorAll('.adm').forEach(e=>e.style.display='none');
+      renderAll();updateNotifBadge();verifierSignatureAuLogin(uid);
+    });
   }else{
     document.getElementById('lerr').style.display='block';
     pinbuf='';
@@ -1565,8 +1571,12 @@ function tryLogin(){
   }
 }
 function logout(){
-  cur=null;window._cur=null;pinbuf='';
+  cur=null;window._cur=null;pinbuf='';editMode=false;
+  // Réinitialiser le bandeau de signature
+  const banner=document.getElementById('sig-banner');
+  if(banner){banner.classList.remove('show');banner.classList.remove('sig-banner-urgent');}
   document.getElementById('usel').value='';upd();
+  const pinInp=document.getElementById('pin-input');if(pinInp)pinInp.value='';
   document.getElementById('app').style.display='none';
   document.getElementById('login').style.display='flex';
   document.querySelectorAll('.adm').forEach(e=>e.style.display='none');
@@ -2661,10 +2671,11 @@ window.updatePoidsRow = function(uid) {
 // Vérifier si un uid est admin (STATE.collabs prioritaire sur USERS en dur)
 function isAdmin(uid) {
   if (!uid) return false;
-  // Chercher dans STATE.collabs d'abord
+  // Chercher dans STATE.collabs d'abord (source de vérité Firestore)
   if (STATE.collabs && STATE.collabs.length) {
     const c = STATE.collabs.find(x => x.id === uid);
-    if (c) return c.admin === true;
+    if (c !== undefined) return c.admin === true;
+    // Si pas dans collabs, l'uid vient de USERS en dur → vérifier là
   }
   // Fallback sur USERS en dur
   return USERS[uid]?.admin === true;
