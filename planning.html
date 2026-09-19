@@ -704,7 +704,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
               <tr>
                 <th style="min-width:110px">Collaborateur</th>
                 <th style="text-align:center;font-size:10px;color:var(--t2);font-weight:500">H sem.</th>
-                <th style="text-align:center;font-size:10px;color:var(--t2);font-weight:500">% vente</th>
+                <th style="text-align:center;font-size:10px;color:var(--t2);font-weight:500">% vente<br><span style="font-size:9px;color:var(--t3)">actuel→sauvegardé</span></th>
                 <th style="text-align:center">Lun</th><th style="text-align:center">Mar</th><th style="text-align:center">Mer</th>
                 <th style="text-align:center">Jeu</th><th style="text-align:center">Ven</th><th style="text-align:center">Sam</th>
                 <th style="text-align:right;border-left:2px solid var(--bm)">Obj. sem.</th>
@@ -1562,6 +1562,7 @@ function tryLogin(){
     if(isAdmin(uid))document.querySelectorAll('.adm').forEach(e=>e.style.display='block');
     loadState().then(()=>{
       syncCollabsFromState();
+      initCoefsHistoryIfEmpty();
       // Afficher les éléments admin si l'utilisateur est admin
       if(isAdmin(uid)) document.querySelectorAll('.adm').forEach(e=>e.style.display='block');
       else document.querySelectorAll('.adm').forEach(e=>e.style.display='none');
@@ -1613,7 +1614,12 @@ function showTab(name,btn){
     margeData={};vendeurData={};
     loadMargeData().then(()=>{ renderObjectifs(); renderMonthlyPerf(); });
   }
-  if(name==='briefs'){ renderBriefs(); }
+  if(name==='briefs'){
+    // Forcer l'affichage direct car le CSS .view peut être écrasé
+    const vb = document.getElementById('view-briefs');
+    if(vb){ vb.style.display='block'; vb.style.minHeight='300px'; }
+    renderBriefs();
+  }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -2570,6 +2576,7 @@ function renderObjectifs(){
           min="0" max="100"
           style="width:42px;text-align:center;border:1px solid var(--bm);border-radius:6px;padding:2px 4px;font-size:11px;background:var(--am-l);color:var(--am);font-weight:600;font-family:'IBM Plex Mono',monospace"
           onchange="window.updatePoidsRow('${uid}')"> %
+        <div style="font-size:9px;color:var(--t3);margin-top:2px">sauv. ${pct}%</div>
       </td>
       ${cells.join('')}
       <td style="text-align:right;font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--bl);border-left:2px solid var(--bm)">${totalCollab>0?Math.round(totalCollab).toLocaleString('fr-FR')+' €':'—'}</td>
@@ -2696,14 +2703,27 @@ function isAdmin(uid) {
 function getCoefsAtDateRaw(dateISO) {
   if (STATE.coefs_history && STATE.coefs_history.length > 0) {
     const sorted = [...STATE.coefs_history].sort((a,b) => a.date.localeCompare(b.date));
-    let active = sorted[0];
+    // Trouver la dernière entrée <= dateISO
+    let active = null;
     for (const entry of sorted) {
       if (entry.date <= dateISO) active = entry;
       else break;
     }
-    return active || STATE.coefs || {};
+    if (active) return active;
   }
+  // Fallback : STATE.coefs (valeurs sauvegardées sans historique)
   return STATE.coefs || {};
+}
+
+// Créer une entrée historique si aucune n'existe encore
+function initCoefsHistoryIfEmpty() {
+  if (!STATE.coefs || Object.keys(STATE.coefs).length === 0) return;
+  if (STATE.coefs_history && STATE.coefs_history.length > 0) return;
+  // Créer une entrée à partir du 01/04/2026 (début du magasin)
+  const entry = Object.assign({ date: '2026-04-01' }, STATE.coefs);
+  STATE.coefs_history = [entry];
+  saveState();
+  Logger && Logger.log && Logger.log('Historique coefs initialisé');
 }
 
 function getCoefsAtDate(dateISO) {
