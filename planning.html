@@ -489,6 +489,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
     <button class="tab" onclick="window.showTab('taches',this)">✅ Tâches</button>
     <button class="tab adm" onclick="window.showTab('admin-abs',this)">Demandes</button>
     <button class="tab adm" onclick="window.showTab('admin-team',this)">Équipe &amp; PIN</button>
+    <button class="tab" onclick="window.showTab('briefs',this)">📋 Briefs</button>
   </div>
 
   <main>
@@ -898,7 +899,40 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
         <div class="mfoot"><button class="mcncl" onclick="document.getElementById('modal-tache').style.display='none'">Annuler</button><button class="msave" onclick="window.saveTache()">Enregistrer</button></div>
       </div>
     </div>
-  </main>
+  
+    <!-- PAGE BRIEFS -->
+    <div id="page-briefs" class="page" style="display:none">
+      <div class="acard">
+        <div class="actitle" style="display:flex;justify-content:space-between;align-items:center">
+          <span>📋 Briefs du samedi</span>
+          <button id="brief-new-btn" style="display:none;background:var(--tx);color:#fff;border:none;padding:6px 14px;border-radius:var(--r);font-size:12px;font-weight:500;cursor:pointer" onclick="window.openBriefModal()">+ Nouveau brief</button>
+        </div>
+        <div id="brief-list" style="margin-top:12px"></div>
+      </div>
+      <!-- Modale brief -->
+      <div id="brief-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;align-items:center;justify-content:center">
+        <div style="background:#fff;border-radius:12px;padding:28px;width:min(620px,95vw);max-height:85vh;overflow-y:auto;font-family:'IBM Plex Sans',sans-serif">
+          <div style="font-weight:700;font-size:15px;margin-bottom:4px" id="brief-modal-title">Brief du —</div>
+          <div style="font-size:11px;color:#888;margin-bottom:16px" id="brief-modal-date"></div>
+          <div id="brief-view-mode">
+            <div id="brief-content-display" style="line-height:1.7;font-size:13px;white-space:pre-wrap;border:1px solid #eee;border-radius:8px;padding:16px;min-height:120px;color:#333"></div>
+            <div style="display:flex;justify-content:space-between;margin-top:14px">
+              <button onclick="window.closeBriefModal()" style="padding:8px 16px;border:1px solid #ddd;border-radius:6px;cursor:pointer;font-size:13px">Fermer</button>
+              <button id="brief-edit-btn" style="display:none;padding:8px 16px;background:#f59e0b;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600" onclick="window.switchBriefEdit()">✏️ Modifier</button>
+            </div>
+          </div>
+          <div id="brief-edit-mode" style="display:none">
+            <textarea id="brief-content-input" rows="12" placeholder="Saisissez le contenu du brief..." style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #ddd;border-radius:8px;font-size:13px;font-family:'IBM Plex Sans',sans-serif;resize:vertical;line-height:1.6"></textarea>
+            <div style="display:flex;justify-content:space-between;margin-top:14px;gap:8px">
+              <button onclick="window.switchBriefView()" style="padding:8px 16px;border:1px solid #ddd;border-radius:6px;cursor:pointer;font-size:13px">Annuler</button>
+              <button onclick="window.saveBrief()" style="padding:8px 20px;background:#22c55e;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">Enregistrer</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- end page-briefs -->
+
+</main>
 </div>
 
 <!-- MODAL ÉDITION -->
@@ -1520,7 +1554,7 @@ function tryLogin(){
     document.getElementById('login').style.display='none';
     document.getElementById('app').style.display='block';
     document.getElementById('huser').textContent=USERS[uid].short;
-    if(USERS[uid].admin)document.querySelectorAll('.adm').forEach(e=>e.style.display='block');
+    if(isAdmin(uid))document.querySelectorAll('.adm').forEach(e=>e.style.display='block');
     loadState().then(()=>{syncCollabsFromState();renderAll();updateNotifBadge();verifierSignatureAuLogin(uid);});
   }else{
     document.getElementById('lerr').style.display='block';
@@ -1552,7 +1586,7 @@ function showTab(name,btn){
   if(name==='absences')renderMyAbs();
   if(name==='signatures'){sigOff=woff;renderSigPage();}
   if(name==='retours'){
-    if(USERS[cur].admin){
+    if(isAdmin(cur)){
       document.getElementById('retours-admin').style.display='block';
       renderRetours();
     }
@@ -1561,17 +1595,17 @@ function showTab(name,btn){
     switchTachesTab('mes-taches', document.querySelector('#taches-tabs .tab'));
   }
   if(name==='objectifs'){
-    // Forcer le rechargement à chaque visite
     margeData={};vendeurData={};
     loadMargeData().then(()=>{ renderObjectifs(); renderMonthlyPerf(); });
   }
+  if(name==='briefs'){ renderBriefs(); }
 }
 
 // ═══════════════════════════════════════════════════════
 //  NAVIGATION SEMAINE
 // ═══════════════════════════════════════════════════════
 function cw(dir){
-  const isAdm=USERS[cur].admin;const n=woff+dir;
+  const isAdm=isAdmin(cur);const n=woff+dir;
   if(!isAdm&&n>5){toast('Seules les 5 prochaines semaines sont visibles.');return;}
   woff=n;renderPlanning();
   if(document.getElementById('view-signatures').classList.contains('on'))renderSigPage();
@@ -1664,7 +1698,7 @@ function renderPlanning(){
   const mon=monday(woff);
   const dates=DAYS.map((_,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i);return d;});
   const wk=monKey(woff);
-  const isAdm=USERS[cur].admin;
+  const isAdm=isAdmin(cur);
 
   document.getElementById('wtitle').textContent=`Semaine du ${fmt(dates[0])} au ${fmt(dates[5])}`;
   document.getElementById('wkn').textContent=`S${wknum(mon)} · ${mon.getFullYear()}`;
@@ -1845,7 +1879,7 @@ function cwSig(dir){
   if(dir===0){ sigOff=0; }
   else {
     const n=sigOff+dir;
-    if(!USERS[cur].admin&&n>5){toast('Seules les 5 prochaines semaines sont visibles.');return;}
+    if(!isAdmin(cur)&&n>5){toast('Seules les 5 prochaines semaines sont visibles.');return;}
     sigOff=n;
   }
   const hint=document.getElementById('sig-nav-hint');
@@ -1898,7 +1932,7 @@ function renderSigPage(){
     if(sig){
       h+=`<div class="sig-area" style="cursor:default"><img src="${sig.drawing}" style="width:100%;height:100%;object-fit:contain"></div>
       <div class="sig-signed">✓ Signé le ${sig.date}</div>`;
-      if(USERS[cur].admin){
+      if(isAdmin(cur)){
         h+=`<button class="sig-clear" onclick="window.clearSig('${uid}','${wk}')">Effacer la signature</button>`;
       }
     } else if(isMe){
@@ -2141,7 +2175,7 @@ function renderAdminTeam(){
 //  MODE ÉDITION
 // ═══════════════════════════════════════════════════════
 function toggleEdit(){
-  if(!USERS[cur].admin)return;
+  if(!isAdmin(cur))return;
   editMode=!editMode;
   document.getElementById('edit-bar').style.display=editMode?'block':'none';
   const btn=document.getElementById('edit-toggle');
@@ -2152,7 +2186,7 @@ function toggleEdit(){
 }
 
 function openModal(uid,dayKey){
-  if(!editMode||!USERS[cur].admin)return;
+  if(!editMode||!isAdmin(cur))return;
   const mon=monday(woff);
   const dayIdx=DAYS.indexOf(dayKey);
   const dt=new Date(mon);dt.setDate(mon.getDate()+dayIdx);
@@ -2624,16 +2658,43 @@ window.updatePoidsRow = function(uid) {
 };
 
 // Retourne la config de coefficients active à une date ISO donnée
-function getCoefsAtDate(dateISO) {
-  if(!STATE.coefs_history || STATE.coefs_history.length === 0) return STATE.coefs || {};
-  // Trier par date et prendre la dernière entrée <= dateISO
-  const sorted = [...STATE.coefs_history].sort((a,b) => a.date.localeCompare(b.date));
-  let active = sorted[0];
-  for(const entry of sorted) {
-    if(entry.date <= dateISO) active = entry;
-    else break;
+// Vérifier si un uid est admin (STATE.collabs prioritaire sur USERS en dur)
+function isAdmin(uid) {
+  if (!uid) return false;
+  // Chercher dans STATE.collabs d'abord
+  if (STATE.collabs && STATE.collabs.length) {
+    const c = STATE.collabs.find(x => x.id === uid);
+    if (c) return c.admin === true;
   }
-  return active || STATE.coefs || {};
+  // Fallback sur USERS en dur
+  return USERS[uid]?.admin === true;
+}
+
+function getCoefsAtDate(dateISO) {
+  // Lire les inputs live si on est sur la semaine affichée
+  const mon = monday(woff);
+  const weekISO = iso(mon);
+  const weekEnd = iso(new Date(mon.getFullYear(), mon.getMonth(), mon.getDate()+5));
+  if (dateISO >= weekISO && dateISO <= weekEnd) {
+    const liveCoefs = {};
+    let hasLive = false;
+    SIDS.forEach(uid => {
+      const inp = document.getElementById('coef-'+uid);
+      if (inp) { liveCoefs[uid] = parseInt(inp.value)||0; hasLive = true; }
+    });
+    if (hasLive) return liveCoefs;
+  }
+  // Sinon historique
+  if (STATE.coefs_history && STATE.coefs_history.length > 0) {
+    const sorted = [...STATE.coefs_history].sort((a,b) => a.date.localeCompare(b.date));
+    let active = sorted[0];
+    for (const entry of sorted) {
+      if (entry.date <= dateISO) active = entry;
+      else break;
+    }
+    return active || STATE.coefs || {};
+  }
+  return STATE.coefs || {};
 }
 
 // ═══════════════════════════════════════════════════════
@@ -3534,7 +3595,7 @@ let evCtxDate=null;
 let evTemp=[];
 
 function openEvModal(dateISO){
-  if(!editMode||!USERS[cur].admin)return;
+  if(!editMode||!isAdmin(cur))return;
   evCtxDate=dateISO;
   const[y,m,d]=dateISO.split('-');
   const jns=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
@@ -3908,6 +3969,104 @@ function renderMonthlyPerf() {
 }
 
 window.renderMonthlyPerf = renderMonthlyPerf;
+
+// ═══════════════════════════════════════════════════════
+//  BRIEFS DU SAMEDI
+// ═══════════════════════════════════════════════════════
+let briefCurrent = null; // brief ouvert
+
+function renderBriefs() {
+  const list = document.getElementById('brief-list');
+  if (!list) return;
+  // Afficher bouton nouveau si admin
+  const newBtn = document.getElementById('brief-new-btn');
+  if (newBtn) newBtn.style.display = isAdmin(cur) ? 'inline-block' : 'none';
+
+  const briefs = (STATE.briefs || []).slice().sort((a,b) => b.date.localeCompare(a.date));
+  if (!briefs.length) {
+    list.innerHTML = '<div style="color:#888;font-size:13px;padding:20px;text-align:center">Aucun brief pour le moment.</div>';
+    return;
+  }
+  list.innerHTML = briefs.map(b => {
+    const d = new Date(b.date);
+    const label = 'Brief du ' + d.toLocaleDateString('fr-FR', {weekday:'long', day:'2-digit', month:'long', year:'numeric'});
+    const preview = (b.content||'').replace(/
+/g,' ').substring(0,80);
+    return `<div onclick="window.openBriefRead('${b.id}')" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border:1px solid var(--brd);border-radius:var(--r);margin-bottom:8px;cursor:pointer;transition:background .15s" onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background=''">
+      <div>
+        <div style="font-weight:600;font-size:13px">${label}</div>
+        ${preview?'<div style="font-size:11px;color:#888;margin-top:2px">'+preview+'…</div>':''}
+      </div>
+      <span style="font-size:18px;color:#aaa">›</span>
+    </div>`;
+  }).join('');
+}
+
+function openBriefRead(id) {
+  const b = (STATE.briefs||[]).find(x=>x.id===id);
+  if (!b) return;
+  briefCurrent = b;
+  const d = new Date(b.date);
+  const label = 'Brief du ' + d.toLocaleDateString('fr-FR', {weekday:'long', day:'2-digit', month:'long', year:'numeric'});
+  document.getElementById('brief-modal-title').textContent = label;
+  document.getElementById('brief-modal-date').textContent = d.toLocaleDateString('fr-FR', {day:'2-digit', month:'long', year:'numeric'});
+  document.getElementById('brief-content-display').textContent = b.content || '(contenu vide)';
+  const editBtn = document.getElementById('brief-edit-btn');
+  if (editBtn) editBtn.style.display = isAdmin(cur) ? 'inline-block' : 'none';
+  document.getElementById('brief-view-mode').style.display = 'block';
+  document.getElementById('brief-edit-mode').style.display = 'none';
+  const modal = document.getElementById('brief-modal');
+  modal.style.display = 'flex';
+}
+
+window.openBriefModal = function() {
+  // Créer un nouveau brief daté du prochain samedi
+  const today = new Date();
+  const daysToSat = (6 - today.getDay() + 7) % 7 || 7;
+  const sat = new Date(today); sat.setDate(today.getDate() + (daysToSat === 7 && today.getDay()===6 ? 0 : daysToSat));
+  const dateISO = sat.toISOString().substring(0,10);
+  briefCurrent = {id: 'brief-'+Date.now(), date: dateISO, content: ''};
+  const d = new Date(dateISO);
+  const label = 'Brief du ' + d.toLocaleDateString('fr-FR', {weekday:'long', day:'2-digit', month:'long', year:'numeric'});
+  document.getElementById('brief-modal-title').textContent = label;
+  document.getElementById('brief-modal-date').textContent = '';
+  document.getElementById('brief-content-input').value = '';
+  document.getElementById('brief-view-mode').style.display = 'none';
+  document.getElementById('brief-edit-mode').style.display = 'block';
+  document.getElementById('brief-modal').style.display = 'flex';
+};
+
+window.closeBriefModal = function() {
+  document.getElementById('brief-modal').style.display = 'none';
+  briefCurrent = null;
+};
+
+window.switchBriefEdit = function() {
+  if (!briefCurrent) return;
+  document.getElementById('brief-content-input').value = briefCurrent.content || '';
+  document.getElementById('brief-view-mode').style.display = 'none';
+  document.getElementById('brief-edit-mode').style.display = 'block';
+};
+
+window.switchBriefView = function() {
+  document.getElementById('brief-view-mode').style.display = 'block';
+  document.getElementById('brief-edit-mode').style.display = 'none';
+};
+
+window.saveBrief = async function() {
+  if (!briefCurrent) return;
+  briefCurrent.content = document.getElementById('brief-content-input').value;
+  briefCurrent.updatedAt = new Date().toISOString();
+  briefCurrent.updatedBy = cur;
+  if (!STATE.briefs) STATE.briefs = [];
+  const idx = STATE.briefs.findIndex(b => b.id === briefCurrent.id);
+  if (idx >= 0) STATE.briefs[idx] = briefCurrent;
+  else STATE.briefs.push(briefCurrent);
+  await saveState();
+  toast('Brief enregistré ✓');
+  window.closeBriefModal();
+  renderBriefs();
+};
 
 window.pp=pp; window.pdel=pdel; window.logout=logout; window.resetPin=resetPin; window.onMagasinChange=onMagasinChange;
 window.changeWeek=function(delta){
