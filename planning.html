@@ -4033,20 +4033,47 @@ function openBriefRead(id) {
 }
 
 window.openBriefModal = function() {
-  // Créer un nouveau brief daté du prochain samedi
+  // Modale de création avec choix de la date
   const today = new Date();
-  const daysToSat = (6 - today.getDay() + 7) % 7 || 7;
-  const sat = new Date(today); sat.setDate(today.getDate() + (daysToSat === 7 && today.getDay()===6 ? 0 : daysToSat));
-  const dateISO = sat.toISOString().substring(0,10);
-  briefCurrent = {id: 'brief-'+Date.now(), date: dateISO, content: ''};
-  const d = new Date(dateISO);
-  const label = 'Brief du ' + d.toLocaleDateString('fr-FR', {weekday:'long', day:'2-digit', month:'long', year:'numeric'});
-  document.getElementById('brief-modal-title').textContent = label;
-  document.getElementById('brief-modal-date').textContent = '';
-  document.getElementById('brief-content-input').value = '';
-  document.getElementById('brief-view-mode').style.display = 'none';
-  document.getElementById('brief-edit-mode').style.display = 'block';
-  document.getElementById('brief-modal').style.display = 'flex';
+  const todayISO = today.toISOString().substring(0,10);
+  // Suggérer le dernier samedi
+  const dow = today.getDay(); // 0=dim, 6=sam
+  const lastSat = new Date(today);
+  lastSat.setDate(today.getDate() - (dow === 6 ? 0 : dow + 1));
+  const suggestISO = lastSat.toISOString().substring(0,10);
+
+  // Créer une mini-modale de choix de date
+  const datePicker = document.createElement('div');
+  datePicker.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10000;display:flex;align-items:center;justify-content:center';
+  datePicker.innerHTML = `
+    <div style="background:#fff;border-radius:12px;padding:28px;width:340px;font-family:sans-serif">
+      <div style="font-weight:700;font-size:15px;margin-bottom:6px">📋 Nouveau brief</div>
+      <div style="font-size:12px;color:#888;margin-bottom:16px">Choisissez la date du brief</div>
+      <label style="font-size:12px;color:#555;display:block;margin-bottom:6px">Date</label>
+      <input type="date" id="brief-date-picker" value="${suggestISO}"
+        style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #ddd;border-radius:7px;font-size:14px;margin-bottom:18px">
+      <div style="display:flex;gap:8px">
+        <button onclick="this.closest('div[style*=fixed]').remove()" style="flex:1;padding:9px;border:1px solid #ddd;border-radius:6px;cursor:pointer;font-size:13px">Annuler</button>
+        <button id="brief-date-confirm" style="flex:2;padding:9px;background:#111;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">Créer le brief</button>
+      </div>
+    </div>`;
+  document.body.appendChild(datePicker);
+
+  datePicker.querySelector('#brief-date-confirm').onclick = function() {
+    const dateISO = datePicker.querySelector('#brief-date-picker').value;
+    if(!dateISO) return;
+    datePicker.remove();
+    const d = new Date(dateISO);
+    const label = 'Brief du ' + d.toLocaleDateString('fr-FR', {weekday:'long', day:'2-digit', month:'long', year:'numeric'});
+    briefCurrent = {id: 'brief-'+Date.now(), date: dateISO, content: ''};
+    document.getElementById('brief-modal-title').textContent = label;
+    document.getElementById('brief-modal-date').textContent = '';
+    document.getElementById('brief-content-input').value = '';
+    document.getElementById('brief-view-mode').style.display = 'none';
+    document.getElementById('brief-edit-mode').style.display = 'block';
+    document.getElementById('brief-modal').style.display = 'flex';
+  };
+  datePicker.onclick = function(e){ if(e.target===datePicker) datePicker.remove(); };
 };
 
 window.closeBriefModal = function() {
