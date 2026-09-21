@@ -1112,9 +1112,10 @@ async function loadState(){
       if(saved.evenements) STATE.evenements = saved.evenements;
       if(saved.retours) STATE.retours = saved.retours;
       if(saved.coefs) STATE.coefs = saved.coefs;
+      if(saved.coefs_history) STATE.coefs_history = saved.coefs_history;
+      if(saved.briefs) STATE.briefs = saved.briefs;
       if(saved.contrats) {
         STATE.contrats = saved.contrats;
-        // Appliquer les heures sauvegardées à BASE_SCHEDULE
         Object.entries(saved.contrats).forEach(([uid, h]) => {
           if(BASE_SCHEDULE[uid]) BASE_SCHEDULE[uid].h = h;
         });
@@ -1148,8 +1149,9 @@ async function saveState(){
       collabs: STATE.collabs,
       taches: STATE.taches,
       nettoyage: STATE.nettoyage,
-      // Sauvegarder aussi en JSON pour garantir la fidélité des tableaux imbriqués
       nettoyage_json: JSON.stringify(STATE.nettoyage),
+      briefs: STATE.briefs || [],
+      coefs_history: STATE.coefs_history || [],
     }, { merge: true });
     setSyncStatus('ok');
   } catch(e){
@@ -1239,9 +1241,10 @@ function startPolling(){
       if(saved.evenements) STATE.evenements = saved.evenements;
       if(saved.retours) STATE.retours = saved.retours;
       if(saved.coefs) STATE.coefs = saved.coefs;
+      if(saved.coefs_history) STATE.coefs_history = saved.coefs_history;
+      if(saved.briefs) STATE.briefs = saved.briefs;
       if(saved.contrats) {
         STATE.contrats = saved.contrats;
-        // Appliquer les heures sauvegardées à BASE_SCHEDULE
         Object.entries(saved.contrats).forEach(([uid, h]) => {
           if(BASE_SCHEDULE[uid]) BASE_SCHEDULE[uid].h = h;
         });
