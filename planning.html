@@ -905,37 +905,8 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
       </div>
     </div>
   
-    <!-- PAGE BRIEFS -->
-    <div id="view-briefs" class="view">
-      <div class="acard">
-        <div class="actitle" style="display:flex;justify-content:space-between;align-items:center">
-          <span>📋 Briefs du samedi</span>
-          <button id="brief-new-btn" style="display:none;background:var(--tx);color:#fff;border:none;padding:6px 14px;border-radius:var(--r);font-size:12px;font-weight:500;cursor:pointer" onclick="window.openBriefModal()">+ Nouveau brief</button>
-        </div>
-        <div id="brief-list" style="margin-top:12px"></div>
-      </div>
-      <!-- Modale brief -->
-      <div id="brief-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;align-items:center;justify-content:center">
-        <div style="background:#fff;border-radius:12px;padding:28px;width:min(620px,95vw);max-height:85vh;overflow-y:auto;font-family:'IBM Plex Sans',sans-serif">
-          <div style="font-weight:700;font-size:15px;margin-bottom:4px" id="brief-modal-title">Brief du —</div>
-          <div style="font-size:11px;color:#888;margin-bottom:16px" id="brief-modal-date"></div>
-          <div id="brief-view-mode">
-            <div id="brief-content-display" style="line-height:1.7;font-size:13px;white-space:pre-wrap;border:1px solid #eee;border-radius:8px;padding:16px;min-height:120px;color:#333"></div>
-            <div style="display:flex;justify-content:space-between;margin-top:14px">
-              <button onclick="window.closeBriefModal()" style="padding:8px 16px;border:1px solid #ddd;border-radius:6px;cursor:pointer;font-size:13px">Fermer</button>
-              <button id="brief-edit-btn" style="display:none;padding:8px 16px;background:#f59e0b;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600" onclick="window.switchBriefEdit()">✏️ Modifier</button>
-            </div>
-          </div>
-          <div id="brief-edit-mode" style="display:none">
-            <textarea id="brief-content-input" rows="12" placeholder="Saisissez le contenu du brief..." style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #ddd;border-radius:8px;font-size:13px;font-family:'IBM Plex Sans',sans-serif;resize:vertical;line-height:1.6"></textarea>
-            <div style="display:flex;justify-content:space-between;margin-top:14px;gap:8px">
-              <button onclick="window.switchBriefView()" style="padding:8px 16px;border:1px solid #ddd;border-radius:6px;cursor:pointer;font-size:13px">Annuler</button>
-              <button onclick="window.saveBrief()" style="padding:8px 20px;background:#22c55e;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">Enregistrer</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div><!-- end view-briefs -->
+    <!-- PAGE BRIEFS : contenu injecté par JS -->
+    <div id="view-briefs" class="view"></div><!-- end view-briefs -->
 
 </main>
 </div>
@@ -2723,7 +2694,6 @@ function initCoefsHistoryIfEmpty() {
   const entry = Object.assign({ date: '2026-04-01' }, STATE.coefs);
   STATE.coefs_history = [entry];
   saveState();
-  Logger && Logger.log && Logger.log('Historique coefs initialisé');
 }
 
 function getCoefsAtDate(dateISO) {
@@ -4012,30 +3982,44 @@ window.renderBriefs = renderBriefs;
 let briefCurrent = null; // brief ouvert
 
 function renderBriefs() {
-  const list = document.getElementById('brief-list');
-  if (!list) return;
-  // Afficher bouton nouveau si admin
-  const newBtn = document.getElementById('brief-new-btn');
-  if (newBtn) newBtn.style.display = isAdmin(cur) ? 'inline-block' : 'none';
-
+  const wrap = document.getElementById('view-briefs');
+  if (!wrap) return;
+  const admin = isAdmin(cur);
   const briefs = (STATE.briefs || []).slice().sort((a,b) => b.date.localeCompare(a.date));
-  if (!briefs.length) {
-    list.innerHTML = '<div style="color:#888;font-size:13px;padding:20px;text-align:center">Aucun brief pour le moment.</div>';
-    return;
-  }
-  list.innerHTML = briefs.map(b => {
-    const d = new Date(b.date);
-    const label = 'Brief du ' + d.toLocaleDateString('fr-FR', {weekday:'long', day:'2-digit', month:'long', year:'numeric'});
+  const listItems = briefs.length
+    ? briefs.map(function(b) {
+        const d = new Date(b.date);
+        const label = 'Brief du ' + d.toLocaleDateString('fr-FR', {weekday:'long', day:'2-digit', month:'long', year:'numeric'});
         const preview = (b.content||'').split('\n').join(' ').substring(0,80);
-    return `<div onclick="window.openBriefRead('${b.id}')" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border:1px solid var(--brd);border-radius:var(--r);margin-bottom:8px;cursor:pointer;transition:background .15s" onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background=''">
-      <div>
-        <div style="font-weight:600;font-size:13px">${label}</div>
-        ${preview?'<div style="font-size:11px;color:#888;margin-top:2px">'+preview+'…</div>':''}
-      </div>
-      <span style="font-size:18px;color:#aaa">›</span>
-    </div>`;
-  }).join('');
+        return '<div onclick="window.openBriefRead(\''+b.id+'\')" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border:1px solid var(--brd);border-radius:var(--r);margin-bottom:8px;cursor:pointer" onmouseover="this.style.background=\'var(--s2)\'" onmouseout="this.style.background=\'\'"><div><div style="font-weight:600;font-size:13px">'+label+'</div>'+(preview?'<div style="font-size:11px;color:#888;margin-top:2px">'+preview+'…</div>':'')+'</div><span style="font-size:18px;color:#aaa">›</span></div>';
+      }).join('')
+    : '<div style="color:#888;font-size:13px;padding:30px;text-align:center">'+(admin?'Aucun brief — cliquez "+ Nouveau brief" pour commencer.':'Aucun brief pour le moment.')+'</div>';
+  wrap.innerHTML =
+    '<div style="padding:16px 18px;max-width:1180px;margin:0 auto">' +
+    '<div style="background:var(--sf);border:1px solid var(--b);border-radius:var(--r);padding:18px 20px">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">' +
+    '<div style="font-weight:700;font-size:14px">📋 Briefs du samedi</div>' +
+    (admin ? '<button onclick="window.openBriefModal()" style="background:var(--tx);color:#fff;border:none;padding:6px 14px;border-radius:var(--r);font-size:12px;font-weight:500;cursor:pointer">+ Nouveau brief</button>' : '') +
+    '</div>' +
+    '<div id="brief-list">' + listItems + '</div>' +
+    '</div>' +
+    '<div id="brief-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">' +
+    '<div style="background:#fff;border-radius:12px;padding:28px;width:min(620px,95vw);max-height:85vh;overflow-y:auto;font-family:sans-serif">' +
+    '<div style="font-weight:700;font-size:15px;margin-bottom:4px" id="brief-modal-title">Brief du —</div>' +
+    '<div style="font-size:11px;color:#888;margin-bottom:16px" id="brief-modal-date"></div>' +
+    '<div id="brief-view-mode"><div id="brief-content-display" style="line-height:1.7;font-size:13px;white-space:pre-wrap;border:1px solid #eee;border-radius:8px;padding:16px;min-height:120px;color:#333"></div>' +
+    '<div style="display:flex;justify-content:space-between;margin-top:14px">' +
+    '<button onclick="window.closeBriefModal()" style="padding:8px 16px;border:1px solid #ddd;border-radius:6px;cursor:pointer;font-size:13px">Fermer</button>' +
+    (admin ? '<button id="brief-edit-btn" onclick="window.switchBriefEdit()" style="padding:8px 16px;background:#f59e0b;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">✏️ Modifier</button>' : '') +
+    '</div></div>' +
+    '<div id="brief-edit-mode" style="display:none">' +
+    '<textarea id="brief-content-input" rows="12" placeholder="Saisissez le contenu du brief..." style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #ddd;border-radius:8px;font-size:13px;resize:vertical;line-height:1.6"></textarea>' +
+    '<div style="display:flex;justify-content:space-between;margin-top:14px;gap:8px">' +
+    '<button onclick="window.switchBriefView()" style="padding:8px 16px;border:1px solid #ddd;border-radius:6px;cursor:pointer;font-size:13px">Annuler</button>' +
+    '<button onclick="window.saveBrief()" style="padding:8px 20px;background:#22c55e;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">Enregistrer</button>' +
+    '</div></div></div></div></div>';
 }
+
 
 function openBriefRead(id) {
   const b = (STATE.briefs||[]).find(x=>x.id===id);
