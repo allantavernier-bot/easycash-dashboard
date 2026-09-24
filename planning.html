@@ -704,7 +704,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
               <tr>
                 <th style="min-width:110px">Collaborateur</th>
                 <th style="text-align:center;font-size:10px;color:var(--t2);font-weight:500">H sem.</th>
-                <th style="text-align:center;font-size:10px;color:var(--t2);font-weight:500">% vente<br><span style="font-size:9px;color:var(--t3)">actuel→sauvegardé</span></th>
+                <th style="text-align:center;font-size:10px;color:var(--t2);font-weight:500">% vente<br><span style="font-size:9px;color:var(--t3)">de la semaine</span></th>
                 <th style="text-align:center">Lun</th><th style="text-align:center">Mar</th><th style="text-align:center">Mer</th>
                 <th style="text-align:center">Jeu</th><th style="text-align:center">Ven</th><th style="text-align:center">Sam</th>
                 <th style="text-align:right;border-left:2px solid var(--bm)">Obj. sem.</th>
@@ -1000,7 +1000,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
 //  FIREBASE INIT
 // ═══════════════════════════════════════════════════════
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, FieldPath } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCABD_v4pRHoYXhmPvE7CA_r7t0u5_Pc3g",
@@ -1113,6 +1113,7 @@ async function loadState(){
       if(saved.retours) STATE.retours = saved.retours;
       if(saved.coefs) STATE.coefs = saved.coefs;
       if(saved.coefs_history) STATE.coefs_history = saved.coefs_history;
+      if(saved.coefs_hist) STATE.coefs_hist = saved.coefs_hist;
       if(saved.briefs) STATE.briefs = saved.briefs;
       if(saved.contrats) {
         STATE.contrats = saved.contrats;
@@ -1151,7 +1152,8 @@ async function saveState(){
       nettoyage: STATE.nettoyage,
       nettoyage_json: JSON.stringify(STATE.nettoyage),
       briefs: STATE.briefs || [],
-      coefs_history: STATE.coefs_history || [],
+      // coefs_history (ancien format) et coefs_hist (nouveau) ne sont JAMAIS écrits ici :
+      // coefs_hist est écrit uniquement par saveCoefs() via updateDoc ciblé.
     }, { merge: true });
     setSyncStatus('ok');
   } catch(e){
@@ -1242,6 +1244,7 @@ function startPolling(){
       if(saved.retours) STATE.retours = saved.retours;
       if(saved.coefs) STATE.coefs = saved.coefs;
       if(saved.coefs_history) STATE.coefs_history = saved.coefs_history;
+      if(saved.coefs_hist) STATE.coefs_hist = saved.coefs_hist;
       if(saved.briefs) STATE.briefs = saved.briefs;
       if(saved.contrats) {
         STATE.contrats = saved.contrats;
@@ -1535,7 +1538,7 @@ function tryLogin(){
     if(isAdmin(uid))document.querySelectorAll('.adm').forEach(e=>e.style.display='block');
     loadState().then(()=>{
       syncCollabsFromState();
-      initCoefsHistoryIfEmpty();
+      migrateCoefsHist();
       // Afficher les éléments admin si l'utilisateur est admin
       if(isAdmin(uid)) document.querySelectorAll('.adm').forEach(e=>e.style.display='block');
       else document.querySelectorAll('.adm').forEach(e=>e.style.display='none');
@@ -2448,6 +2451,12 @@ function renderObjectifs(){
   document.getElementById('marge-week-label').textContent = `S${wknum(mon)} — ${fmt(mon)} au ${fmt(dates[5])}`;
 
   const VIERGE_FROM = '2026-06-29';
+  const weekISO = iso(mon);
+  const drafts = coefDrafts[weekISO] || {};
+  // % vente de la semaine affichée : saisie non enregistrée prioritaire, sinon valeur enregistrée
+  const weekCoef = uid => drafts[uid] !== undefined ? drafts[uid] : getCoefAt(uid, weekISO);
+  const msgBanner = document.getElementById('obj-update-msg');
+  if (msgBanner) msgBanner.style.display = Object.keys(drafts).length ? 'block' : 'none';
 
   // Calculer les heures réelles de la semaine depuis le planning Firestore
   function getHeuresSemaine(uid) {
@@ -2465,7 +2474,7 @@ function renderObjectifs(){
   // Calculer le poids effectif : heures réelles × % vente
   function getPoids(uid) {
     const h = getHeuresSemaine(uid);
-    const pct = (STATE.coefs?.[uid] || 0) / 100;
+    const pct = weekCoef(uid) / 100;
     return h * pct;
   }
 
@@ -2495,10 +2504,12 @@ function renderObjectifs(){
     const u = USERS[uid];
     const poids = getPoids(uid);
     const hSem = getHeuresSemaine(uid);
-    // Lire le coef depuis l'historique si disponible (sinon fallback STATE.coefs)
-    const weekMon = iso(mon);
-    const activeCoefs = getCoefsAtDate(weekMon);
-    const pct = activeCoefs[uid] !== undefined ? (activeCoefs[uid] || 0) : (STATE.coefs?.[uid] || 0);
+    // % vente de CE collaborateur pour CETTE semaine
+    const pct = weekCoef(uid);
+    const savedPct = getCoefAt(uid, weekISO);
+    const sinceKey = getCoefSince(uid, weekISO);
+    const isDraft = drafts[uid] !== undefined;
+    const sinceLbl = sinceKey ? (sinceKey === weekISO ? 'défini cette sem.' : 'depuis S' + wknum(new Date(sinceKey + 'T12:00:00'))) : 'valeur de base';
     const partTheor = totalPoidsEquipe > 0 ? Math.round(poids / totalPoidsEquipe * 100) : 0;
     let totalCollab = 0;
 
@@ -2519,7 +2530,7 @@ function renderObjectifs(){
         const iv2 = dISO >= VIERGE_FROM && !STATE.slotOverrides[`${u2}-${dISO}`] && !STATE.scheduleOverrides[`${u2}-${dayKey}`];
         const p2 = !iv2 && a2 !== 'approved' && s2 && s2.type !== 'off' && s2.type !== 'cp' && s2.type !== 'am';
         const mins2 = p2 && s2?.mins ? s2.mins / 60 : 0;
-        return acc + mins2 * ((STATE.coefs?.[u2] || 0) / 100);
+        return acc + mins2 * (weekCoef(u2) / 100);
       }, 0);
 
       if(!present || pct === 0) return `<td style="text-align:center;color:var(--t3);font-size:10px">—</td>`;
@@ -2542,11 +2553,11 @@ function renderObjectifs(){
       <td style="text-align:center;font-size:11px;color:var(--t2)">${hSem.toFixed(1)}h</td>
       <td style="text-align:center;padding:4px 6px">
         <input type="number" id="coef-${uid}"
-          value="${(()=>{const ex=document.getElementById('coef-'+uid);return(ex&&document.activeElement===ex)?ex.value:pct;})()}"
+          value="${pct}"
           min="0" max="100"
-          style="width:42px;text-align:center;border:1px solid var(--bm);border-radius:6px;padding:2px 4px;font-size:11px;background:var(--am-l);color:var(--am);font-weight:600;font-family:'IBM Plex Mono',monospace"
+          style="width:42px;text-align:center;border:${isDraft?'2px solid #f59e0b':'1px solid var(--bm)'};border-radius:6px;padding:2px 4px;font-size:11px;background:var(--am-l);color:var(--am);font-weight:600;font-family:'IBM Plex Mono',monospace"
           onchange="window.updatePoidsRow('${uid}')"> %
-        <div style="font-size:9px;color:var(--t3);margin-top:2px">sauv. ${pct}%</div>
+        <div style="font-size:9px;color:var(--t3);margin-top:2px">sauv. ${savedPct}% · ${sinceLbl}</div>
       </td>
       ${cells.join('')}
       <td style="text-align:right;font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--bl);border-left:2px solid var(--bm)">${totalCollab>0?Math.round(totalCollab).toLocaleString('fr-FR')+' €':'—'}</td>
@@ -2622,36 +2633,61 @@ function renderObjectifs(){
     </div>`;
 }
 
+// ── % VENTE : 1 valeur = 1 collaborateur + 1 semaine ─────────────
+// Firestore, champ `coefs_hist` : { uid: { 'AAAA-MM-JJ' (lundi): valeur } }
+// Une valeur s'applique à sa semaine ET aux suivantes, jusqu'à la prochaine valeur saisie
+// pour CE collaborateur. Écrit uniquement ici, par chemin précis (updateDoc) :
+// aucune autre sauvegarde (signature, absence, tâche…) ne peut l'écraser.
 async function saveCoefs(){
-  if(!STATE.coefs) STATE.coefs={};
-  if(!STATE.coefs_history) STATE.coefs_history=[];
-  const newCoefs={};
+  if(!isAdmin(cur)){ toast('Réservé aux administrateurs'); return; }
+  const weekISO = iso(monday(woff));
+  const drafts = coefDrafts[weekISO] || {};
+  // Sécurité : relire aussi les champs affichés
   SIDS.forEach(uid => {
     const inp = document.getElementById(`coef-${uid}`);
-    if(inp) newCoefs[uid] = parseInt(inp.value) || 0;
+    if(!inp || inp.value === '') return;
+    const v = parseInt(inp.value);
+    if(!isNaN(v)) drafts[uid] = Math.max(0, Math.min(100, v));
   });
-  STATE.coefs = newCoefs; // Sync STATE.coefs pour compatibilité
-  // Historiser avec la date du lundi de la semaine en cours
-  const mon = monday(woff);
-  const dateKey = iso(mon);
-  // Remplacer si même date, sinon ajouter
-  const existIdx = STATE.coefs_history.findIndex(e => e.date === dateKey);
-  const entry = Object.assign({date: dateKey}, newCoefs);
-  if(existIdx >= 0) STATE.coefs_history[existIdx] = entry;
-  else STATE.coefs_history.push(entry);
-  await saveState();
-  toast('Coefficients enregistrés ✓');
+  const changes = Object.entries(drafts).filter(([uid, v]) => v !== getCoefAt(uid, weekISO));
+  if(!changes.length){
+    delete coefDrafts[weekISO];
+    toast('Aucune modification à enregistrer');
+    renderObjectifs();
+    return;
+  }
+  const args = [];
+  changes.forEach(([uid, v]) => { args.push(new FieldPath('coefs_hist', uid, weekISO), v); });
+  setSyncStatus('syncing');
+  try {
+    await updateDoc(STATE_DOC, ...args);
+    if(!STATE.coefs_hist) STATE.coefs_hist = {};
+    changes.forEach(([uid, v]) => {
+      if(!STATE.coefs_hist[uid]) STATE.coefs_hist[uid] = {};
+      STATE.coefs_hist[uid][weekISO] = v;
+    });
+    delete coefDrafts[weekISO];
+    setSyncStatus('ok');
+    toast(`% vente enregistrés pour S${wknum(monday(woff))} ✓ (${changes.map(([u,v])=>(USERS[u]?.short||u)+' '+v+'%').join(', ')})`);
+  } catch(e){
+    console.error('saveCoefs error:', e);
+    setSyncStatus('error');
+    toast('⚠ Erreur d\'enregistrement — rien n\'a été perdu, réessayez');
+  }
   renderObjectifs();
   renderMonthlyPerf();
-  // Masquer le bandeau si le total collaborateurs ≈ total global
-  const msg = document.getElementById('obj-update-msg');
-  if(msg) msg.style.display = 'none';
 }
 
 window.updatePoidsRow = function(uid) {
-  const msg = document.getElementById('obj-update-msg');
-  if(msg) msg.style.display = 'block'; // restera visible jusqu'à enregistrement
-  renderObjectifs();
+  const weekISO = iso(monday(woff));
+  const inp = document.getElementById('coef-'+uid);
+  if(!inp) return;
+  const v = parseInt(inp.value);
+  if(!coefDrafts[weekISO]) coefDrafts[weekISO] = {};
+  if(isNaN(v) || Math.max(0, Math.min(100, v)) === getCoefAt(uid, weekISO)) delete coefDrafts[weekISO][uid];
+  else coefDrafts[weekISO][uid] = Math.max(0, Math.min(100, v));
+  if(!Object.keys(coefDrafts[weekISO]).length) delete coefDrafts[weekISO];
+  renderObjectifs(); // le bandeau jaune reste visible tant que non enregistré
 };
 
 // Retourne la config de coefficients active à une date ISO donnée
@@ -2669,36 +2705,66 @@ function isAdmin(uid) {
 }
 
 
-// Version de getCoefsAtDate qui ne lit PAS les inputs
-function getCoefsAtDateRaw(dateISO) {
-  if (STATE.coefs_history && STATE.coefs_history.length > 0) {
-    const sorted = [...STATE.coefs_history].sort((a,b) => a.date.localeCompare(b.date));
-    // Trouver la dernière entrée <= dateISO
-    let active = null;
-    for (const entry of sorted) {
-      if (entry.date <= dateISO) active = entry;
-      else break;
-    }
-    if (active) return active;
-  }
-  // Fallback : STATE.coefs (valeurs sauvegardées sans historique)
-  return STATE.coefs || {};
+// Saisies % vente non enregistrées, par semaine : { weekISO: { uid: valeur } } (mémoire seulement)
+let coefDrafts = {};
+
+// Semaine (lundi ISO) de la dernière valeur enregistrée <= dateISO pour ce collaborateur
+function getCoefSince(uid, dateISO) {
+  const h = STATE.coefs_hist?.[uid];
+  if(!h) return null;
+  let since = null;
+  Object.keys(h).sort().forEach(k => { if(k <= dateISO) since = k; });
+  return since;
 }
 
-// Créer une entrée historique si aucune n'existe encore
-function initCoefsHistoryIfEmpty() {
-  if (!STATE.coefs || Object.keys(STATE.coefs).length === 0) return;
-  if (STATE.coefs_history && STATE.coefs_history.length > 0) return;
-  // Créer une entrée à partir du 01/04/2026 (début du magasin)
-  const entry = Object.assign({ date: '2026-04-01' }, STATE.coefs);
-  STATE.coefs_history = [entry];
-  saveState();
+// % vente d'un collaborateur à une date : dernière valeur enregistrée <= date
+function getCoefAt(uid, dateISO) {
+  const since = getCoefSince(uid, dateISO);
+  if(since) return Number(STATE.coefs_hist[uid][since]) || 0;
+  // Aucune valeur avant cette date → valeur de base (fiche collaborateur)
+  if(STATE.coefs && STATE.coefs[uid] !== undefined) return Number(STATE.coefs[uid]) || 0;
+  const c = (STATE.collabs || []).find(x => x.id === uid);
+  return Number(c?.coef) || 0;
+}
+
+// Compatibilité : objet { uid: % } pour une date
+function getCoefsAtDateRaw(dateISO) {
+  const uids = new Set([...SIDS, ...Object.keys(STATE.coefs_hist || {}), ...Object.keys(STATE.coefs || {})]);
+  const out = {};
+  uids.forEach(uid => { out[uid] = getCoefAt(uid, dateISO); });
+  return out;
 }
 
 function getCoefsAtDate(dateISO) {
-  // Toujours lire depuis l'historique — les inputs n'affectent pas les calculs
-  // avant que l'utilisateur clique "Enregistrer"
   return getCoefsAtDateRaw(dateISO);
+}
+
+// Migration unique : ancien historique (instantanés de toute l'équipe) → coefs_hist
+// On ne garde que les vrais changements par collaborateur.
+async function migrateCoefsHist() {
+  if(STATE.coefs_hist && Object.keys(STATE.coefs_hist).length) return;
+  if(!isAdmin(cur)) return;
+  const old = Array.isArray(STATE.coefs_history) ? [...STATE.coefs_history] : [];
+  const map = {};
+  if(old.length){
+    old.sort((a,b) => String(a.date).localeCompare(String(b.date))).forEach(entry => {
+      Object.entries(entry).forEach(([uid, v]) => {
+        if(uid === 'date' || typeof v !== 'number') return;
+        if(!map[uid]) map[uid] = {};
+        const keys = Object.keys(map[uid]).sort();
+        const last = keys.length ? map[uid][keys[keys.length-1]] : undefined;
+        if(last !== v) map[uid][entry.date] = v;
+      });
+    });
+  } else if(STATE.coefs && Object.keys(STATE.coefs).length){
+    Object.entries(STATE.coefs).forEach(([uid, v]) => { map[uid] = { '2026-04-01': Number(v) || 0 }; });
+  }
+  if(!Object.keys(map).length) return;
+  try {
+    await updateDoc(STATE_DOC, { coefs_hist: map });
+    STATE.coefs_hist = map;
+    console.log('coefs_hist migré', map);
+  } catch(e){ console.error('migrateCoefsHist error:', e); }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -2796,7 +2862,7 @@ function rvoRender(){
   grid.innerHTML = collabs.map(uid => {
     const u = USERS[uid];
     const h_contrat = STATE.contrats?.[uid] || BASE_SCHEDULE[uid]?.h || 35;
-    const coef = (STATE.coefs?.[uid]||0)/100 * h_contrat;
+    const lastDay = datesInRange[datesInRange.length-1] || iso(new Date());
     const realMarge = datesInRange.reduce((s,dISO)=>s+(vendeurData[`${dISO}|${uid}`]||0),0);
 
     let objMarge = 0;
@@ -2806,8 +2872,9 @@ function rvoRender(){
       const totalPart = SIDS.filter(u2=>u2!=='allan').reduce((s,u2)=>{
         const hasDonnees = vendeurData[`${dISO}|${u2}`]!==undefined;
         const h2 = STATE.contrats?.[u2] || BASE_SCHEDULE[u2]?.h || 35;
-        return s + (hasDonnees ? (STATE.coefs?.[u2]||0)/100 * h2 : 0);
+        return s + (hasDonnees ? getCoefAt(u2, dISO)/100 * h2 : 0);
       },0);
+      const coef = getCoefAt(uid, dISO)/100 * h_contrat;
       const wasThere = vendeurData[`${dISO}|${uid}`]!==undefined;
       if(wasThere && totalPart>0) objMarge += (coef/totalPart)*dayObj;
     });
@@ -2818,7 +2885,7 @@ function rvoRender(){
     const joursCollab = datesInRange.filter(d=>vendeurData[`${d}|${uid}`]!==undefined).length;
 
     return `<div class="rvo-card">
-      <div class="rvo-card-name">${u.short}<span class="rvo-coef-tag">${STATE.coefs?.[uid]||0}%</span></div>
+      <div class="rvo-card-name">${u.short}<span class="rvo-coef-tag">${getCoefAt(uid, lastDay)}%</span></div>
       <div class="rvo-gauge-lbl"><span>Marge réalisée</span><span style="font-weight:600;color:var(--tx)">${pct.toFixed(1)}%</span></div>
       <div class="rvo-track"><div class="rvo-fill ${cl}" style="width:${pct}%"></div></div>
       <div class="rvo-nums">
@@ -4111,15 +4178,7 @@ window.saveBrief = async function() {
 window.pp=pp; window.pdel=pdel; window.logout=logout; window.resetPin=resetPin; window.onMagasinChange=onMagasinChange;
 window.changeWeek=function(delta){
   if(delta===0){woff=0;}else{woff+=delta;}
-  // Réinitialiser les inputs depuis la config de la nouvelle semaine
-  const newMon = monday(woff);
-  const newWeekISO = iso(newMon);
-  const weekCoefs = getCoefsAtDateRaw(newWeekISO);
-  SIDS.forEach(uid => {
-    const inp = document.getElementById('coef-'+uid);
-    if(inp) inp.value = weekCoefs[uid] !== undefined ? weekCoefs[uid] : (STATE.coefs?.[uid] || 0);
-  });
-  renderObjectifs();
+  renderObjectifs(); // chaque semaine affiche ses propres % vente enregistrés
 };
 
 window.onPinInput=function(val){pinbuf=val;const el=document.getElementById('lerr');if(el)el.style.display='none';};
