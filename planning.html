@@ -443,6 +443,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
       oninput="window.onPinInput(this.value)"
       onkeydown="if(event.key==='Enter') window.tryLoginInput()">
     <button class="sbmit" style="width:100%;margin-top:4px" onclick="window.tryLoginInput()">Connexion</button>
+    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 25/09/2026 · <span id="collabs-load-status">chargement équipe…</span></div>
   </div>
 </div>
 
@@ -1500,7 +1501,8 @@ function populateUserSelect(){
   Object.keys(USERS).forEach(uid=>{
     const u=USERS[uid];
     if(u.active===false)return;
-    if(u.magasin!=='all'&&u.magasin!==magasin)return;
+    const um=u.magasin||'berck';
+    if(um!=='all'&&um!==magasin)return;
     count++;
     h+=`<option value="${uid}">${u.name}${u.role?' · '+u.role.split(' · ')[0]:''}</option>`;
   });
@@ -2997,6 +2999,8 @@ async function saveCollab(){
     bg: collabEditId ? (collabs.find(c=>c.id===collabEditId)?.bg||'#EEE') : '#EFEFED',
     ct: collabEditId ? (collabs.find(c=>c.id===collabEditId)?.ct||'#333') : '#2A2A28',
     admin: document.getElementById('cm-admin')?.checked||false,
+    magasin: collabEditId ? (collabs.find(c=>c.id===collabEditId)?.magasin||'berck') : 'berck',
+    active: true,
   };
 
   // Mettre à jour coefs
@@ -3004,7 +3008,7 @@ async function saveCollab(){
   STATE.coefs[id]=coef;
 
   // Mettre à jour USERS en mémoire pour que ça fonctionne immédiatement
-  USERS[id]={name:data.nom,short:data.short,role:data.role,pin:data.pin,admin:data.admin,bg:data.bg,ct:data.ct};
+  USERS[id]={name:data.nom,short:data.short,role:data.role,pin:data.pin,admin:data.admin,bg:data.bg,ct:data.ct,magasin:data.magasin,active:true};
 
   // Mettre à jour STATE.collabs
   let cl=getActiveCollabs();
@@ -4317,6 +4321,21 @@ const now=new Date();
 document.getElementById('astart').value=iso(now);
 document.getElementById('aend').value=iso(now);
 populateUserSelect();
+// Charger les collaborateurs ajoutés via « Équipe & PIN » (Firestore) AVANT la connexion,
+// sinon ils n'apparaissent pas dans la liste de connexion (ex. Matthieu).
+loadState().then(()=>{
+  syncCollabsFromState();
+  const usel=document.getElementById('usel');
+  const prev=usel?usel.value:'';
+  populateUserSelect();
+  if(prev&&usel&&[...usel.options].some(o=>o.value===prev)) usel.value=prev;
+  const st=document.getElementById('collabs-load-status');
+  if(st) st.textContent=(STATE.collabs&&STATE.collabs.length)?(STATE.collabs.length+' collaborateurs chargés'):'équipe non chargée';
+}).catch(e=>{
+  console.error('Chargement équipe avant connexion :', e);
+  const st=document.getElementById('collabs-load-status');
+  if(st) st.textContent='⚠ équipe non chargée';
+});
 emailjs.init(EMAILJS_KEY);
 startPolling();
 </script>
