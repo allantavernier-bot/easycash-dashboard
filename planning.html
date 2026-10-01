@@ -443,7 +443,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
       oninput="window.onPinInput(this.value)"
       onkeydown="if(event.key==='Enter') window.tryLoginInput()">
     <button class="sbmit" style="width:100%;margin-top:4px" onclick="window.tryLoginInput()">Connexion</button>
-    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 25/09/2026 · <span id="collabs-load-status">chargement équipe…</span></div>
+    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 01/10/2026 b · <span id="collabs-load-status">chargement équipe…</span></div>
   </div>
 </div>
 
@@ -451,7 +451,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
 <div id="app">
   <header>
     <div style="display:flex;align-items:center;">
-      <div class="hbadge">EC</div><span class="htitle">Planning équipe</span>
+      <div class="hbadge">EC</div><span class="htitle">Planning équipe · <span id="hmag">Easy Cash Berck</span></span>
       <span style="font-size:10px;color:var(--t3);margin-left:10px;display:flex;align-items:center;">
         <span class="sync-dot" id="sync-dot"></span><span id="sync-label">Synchronisé</span>
       </span>
@@ -536,8 +536,9 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
         <div class="li"><div class="ld" style="background:#F0AAAA"></div>Absence</div>
         <div class="li"><div class="ld" style="background:#C0B8F5"></div>Repos échange / att.</div>
         <div class="li"><div class="ld" style="background:var(--s2)"></div>Repos</div>
-        <div class="li" style="border-left:2px solid var(--gn);padding-left:6px;color:var(--gn)">🔑 Clés/Coffre : Allan ou Anthony présent obligatoirement</div>
-        <div class="li" style="border-left:2px solid var(--vl);padding-left:6px;color:var(--vl)">🍽 Sam. 12h–13h : Cathy, Hubert, Allan &nbsp;|&nbsp; 13h–14h : Anthony, Manon</div>
+        <div class="li" style="border-left:2px solid var(--am);padding-left:6px;color:var(--am)">🎓 Heures hors objectifs : comptées au contrat, exclues du calcul des objectifs</div>
+        <div class="li only-berck" style="border-left:2px solid var(--gn);padding-left:6px;color:var(--gn)">🔑 Clés/Coffre : Allan ou Anthony présent obligatoirement</div>
+        <div class="li only-berck" style="border-left:2px solid var(--vl);padding-left:6px;color:var(--vl)">🍽 Sam. 12h–13h : Cathy, Hubert, Allan &nbsp;|&nbsp; 13h–14h : Anthony, Manon</div>
       </div>
       <div class="hcard adm" id="hcard" style="display:none">
         <div style="font-size:12px;font-weight:500">Contrôle contrats — semaine</div>
@@ -647,6 +648,16 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
             <div class="mrow"><label>Code PIN</label><input type="text" id="cm-pin" placeholder="2006" maxlength="4" style="width:100%;padding:7px 9px;border:1px solid var(--bm);border-radius:var(--r);font-family:'IBM Plex Sans',sans-serif;font-size:13px;outline:none"></div>
             <div class="mrow"><label>Coeff vente (%)</label><input type="number" id="cm-coef" value="100" min="0" max="100" style="width:100%;padding:7px 9px;border:1px solid var(--bm);border-radius:var(--r);font-family:'IBM Plex Sans',sans-serif;font-size:13px;outline:none"></div>
             <div class="mrow"><label>Email</label><input type="email" id="cm-email" placeholder="prenom@gmail.com" style="width:100%;padding:7px 9px;border:1px solid var(--bm);border-radius:var(--r);font-family:'IBM Plex Sans',sans-serif;font-size:13px;outline:none"></div>
+            <div class="mrow"><label>Magasin</label>
+              <select id="cm-magasin" style="width:100%;padding:7px 9px;border:1px solid var(--bm);border-radius:var(--r);font-family:'IBM Plex Sans',sans-serif;font-size:13px;outline:none">
+                <option value="berck">Easy Cash Berck</option>
+                <option value="abbeville">Easy Cash Abbeville</option>
+              </select>
+            </div>
+            <div class="mrow"><label>Peut aussi se connecter à</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin:4px 0"><input type="checkbox" id="cm-acces-berck"> Berck</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin:0"><input type="checkbox" id="cm-acces-abbeville"> Abbeville</label>
+            </div>
             <div class="mrow" style="grid-column:1/-1;display:flex;align-items:center;gap:10px;padding:8px 0">
               <input type="checkbox" id="cm-admin" style="width:16px;height:16px;cursor:pointer">
               <label for="cm-admin" style="margin:0;cursor:pointer;font-size:13px">Accès administrateur (peut modifier le planning et gérer les demandes)</label>
@@ -940,6 +951,14 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
           <div class="tgrid"><input type="time" id="m-apm-s" oninput="updatePreview()"><span>→</span><input type="time" id="m-apm-e" oninput="updatePreview()"></div>
         </div>
       </div>
+      <div class="mrow" id="m-horsobj-row" style="display:none">
+        <label>Heures hors objectifs <span style="font-weight:400;color:var(--t3)">(formation, réunion… comptées au contrat, pas dans les objectifs)</span></label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="number" id="m-horsobj" min="0" max="12" step="0.5" placeholder="0" style="width:80px;padding:6px 8px;border:1px solid var(--bm);border-radius:var(--r);font-size:13px"> h
+          <input type="text" id="m-horsobj-lbl" placeholder="Motif (ex. Formation)" style="flex:1;padding:6px 8px;border:1px solid var(--bm);border-radius:var(--r);font-size:13px">
+        </div>
+      </div>
+      <div id="m-form-info" style="display:none;font-size:11px;color:var(--am);background:var(--am-l);border-radius:var(--r);padding:8px 10px;margin-bottom:10px">🎓 Journée de formation : compte <b>1/5 du contrat</b> (7h pour 35h, 5h pour 25h), <b>exclue des objectifs</b>. Les horaires ci-dessus sont indicatifs.</div>
       <div class="mpreview" id="mpreview" style="display:none">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <span style="font-size:11px;color:var(--t2)">Ce créneau</span><span class="mph" id="mph-slot">—</span>
@@ -1021,28 +1040,76 @@ const STATE_DOC = doc(db, "easycash", "state");
 
 const USERS = {
   allan:   {name:'Allan Tavernier', short:'Allan',   role:'Directeur Général',              pin:'084809', admin:true,  bg:'#EFEFED',ct:'#2A2A28', magasin:'all'},
-  anthony: {name:'Anthony Vantorre',short:'Anthony', role:'Acheteur principal · Adjoint',   pin:'2001', admin:false, bg:'#E8F0FF',ct:'#1A4BAA', magasin:'berck'},
+  anthony: {name:'Anthony Vantorre',short:'Anthony', role:'Acheteur principal · Adjoint',   pin:'2001', admin:false, bg:'#E8F0FF',ct:'#1A4BAA', magasin:'berck', magasins_acces:['abbeville']},
   cathy:   {name:'Cathy Matturel',  short:'Cathy',   role:'Bijoutière',                     pin:'2002', admin:false, bg:'#FCEAF2',ct:'#7A2040', magasin:'berck'},
   hubert:  {name:'Hubert Poidevin', short:'Hubert',  role:'Vendeur téléphonie',             pin:'2003', admin:false, bg:'#FFF5E8',ct:'#7A4808', magasin:'berck'},
   manon:   {name:'Manon Vivien',    short:'Manon',   role:'Vendeuse JV & Culture',          pin:'2004', admin:false, bg:'#EAFAF2',ct:'#0F6830', magasin:'berck'},
-  lucie:   {name:'Lucie Bridoux',   short:'Lucie',   role:'Vendeuse générale · Alternance', pin:'2005', admin:false, bg:'#EEEEFF',ct:'#3D2DA0', magasin:'berck', active:false}
+  lucie:   {name:'Lucie Bridoux',   short:'Lucie',   role:'Vendeuse générale · Alternance', pin:'2005', admin:false, bg:'#EEEEFF',ct:'#3D2DA0', magasin:'berck', active:false},
+  // Ajouts 01/10/2026
+  kevin:   {name:'Kévin Guffroy',      short:'Kévin',   role:'Vendeur · Alternance',  pin:'3107', admin:false, bg:'#FFF0E6',ct:'#8A3B0C', magasin:'berck'},
+  jeremy:  {name:'Jérémy Huysschaert', short:'Jérémy',  role:'Vendeur / Acheteur',    pin:'4512', admin:false, bg:'#E6F4FF',ct:'#0B4F80', magasin:'abbeville'},
+  remy:    {name:'Rémy Cardon',        short:'Rémy',    role:'Vendeur / Acheteur',    pin:'4628', admin:false, bg:'#EEF7E6',ct:'#2F6410', magasin:'abbeville'},
+  julie:   {name:'Julie Vilbert',      short:'Julie',   role:'Vendeuse / Acheteuse',  pin:'4735', admin:false, bg:'#FBE9F5',ct:'#7A1F5C', magasin:'abbeville'},
+  ludovic: {name:'Ludovic Journée',    short:'Ludovic', role:'Vendeur / Acheteur',    pin:'4851', admin:false, bg:'#F2EEFF',ct:'#45309A', magasin:'abbeville'}
 };
+// Collaborateurs à créer une fois dans Firestore (Équipe & PIN) au 1er login admin
+const NOUVEAUX_COLLABS_20261001 = [
+  {id:'kevin',   h:35, coef:50},
+  {id:'jeremy',  h:35, coef:100},
+  {id:'remy',    h:35, coef:100},
+  {id:'julie',   h:35, coef:100},
+  {id:'ludovic', h:25, coef:100},
+];
 const SIDS = ['anthony','cathy','hubert','manon'];
 const SKILLS = {
   allan:['buy','sell','jew'], anthony:['buy','sell'],
-  cathy:['sell','jew'], hubert:['buy','sell'], manon:['sell'], lucie:['sell']
+  cathy:['sell','jew'], hubert:['buy','sell'], manon:['sell'], lucie:['sell'],
+  kevin:['sell'], jeremy:['buy','sell'], remy:['buy','sell'], julie:['buy','sell'], ludovic:['buy','sell']
 };
+function skillsOf(uid){ return SKILLS[uid] || ['sell']; }
 const BASE_SCHEDULE = {
   allan:  {h:0, lun:{type:'dir',mat:'Matin',apm:'APM',mins:0},mar:{type:'dir',mat:'Matin',apm:'APM',mins:0},mer:{type:'dir',mat:'Matin',apm:'APM',mins:0},jeu:{type:'dir',mat:'Matin',apm:'APM',mins:0},ven:{type:'dir',mat:'Matin',apm:'APM',mins:0},sam:{type:'dir',mat:'Matin',apm:'APM',mins:0}},
   anthony:{h:35,lun:{type:'full',prep:'09h45',mat:'09h45–12h00',apm:'14h00–19h15',mins:440},mar:{type:'apm',prep:null,mat:null,apm:'14h00–19h15',mins:305},mer:{type:'full',prep:'09h45',mat:'09h45–12h00',apm:'14h00–19h15',mins:440},jeu:{type:'off'},ven:{type:'full',prep:'09h45',mat:'09h45–12h00',apm:'14h00–18h35',mins:400},sam:{type:'sat',prep:'09h30',mat:'09h30–13h00',apm:'14h00–19h15',mins:515}},
   cathy:  {h:35,lun:{type:'off'},mar:{type:'full',prep:'09h45',mat:'09h45–12h00',apm:'14h00–19h15',mins:440},mer:{type:'full',prep:'09h45',mat:'09h45–12h30',apm:'14h00–18h05',mins:400},jeu:{type:'full',prep:'09h45',mat:'09h45–12h00',apm:'14h00–19h15',mins:440},ven:{type:'apm',prep:null,mat:null,apm:'14h00–19h15',mins:305},sam:{type:'sat',prep:'09h30',mat:'09h30–13h00',apm:'14h00–19h15',mins:515}},
   hubert: {h:35,lun:{type:'full',prep:'09h45',mat:'09h45–12h30',apm:'14h00–19h15',mins:470},mar:{type:'full',prep:'09h45',mat:'09h45–12h30',apm:'14h00–18h05',mins:400},mer:{type:'off'},jeu:{type:'full',prep:'09h45',mat:'09h45–12h30',apm:'15h00–19h15',mins:410},ven:{type:'apm',prep:null,mat:null,apm:'14h00–19h15',mins:305},sam:{type:'sat',prep:'09h30',mat:'09h30–13h00',apm:'14h00–19h15',mins:515}},
   manon:  {h:25,lun:{type:'off'},mar:{type:'off'},mer:{type:'full',prep:'09h30',mat:'09h30–12h30',apm:'14h00–19h15',mins:485},jeu:{type:'off'},ven:{type:'full',prep:'09h15',mat:'09h15–12h30',apm:'14h00–19h15',mins:500},sam:{type:'sat',prep:'09h30',mat:'09h30–13h00',apm:'14h00–19h15',mins:515}},
-  lucie:  {h:35,lun:{type:'full',prep:'09h45',mat:'09h45–12h00',apm:'14h00–19h15',mins:440},mar:{type:'form',label:'Formation',detail:'09h00–11h30 | 14h00–16h30',mins:300},mer:{type:'full',prep:'09h45',mat:'09h45–12h00',apm:'14h00–19h15',mins:440},jeu:{type:'full',prep:'09h45',mat:'09h45–12h00',apm:'14h00–19h15',mins:440},ven:{type:'off'},sam:{type:'sat',prep:'09h30',mat:'09h30–12h30',apm:'14h00–19h10',mins:480}}
+  lucie:  {h:35,lun:{type:'full',prep:'09h45',mat:'09h45–12h00',apm:'14h00–19h15',mins:440},mar:{type:'form',label:'Formation',detail:'09h00–11h30 | 14h00–16h30',mins:300},mer:{type:'full',prep:'09h45',mat:'09h45–12h00',apm:'14h00–19h15',mins:440},jeu:{type:'full',prep:'09h45',mat:'09h45–12h00',apm:'14h00–19h15',mins:440},ven:{type:'off'},sam:{type:'sat',prep:'09h30',mat:'09h30–12h30',apm:'14h00–19h10',mins:480}},
+  // Nouveaux : planning de base vide (la semaine se saisit dans le planning, comme pour les autres)
+  kevin:  {h:35,lun:{type:'off'},mar:{type:'off'},mer:{type:'off'},jeu:{type:'off'},ven:{type:'off'},sam:{type:'off'}},
+  jeremy: {h:35,lun:{type:'off'},mar:{type:'off'},mer:{type:'off'},jeu:{type:'off'},ven:{type:'off'},sam:{type:'off'}},
+  remy:   {h:35,lun:{type:'off'},mar:{type:'off'},mer:{type:'off'},jeu:{type:'off'},ven:{type:'off'},sam:{type:'off'}},
+  julie:  {h:35,lun:{type:'off'},mar:{type:'off'},mer:{type:'off'},jeu:{type:'off'},ven:{type:'off'},sam:{type:'off'}},
+  ludovic:{h:25,lun:{type:'off'},mar:{type:'off'},mer:{type:'off'},jeu:{type:'off'},ven:{type:'off'},sam:{type:'off'}}
 };
+// Semaine type de Kévin (alternance 35h dont 5h de formation lundi et mardi matin)
+const KEVIN_SEMAINE_TYPE = {
+  lun:{type:'full',prep:'09h30',mat:'09h30–12h00',apm:'14h00–19h15',mins:455,horsObjMins:150,horsObjLabel:'Formation'},
+  mar:{type:'full',prep:'09h30',mat:'09h30–12h00',apm:'14h00–19h15',mins:455,horsObjMins:150,horsObjLabel:'Formation'},
+  mer:{type:'off',mins:0},
+  jeu:{type:'full',prep:'09h45',mat:'09h45–12h00',apm:'14h00–19h15',mins:440},
+  ven:{type:'apm',prep:null,mat:null,apm:'14h00–18h05',mins:235},
+  sam:{type:'sat',prep:'09h30',mat:'09h30–13h00',apm:'14h00–19h15',mins:515}
+};
+const KEVIN_PREMIERE_SEMAINE = '2026-10-05';
 
 // Règle clés & coffre : Allan ou Anthony doit toujours être présent
 const CLES_COFFRE = ['allan', 'anthony'];
+
+// ── MAGASIN DE LA SESSION (choisi à la connexion) ──
+const MAGASIN_LBL = { berck:'Easy Cash Berck', abbeville:'Easy Cash Abbeville' };
+let curMag = 'berck';
+function userMagasin(uid){ return (USERS[uid] && USERS[uid].magasin) || 'berck'; }
+// SIDS = salariés du magasin de la session (Allan à part)
+function applyMagasinScope(){
+  const ids = Object.keys(USERS).filter(uid =>
+    uid !== 'allan' && USERS[uid].active !== false && BASE_SCHEDULE[uid] && userMagasin(uid) === curMag);
+  SIDS.splice(0, SIDS.length, ...ids);
+}
+function peutSeConnecter(uid, mag){
+  const u = USERS[uid]; if(!u || u.active === false) return false;
+  const um = u.magasin || 'berck';
+  return um === 'all' || um === mag || (u.magasins_acces || []).includes(mag);
+}
 
 // Rotation des pauses repas du samedi (magasin ouvert en continu)
 const PAUSE_SAM_12H = ['allan','cathy','hubert'];   // 12h00–13h00
@@ -1115,6 +1182,7 @@ async function loadState(){
       if(saved.coefs) STATE.coefs = saved.coefs;
       if(saved.coefs_history) STATE.coefs_history = saved.coefs_history;
       if(saved.coefs_hist) STATE.coefs_hist = saved.coefs_hist;
+      if(saved.seeds) STATE.seeds = saved.seeds;
       if(saved.briefs) STATE.briefs = saved.briefs;
       if(saved.contrats) {
         STATE.contrats = saved.contrats;
@@ -1188,6 +1256,7 @@ function syncCollabsFromState() {
         bg: c.bg || '#EFEFED',
         ct: c.ct || '#2A2A28',
         magasin: c.magasin || 'berck',
+        magasins_acces: c.magasins_acces || [],
         active: c.active !== false
       };
     } else {
@@ -1198,6 +1267,8 @@ function syncCollabsFromState() {
       USERS[c.id].pin   = c.pin || '';
       USERS[c.id].admin = c.admin || false;
       USERS[c.id].active = c.active !== false;
+      USERS[c.id].magasin = c.magasin || USERS[c.id].magasin || 'berck';
+      USERS[c.id].magasins_acces = c.magasins_acces || USERS[c.id].magasins_acces || [];
     }
     // Ajouter dans SIDS si actif et absent
     if (c.active !== false && !SIDS.includes(c.id)) {
@@ -1229,6 +1300,7 @@ function syncCollabsFromState() {
       if (idx > -1) SIDS.splice(idx, 1);
     }
   });
+  applyMagasinScope();
 }
 
 function startPolling(){
@@ -1246,6 +1318,7 @@ function startPolling(){
       if(saved.coefs) STATE.coefs = saved.coefs;
       if(saved.coefs_history) STATE.coefs_history = saved.coefs_history;
       if(saved.coefs_hist) STATE.coefs_hist = saved.coefs_hist;
+      if(saved.seeds) STATE.seeds = saved.seeds;
       if(saved.briefs) STATE.briefs = saved.briefs;
       if(saved.contrats) {
         STATE.contrats = saved.contrats;
@@ -1291,12 +1364,34 @@ function hhmm2hh(s){return s?s.replace(':','h'):''}
 // ═══════════════════════════════════════════════════════
 //  HELPERS PLANNING
 // ═══════════════════════════════════════════════════════
+// Clé des surcharges de planning : Allan a un planning de présence propre à chaque magasin
+// (Berck garde les clés historiques « allan-… », Abbeville utilise « allan@abbeville-… »)
+function ovKey(uid){ return (uid === 'allan' && curMag !== 'berck') ? `allan@${curMag}` : uid; }
+// Contrat hebdo (h) d'un collaborateur
+function contratH(uid){ return (STATE.contrats && STATE.contrats[uid]) || (BASE_SCHEDULE[uid] && BASE_SCHEDULE[uid].h) || 35; }
+// Journée de formation = 1/5 du contrat (forfait) : 7h pour 35h, 5h pour 25h
+function minsFormation(uid){ return Math.round(contratH(uid) * 60 / 5); }
+
+// Minutes d'un créneau qui comptent pour les objectifs
+// (Formation = journée entière exclue ; horsObjMins = partie de journée exclue)
+function objMins(slot){
+  if(!slot || !slot.mins) return 0;
+  if(slot.type === 'form') return 0;
+  return Math.max(0, slot.mins - (slot.horsObjMins || 0));
+}
+
 function getSlot(uid, dayKey, dateISO){
+  const sl = getSlotRaw(uid, dayKey, dateISO);
+  if(sl && sl.type === 'form' && uid !== 'allan') return {...sl, mins: minsFormation(uid)};
+  return sl;
+}
+function getSlotRaw(uid, dayKey, dateISO){
   // 1. Surcharge par date spécifique (départ anticipé, etc.)
-  if(STATE.slotOverrides[`${uid}-${dateISO}`]) return STATE.slotOverrides[`${uid}-${dateISO}`];
+  if(STATE.slotOverrides[`${ovKey(uid)}-${dateISO}`]) return STATE.slotOverrides[`${ovKey(uid)}-${dateISO}`];
   // 2. Surcharge permanente du planning (mode édition)
-  if(STATE.scheduleOverrides[`${uid}-${dayKey}`]) return STATE.scheduleOverrides[`${uid}-${dayKey}`];
-  // 3. Planning de base
+  if(STATE.scheduleOverrides[`${ovKey(uid)}-${dayKey}`]) return STATE.scheduleOverrides[`${ovKey(uid)}-${dayKey}`];
+  // 3. Planning de base (Allan hors Berck : absent par défaut, il coche ses demi-journées)
+  if(uid === 'allan' && curMag !== 'berck') return {type:'off', mins:0};
   return BASE_SCHEDULE[uid][dayKey];
 }
 
@@ -1395,7 +1490,7 @@ function weekMins(uid,off){
     }
     if(abs==='repos_echange') return tot; // récup non payée
     if(isFerieChome(uid,dateISO))return tot;
-    const isVierge=dateISO>=VIERGE_FROM&&!STATE.slotOverrides[`${uid}-${dateISO}`]&&!STATE.scheduleOverrides[`${uid}-${d}`];
+    const isVierge=dateISO>=VIERGE_FROM&&!STATE.slotOverrides[`${ovKey(uid)}-${dateISO}`]&&!STATE.scheduleOverrides[`${ovKey(uid)}-${d}`];
     if(isVierge&&BASE_SCHEDULE[uid].h>0)return tot;
     return tot+(getSlot(uid,d,dateISO).mins||0);
   },0);
@@ -1501,8 +1596,7 @@ function populateUserSelect(){
   Object.keys(USERS).forEach(uid=>{
     const u=USERS[uid];
     if(u.active===false)return;
-    const um=u.magasin||'berck';
-    if(um!=='all'&&um!==magasin)return;
+    if(!peutSeConnecter(uid,magasin))return;
     count++;
     h+=`<option value="${uid}">${u.name}${u.role?' · '+u.role.split(' · ')[0]:''}</option>`;
   });
@@ -1534,6 +1628,12 @@ function tryLogin(){
   if(!uid){pinbuf='';upd();return;}
   if(USERS[uid]&&pinbuf===USERS[uid].pin){
     cur=uid;window._cur=uid;pinbuf='';upd();
+    curMag=(document.getElementById('msel')||{}).value||'berck';
+    applyMagasinScope();
+    const magLbl=MAGASIN_LBL[curMag]||curMag;
+    document.title='Planning — '+magLbl;
+    const hm=document.getElementById('hmag'); if(hm) hm.textContent=magLbl;
+    document.querySelectorAll('.only-berck').forEach(e=>e.style.display=curMag==='berck'?'':'none');
     document.getElementById('login').style.display='none';
     document.getElementById('app').style.display='block';
     document.getElementById('huser').textContent=USERS[uid].short;
@@ -1541,6 +1641,7 @@ function tryLogin(){
     loadState().then(()=>{
       syncCollabsFromState();
       migrateCoefsHist();
+      seedNouveauxCollabs();
       // Afficher les éléments admin si l'utilisateur est admin
       if(isAdmin(uid)) document.querySelectorAll('.adm').forEach(e=>e.style.display='block');
       else document.querySelectorAll('.adm').forEach(e=>e.style.display='none');
@@ -1589,6 +1690,7 @@ function showTab(name,btn){
     switchTachesTab('mes-taches', document.querySelector('#taches-tabs .tab'));
   }
   if(name==='objectifs'){
+    if(curMag!=='berck'){ renderObjectifs(); return; }
     margeData={};vendeurData={};
     loadMargeData().then(()=>{ renderObjectifs(); renderMonthlyPerf(); });
   }
@@ -1657,13 +1759,14 @@ function slotHTMLBase(uid,dayKey,dateISO,abs){
   // Planning vierge à partir du 29/06/2026
   const VIERGE_FROM='2026-06-29';
   const isVierge=dateISO>=VIERGE_FROM
-    &&!STATE.slotOverrides[`${uid}-${dateISO}`]
-    &&!STATE.scheduleOverrides[`${uid}-${dayKey}`];
+    &&!STATE.slotOverrides[`${ovKey(uid)}-${dateISO}`]
+    &&!STATE.scheduleOverrides[`${ovKey(uid)}-${dayKey}`];
   if(isVierge&&BASE_SCHEDULE[uid].h>0)
     return'<div class="sl so" style="color:var(--t3);font-style:italic;font-size:10px">—</div>';
 
   const s=getSlot(uid,dayKey,dateISO);
-  const note=s.note?`<div class="pause-tag" style="color:var(--bl)">${s.note}</div>`:'';
+  const note=(s.note?`<div class="pause-tag" style="color:var(--bl)">${s.note}</div>`:'')
+    +(s.horsObjMins?`<div class="pause-tag" style="color:var(--am);font-weight:600">🎓 ${mh(s.horsObjMins)} ${s.horsObjLabel||''} · hors obj.</div>`:'');
 
   if(s.type==='sat'){
     // Créneau de pause repas selon le groupe
@@ -1679,7 +1782,7 @@ function slotHTMLBase(uid,dayKey,dateISO,abs){
     case'full':return`<div class="prep-tag">▸ ${s.prep} prépa</div><div class="sl sw">${s.mat}</div><div class="sl sw" style="margin-top:1px">${s.apm}</div><div class="pause-tag">pause 10min (non rém.)</div>${note}`;
     case'apm': return`<div class="sl sw">${s.apm}</div><div class="pause-tag">pause 10min (non rém.)</div>${note}`;
     case'mat': return`<div class="prep-tag">▸ ${s.prep} prépa</div><div class="sl sw">${s.mat}</div>${note}`;
-    case'form':return`<div class="sl sf">Formation (5h)</div><div class="pause-tag">${s.detail}</div><div class="pause-tag" style="color:var(--am)">comptées au contrat</div>`;
+    case'form':return`<div class="sl sf">Formation (${mh(s.mins||minsFormation(uid))} · 1/5 contrat)</div><div class="pause-tag">${s.detail||''}</div><div class="pause-tag" style="color:var(--am)">contrat ✓ · hors objectifs</div>`;
     case'off': return`<div class="sl so">Repos</div>`;
     default:   return'';
   }
@@ -1704,7 +1807,7 @@ function renderPlanning(){
   dates.forEach((d,i)=>{
     const dISO=iso(d);
     const present=presentOnDay(woff,i);
-    const hasBuyer=present.some(uid=>SKILLS[uid].includes('buy'));
+    const hasBuyer=present.some(uid=>skillsOf(uid).includes('buy'));
     const hasSeller=present.length>0;
     const td=isToday(d)?'<div class="tdot"></div>':'';
     const fmLbl=magasinFerme(dISO)?`<div style="font-size:8px;color:var(--rd);margin-top:1px">🔒 Fermé</div>`:'';
@@ -1714,9 +1817,11 @@ function renderPlanning(){
       badges+=hasBuyer?'<span class="rb rb-buy">Achat ✓</span>':'<span class="rb rb-warn">! Achat</span>';
       badges+=hasSeller?'<span class="rb rb-sell">Vente ✓</span>':'<span class="rb rb-warn">! Vente</span>';
       // Contrôle clés & coffre
+      if(curMag==='berck'){
       const couvClés=couvertureClés(DAYS[i],dISO,present);
       if(!couvClés) badges+=`<span class="rb rb-warn">🔑 ! Clés/Coffre</span>`;
       else badges+=`<span class="rb" style="background:var(--gn-l);color:var(--gn);border:1px solid var(--gn-b)">🔑 Clés OK</span>`;
+      }
       // Contrôle couverture pauses samedi
       if(i===5){ // Samedi = index 5
         const presents=presentOnDay(woff,5);
@@ -1843,14 +1948,14 @@ function renderPlanning(){
     let cH='';
     DAYS.forEach((_,i)=>{
       const present=presentOnDay(woff,i);
-      const hasBuyer=present.some(u=>SKILLS[u].includes('buy'));
+      const hasBuyer=present.some(u=>skillsOf(u).includes('buy'));
       const hasSell=present.length>0;
-      const hasJew=present.some(u=>SKILLS[u].includes('jew'));
+      const hasJew=present.some(u=>skillsOf(u).includes('jew'));
       // Inclure Allan si présent
       const allanSlot=getSlot('allan',DAYS[i],iso(dates[i]));
       const allanHere=allanSlot.type==='dir'&&absStatus('allan',iso(dates[i]))!=='approved';
-      const buyNames=[...present.filter(u=>SKILLS[u].includes('buy')).map(u=>USERS[u].short),(allanHere?'Allan':'')].filter(Boolean);
-      const jewNames=[...present.filter(u=>SKILLS[u].includes('jew')).map(u=>USERS[u].short),(allanHere?'Allan':'')].filter(Boolean);
+      const buyNames=[...present.filter(u=>skillsOf(u).includes('buy')).map(u=>USERS[u].short),(allanHere?'Allan':'')].filter(Boolean);
+      const jewNames=[...present.filter(u=>skillsOf(u).includes('jew')).map(u=>USERS[u].short),(allanHere?'Allan':'')].filter(Boolean);
       const status=(!hasBuyer&&!allanHere)||!hasSell?'cov-bad':!hasJew&&!allanHere?'cov-warn':'cov-ok';
       const icon=status==='cov-bad'?'⚠':status==='cov-warn'?'◐':'✓';
       cH+=`<div class="cov-item ${status}"><div class="cov-lbl">${icon} ${DLBL[i]}</div><div class="cov-detail">Achat: ${buyNames.join(', ')||'—'}</div><div class="cov-detail">Bijoux: ${jewNames.join(', ')||'⚠'}</div></div>`;
@@ -2188,7 +2293,7 @@ function openModal(uid,dayKey){
   const dt=new Date(mon);dt.setDate(mon.getDate()+dayIdx);
   const dateISO=iso(dt);
   modalCtx={uid,dayKey,dateISO};
-  const s=getSlot(uid,dayKey,dateISO)||BASE_SCHEDULE[uid][dayKey];
+  let s=getSlot(uid,dayKey,dateISO)||BASE_SCHEDULE[uid][dayKey];
   const dayLabel=DLBL[dayIdx];
 
   document.getElementById('modal-title').textContent=`${USERS[uid].short} — ${dayLabel} ${fmt(dt)}`;
@@ -2226,6 +2331,13 @@ function openModal(uid,dayKey){
   const allanUI=document.getElementById('allan-checkboxes');
   if(allanUI) allanUI.style.display='none';
   document.getElementById('m-type').value=s.type||'off';
+  const hoInp=document.getElementById('m-horsobj'), hoLbl=document.getElementById('m-horsobj-lbl');
+  if(hoInp) hoInp.value=s.horsObjMins?(s.horsObjMins/60):'';
+  if(hoLbl) hoLbl.value=s.horsObjLabel||'';
+  if(s.type==='form'&&!s.mat&&s.detail&&s.detail.includes('|')){
+    const [fa,fb]=s.detail.split('|').map(x=>x.trim());
+    s={...s,mat:fa,apm:fb};
+  }
   if(s.mat){const[ms,me]=s.mat.split('–');document.getElementById('m-mat-s').value=hh2hhmm(ms);document.getElementById('m-mat-e').value=hh2hhmm(me);}
   else{document.getElementById('m-mat-s').value='09:45';document.getElementById('m-mat-e').value='12:00';}
   if(s.apm){const[as,ae]=s.apm.split('–');document.getElementById('m-apm-s').value=hh2hhmm(as);document.getElementById('m-apm-e').value=hh2hhmm(ae);}
@@ -2238,8 +2350,8 @@ function closeModal(){document.getElementById('modal').style.display='none';moda
 function slotMinsFromInputs(){
   const type=document.getElementById('m-type').value;
   if(type==='off')return 0;
-  if(type==='form')return 300;
   let t=0;
+  if(type==='form') return modalCtx ? minsFormation(modalCtx.uid) : 420;
   const ms=hhmm2m(document.getElementById('m-mat-s').value),me=hhmm2m(document.getElementById('m-mat-e').value);
   const as=hhmm2m(document.getElementById('m-apm-s').value),ae=hhmm2m(document.getElementById('m-apm-e').value);
   if((type==='full'||type==='mat'||type==='sat')&&me>ms)t+=me-ms;
@@ -2249,11 +2361,13 @@ function slotMinsFromInputs(){
 
 function onTypeChange(){
   const type=document.getElementById('m-type').value;
-  const show=type!=='off'&&type!=='form';
+  const show=type!=='off';
   document.getElementById('m-times').style.display=show?'block':'none';
-  document.getElementById('mpreview').style.display=(show||type==='form')?'flex':'none';
-  const mat=type==='full'||type==='mat'||type==='sat';
-  const apm=type==='full'||type==='apm'||type==='sat';
+  document.getElementById('mpreview').style.display=show?'flex':'none';
+  const hoRow=document.getElementById('m-horsobj-row'); if(hoRow) hoRow.style.display=(show&&type!=='form')?'block':'none';
+  const fInfo=document.getElementById('m-form-info'); if(fInfo) fInfo.style.display=type==='form'?'block':'none';
+  const mat=type==='full'||type==='mat'||type==='sat'||type==='form';
+  const apm=type==='full'||type==='apm'||type==='sat'||type==='form';
   document.getElementById('m-mat-row').style.display=mat?'block':'none';
   document.getElementById('m-apm-row').style.display=apm?'block':'none';
   updatePreview();
@@ -2303,16 +2417,25 @@ function saveSlot(){
     const as=document.getElementById('m-apm-s').value,ae=document.getElementById('m-apm-e').value;
     const prep=ms?hhmm2hh(ms):null;
     if(type==='off'){newSlot={type:'off',mins:0};}
-    else if(type==='form'){newSlot={type:'form',label:'Formation',detail:'09h00–11h30 | 14h00–16h30',mins:300};}
+    else if(type==='form'){
+      const fm=(ms&&me&&hhmm2m(me)>hhmm2m(ms))?`${hhmm2hh(ms)}–${hhmm2hh(me)}`:null;
+      const fa=(as&&ae&&hhmm2m(ae)>hhmm2m(as))?`${hhmm2hh(as)}–${hhmm2hh(ae)}`:null;
+      newSlot={type:'form',label:'Formation',detail:[fm,fa].filter(Boolean).join(' | ')||'Formation',mat:fm,apm:fa,mins:minsFormation(uid)};
+    }
     else{
       const matStr=(type==='full'||type==='mat'||type==='sat')?`${hhmm2hh(ms)}–${hhmm2hh(me)}`:null;
       const apmStr=(type==='full'||type==='apm'||type==='sat')?`${hhmm2hh(as)}–${hhmm2hh(ae)}`:null;
       newSlot={type,prep,mins:slotM,mat:matStr,apm:apmStr};
+      const hoH=parseFloat((document.getElementById('m-horsobj')||{}).value);
+      if(hoH>0){
+        newSlot.horsObjMins=Math.min(slotM,Math.round(hoH*60));
+        newSlot.horsObjLabel=((document.getElementById('m-horsobj-lbl')||{}).value||'').trim()||'Hors objectifs';
+      }
     }
   }
 
   // Sauvegarder par DATE EXACTE dans slotOverrides
-  STATE.slotOverrides[`${uid}-${dateISO}`]=newSlot;
+  STATE.slotOverrides[`${ovKey(uid)}-${dateISO}`]=newSlot;
   const wk=monKey(woff);
   if(STATE.signatures[`${uid}-${wk}`]) delete STATE.signatures[`${uid}-${wk}`];
   const dayLabel=DLBL[DAYS.indexOf(dayKey)];
@@ -2448,6 +2571,15 @@ async function loadMargeData(){
 }
 
 function renderObjectifs(){
+  const vObj = document.getElementById('view-objectifs');
+  let noObj = document.getElementById('obj-mag-msg');
+  if (!noObj && vObj) {
+    noObj = document.createElement('div'); noObj.id = 'obj-mag-msg'; noObj.className = 'acard';
+    noObj.innerHTML = '📊 Les objectifs de marge ne sont pas encore disponibles pour ce magasin (données du pilotage Berck uniquement).';
+    vObj.prepend(noObj);
+  }
+  if (vObj) [...vObj.children].forEach(ch => { ch.style.display = (ch === noObj) === (curMag !== 'berck') ? '' : 'none'; });
+  if (curMag !== 'berck') return;
   const mon = monday(woff);
   const dates = DAYS.map((_,i)=>{ const d=new Date(mon); d.setDate(mon.getDate()+i); return d; });
   document.getElementById('marge-week-label').textContent = `S${wknum(mon)} — ${fmt(mon)} au ${fmt(dates[5])}`;
@@ -2467,9 +2599,9 @@ function renderObjectifs(){
       const dayKey = DAYS[i];
       const absS = absStatus(uid, dISO);
       const slot = getSlot(uid, dayKey, dISO);
-      const isVierge = dISO >= VIERGE_FROM && !STATE.slotOverrides[`${uid}-${dISO}`] && !STATE.scheduleOverrides[`${uid}-${dayKey}`];
+      const isVierge = dISO >= VIERGE_FROM && !STATE.slotOverrides[`${ovKey(uid)}-${dISO}`] && !STATE.scheduleOverrides[`${ovKey(uid)}-${dayKey}`];
       const present = !isVierge && absS !== 'approved' && slot && slot.type !== 'off' && slot.type !== 'cp' && slot.type !== 'am';
-      return total + (present && slot?.mins ? slot.mins / 60 : 0);
+      return total + (present ? objMins(slot) / 60 : 0);
     }, 0);
   }
 
@@ -2520,7 +2652,7 @@ function renderObjectifs(){
       const dayKey = DAYS[i];
       const absS = absStatus(uid, dISO);
       const slot = getSlot(uid, dayKey, dISO);
-      const isVierge = dISO >= VIERGE_FROM && !STATE.slotOverrides[`${uid}-${dISO}`] && !STATE.scheduleOverrides[`${uid}-${dayKey}`];
+      const isVierge = dISO >= VIERGE_FROM && !STATE.slotOverrides[`${ovKey(uid)}-${dISO}`] && !STATE.scheduleOverrides[`${ovKey(uid)}-${dayKey}`];
       const present = !isVierge && absS !== 'approved' && slot && slot.type !== 'off' && slot.type !== 'cp' && slot.type !== 'am';
       const objEquipe = getObjEquipeJour(dISO);
       if(!objEquipe) return `<td style="text-align:center;color:var(--t3);font-size:10px">—</td>`;
@@ -2531,12 +2663,15 @@ function renderObjectifs(){
         const a2 = absStatus(u2, dISO);
         const iv2 = dISO >= VIERGE_FROM && !STATE.slotOverrides[`${u2}-${dISO}`] && !STATE.scheduleOverrides[`${u2}-${dayKey}`];
         const p2 = !iv2 && a2 !== 'approved' && s2 && s2.type !== 'off' && s2.type !== 'cp' && s2.type !== 'am';
-        const mins2 = p2 && s2?.mins ? s2.mins / 60 : 0;
+        const mins2 = p2 ? objMins(s2) / 60 : 0;
         return acc + mins2 * (weekCoef(u2) / 100);
       }, 0);
 
-      if(!present || pct === 0) return `<td style="text-align:center;color:var(--t3);font-size:10px">—</td>`;
-      const hJour = slot?.mins ? slot.mins / 60 : 0;
+      const hJour = present ? objMins(slot) / 60 : 0;
+      if(!present || pct === 0 || hJour === 0) {
+        const why = present && hJour === 0 ? '<div style="font-size:8px;color:var(--am)">hors obj.</div>' : '';
+        return `<td style="text-align:center;color:var(--t3);font-size:10px">—${why}</td>`;
+      }
       const poidsJour = hJour * pct / 100;
       const part = totalPartJour > 0 ? (poidsJour / totalPartJour) * objEquipe : 0;
       totalCollab += part;
@@ -2741,6 +2876,55 @@ function getCoefsAtDate(dateISO) {
   return getCoefsAtDateRaw(dateISO);
 }
 
+// Création unique (01/10/2026) : Kévin, Jérémy, Rémy, Julie, Ludovic dans Équipe & PIN,
+// accès admin Abbeville pour Anthony, 1re semaine de Kévin (05/10) avec 2×2h30 de formation hors objectifs.
+async function seedNouveauxCollabs(){
+  if(!isAdmin(cur)) return;
+  if(STATE.seeds && STATE.seeds['2026-10-01']) return;
+  const cl = (STATE.collabs && STATE.collabs.length) ? STATE.collabs.map(c=>({...c})) : getActiveCollabs().map(c=>({...c}));
+  const pinsPris = new Set(cl.map(c=>c.pin));
+  NOUVEAUX_COLLABS_20261001.forEach(n=>{
+    if(cl.some(c=>c.id===n.id)) return;
+    const u = USERS[n.id];
+    let pin = u.pin;
+    while(pinsPris.has(pin)) pin = String(3000 + Math.floor(Math.random()*6999));
+    pinsPris.add(pin); u.pin = pin;
+    cl.push({id:n.id, nom:u.name, short:u.short, role:u.role, h:n.h, pin, coef:n.coef, email:'',
+             bg:u.bg, ct:u.ct, admin:false, magasin:u.magasin, magasins_acces:[], active:true});
+  });
+  // Anthony : admin + accès Abbeville
+  const ant = cl.find(c=>c.id==='anthony');
+  if(ant){ ant.admin = true; ant.magasins_acces = [...new Set([...(ant.magasins_acces||[]),'abbeville'])]; }
+  const updates = { collabs: cl, ['seeds']: { ...(STATE.seeds||{}), '2026-10-01': true } };
+  // 1re semaine de Kévin (seulement si rien n'est déjà saisi)
+  const lundi = new Date(KEVIN_PREMIERE_SEMAINE+'T12:00:00');
+  const slotUpd = {};
+  DAYS.forEach((d,i)=>{
+    const dt = new Date(lundi); dt.setDate(lundi.getDate()+i);
+    const key = `kevin-${iso(dt)}`;
+    if(!STATE.slotOverrides[key]) slotUpd[key] = KEVIN_SEMAINE_TYPE[d];
+  });
+  // Appliqué localement AVANT l'écriture : une autre sauvegarde lancée pendant ce temps
+  // (signature, notification…) renverra donc déjà les bonnes données.
+  const prevCollabs = STATE.collabs, prevSeeds = STATE.seeds;
+  STATE.collabs = cl;
+  STATE.seeds = updates.seeds;
+  Object.assign(STATE.slotOverrides, slotUpd);
+  try {
+    const args = [];
+    Object.entries(updates).forEach(([k,v])=>{ args.push(k, v); });
+    Object.entries(slotUpd).forEach(([k,v])=>{ args.push(new FieldPath('slotOverrides', k), v); });
+    await updateDoc(STATE_DOC, ...args);
+    syncCollabsFromState();
+    renderAll();
+    toast('✓ Nouveaux collaborateurs créés (Kévin, Jérémy, Rémy, Julie, Ludovic)');
+  } catch(e){
+    console.error('seedNouveauxCollabs error:', e);
+    STATE.collabs = prevCollabs; STATE.seeds = prevSeeds;
+    Object.keys(slotUpd).forEach(k=>delete STATE.slotOverrides[k]);
+  }
+}
+
 // Migration unique : ancien historique (instantanés de toute l'équipe) → coefs_hist
 // On ne garde que les vrais changements par collaborateur.
 async function migrateCoefsHist() {
@@ -2939,7 +3123,7 @@ function renderCollabMgr(){
       <div class="av" style="width:30px;height:30px;font-size:10px;background:${c.bg||'#EEE'};color:${c.ct||'#333'};border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600">${ini}</div>
       <div>
         <div style="font-weight:500;font-size:12px">${c.nom}${c.admin?'<span style="font-size:9px;background:var(--bl-l);color:var(--bl);border:1px solid var(--bl-b);padding:1px 6px;border-radius:10px;margin-left:6px">Admin</span>':''}</div>
-        <div style="font-size:10px;color:var(--t3)">${c.role||''} · ${c.h===0?'Forfait jours':c.h+'h/sem'} · PIN: ${c.pin}</div>
+        <div style="font-size:10px;color:var(--t3)">${c.role||''} · ${c.h===0?'Forfait jours':c.h+'h/sem'} · PIN: ${c.pin} · 🏬 ${c.id==='allan'?'Tous':(MAGASIN_LBL[c.magasin||USERS[c.id]?.magasin||'berck']||'').replace('Easy Cash ','')}${(c.magasins_acces||USERS[c.id]?.magasins_acces||[]).length?' (+ accès '+(c.magasins_acces||USERS[c.id]?.magasins_acces).map(m=>(MAGASIN_LBL[m]||m).replace('Easy Cash ','')).join(', ')+')':''}</div>
       </div>
       <div style="font-size:10px;color:${signed?'var(--gn)':'var(--t3)'}">${signed?'✓ Signé':'Non signé'}</div>
       <button onclick="window.openCollabModal('edit','${c.id}')" style="background:var(--s2);border:1px solid var(--b);padding:4px 10px;border-radius:var(--r);font-size:11px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif">✏️ Modifier</button>
@@ -2963,10 +3147,19 @@ function openCollabModal(mode, id){
     const adminChk = document.getElementById('cm-admin');
     if(adminChk) adminChk.checked = c.admin||false;
     document.getElementById('cm-email').value=c.email||USER_EMAILS[id]||'';
+    const cMag=c.magasin||USERS[id]?.magasin||'berck';
+    const cAcc=c.magasins_acces||USERS[id]?.magasins_acces||[];
+    document.getElementById('cm-magasin').value=cMag==='all'?'berck':cMag;
+    document.getElementById('cm-acces-berck').checked=cAcc.includes('berck');
+    document.getElementById('cm-acces-abbeville').checked=cAcc.includes('abbeville');
   } else {
     ['cm-nom','cm-poste','cm-pin','cm-email'].forEach(i=>document.getElementById(i).value='');
     document.getElementById('cm-h').value='35';
     document.getElementById('cm-coef').value='100';
+    document.getElementById('cm-magasin').value=curMag;
+    document.getElementById('cm-acces-berck').checked=false;
+    document.getElementById('cm-acces-abbeville').checked=false;
+    const adm=document.getElementById('cm-admin'); if(adm) adm.checked=false;
   }
   document.getElementById('modal-collab').style.display='flex';
 }
@@ -2999,22 +3192,27 @@ async function saveCollab(){
     bg: collabEditId ? (collabs.find(c=>c.id===collabEditId)?.bg||'#EEE') : '#EFEFED',
     ct: collabEditId ? (collabs.find(c=>c.id===collabEditId)?.ct||'#333') : '#2A2A28',
     admin: document.getElementById('cm-admin')?.checked||false,
-    magasin: collabEditId ? (collabs.find(c=>c.id===collabEditId)?.magasin||'berck') : 'berck',
+    magasin: document.getElementById('cm-magasin').value||curMag,
+    magasins_acces: ['berck','abbeville'].filter(m=>document.getElementById('cm-acces-'+m)?.checked && m!==document.getElementById('cm-magasin').value),
     active: true,
   };
+  if(collabEditId==='allan') data.magasin='all';
 
   // Mettre à jour coefs
   if(!STATE.coefs) STATE.coefs={};
   STATE.coefs[id]=coef;
 
   // Mettre à jour USERS en mémoire pour que ça fonctionne immédiatement
-  USERS[id]={name:data.nom,short:data.short,role:data.role,pin:data.pin,admin:data.admin,bg:data.bg,ct:data.ct,magasin:data.magasin,active:true};
+  USERS[id]={name:data.nom,short:data.short,role:data.role,pin:data.pin,admin:data.admin,bg:data.bg,ct:data.ct,magasin:data.magasin,magasins_acces:data.magasins_acces,active:true};
+  if(!SKILLS[id]) SKILLS[id]=['sell'];
 
   // Mettre à jour STATE.collabs
   let cl=getActiveCollabs();
   if(collabEditId) cl=cl.map(c=>c.id===collabEditId?data:c);
-  else { cl.push(data); if(!SIDS.includes(id)) SIDS.push(id); }
+  else { cl.push(data); }
+  if(!BASE_SCHEDULE[id]) BASE_SCHEDULE[id]={h:data.h||35,lun:{type:'off'},mar:{type:'off'},mer:{type:'off'},jeu:{type:'off'},ven:{type:'off'},sam:{type:'off'}};
   STATE.collabs=cl;
+  applyMagasinScope();
 
   await saveState();
   closeCollabModal();
@@ -3496,8 +3694,8 @@ async function genererFichePointage(uid, sigOff_) {
       // Journée vierge (à partir du 29/06/2026) ou repos
       const VIERGE_FROM = '2026-06-29';
       const isVierge = dISO >= VIERGE_FROM
-        && !STATE.slotOverrides[`${uid}-${dISO}`]
-        && !STATE.scheduleOverrides[`${uid}-${dk}`];
+        && !STATE.slotOverrides[`${ovKey(uid)}-${dISO}`]
+        && !STATE.scheduleOverrides[`${ovKey(uid)}-${dk}`];
 
       if(abs === 'approved' || slot.type === 'off' || isVierge) {
         // Repos / absence — on met RH ou CP selon le type
@@ -3917,6 +4115,7 @@ window.allerSignatures = function() {
 //  VUE MENSUELLE DES PERFORMANCES
 // ═══════════════════════════════════════════════════════
 function renderMonthlyPerf() {
+  if (curMag !== 'berck') return;
   const wrap = document.getElementById('monthly-perf-wrap');
   if(!wrap || !Object.keys(margeData).length) return;
 
@@ -4242,7 +4441,7 @@ async function confirmDup(){
       const dow=dt.getDay();
       const idx=dow===0?5:dow-1;
       const targetDayKey=DAYS[idx];
-      if(targetDayKey) STATE.slotOverrides[`${dupCtx.uid}-${targetDate}`]={...dupCtx.slot};
+      if(targetDayKey) STATE.slotOverrides[`${ovKey(dupCtx.uid)}-${targetDate}`]={...dupCtx.slot};
     });
     await saveState();
     toast(`✓ Créneau dupliqué sur ${checkboxes.length} jour(s)`);
@@ -4259,8 +4458,8 @@ async function confirmDup(){
         const srcISO=iso(srcDate);
         const tgtDate=new Date(srcMon);tgtDate.setDate(srcMon.getDate()+i+wkDelta*7);
         const tgtISO=iso(tgtDate);
-        const slot=STATE.slotOverrides[`${uid}-${srcISO}`]||STATE.scheduleOverrides[`${uid}-${dk}`]||BASE_SCHEDULE[uid][dk];
-        if(slot) STATE.slotOverrides[`${uid}-${tgtISO}`]={...slot};
+        const slot=STATE.slotOverrides[`${ovKey(uid)}-${srcISO}`]||STATE.scheduleOverrides[`${ovKey(uid)}-${dk}`]||BASE_SCHEDULE[uid][dk];
+        if(slot) STATE.slotOverrides[`${ovKey(uid)}-${tgtISO}`]={...slot};
       });
     });
     await saveState();
