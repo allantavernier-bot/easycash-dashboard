@@ -443,7 +443,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
       oninput="window.onPinInput(this.value)"
       onkeydown="if(event.key==='Enter') window.tryLoginInput()">
     <button class="sbmit" style="width:100%;margin-top:4px" onclick="window.tryLoginInput()">Connexion</button>
-    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 02/10/2026 · <span id="collabs-load-status">chargement équipe…</span></div>
+    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 08/10/2026 · <span id="collabs-load-status">chargement équipe…</span></div>
   </div>
 </div>
 
@@ -873,16 +873,13 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
           <div class="gondlist-box" id="nassign-list"></div>
           <div class="mrow"><label>Assigner à</label>
             <div class="tache-modal-chips" id="nassign-chips">
-              <div class="tache-chip" onclick="window.pickNchip(this,'anthony')">Anthony</div>
-              <div class="tache-chip" onclick="window.pickNchip(this,'cathy')">Cathy</div>
-              <div class="tache-chip" onclick="window.pickNchip(this,'hubert')">Hubert</div>
-              <div class="tache-chip" onclick="window.pickNchip(this,'manon')">Manon</div>
+              <!-- rempli dynamiquement par remplirChoixCollabs() -->
             </div>
           </div>
           <div class="mrow" style="margin-top:10px"><label>À faire avant le</label><input type="date" id="nassign-date" style="width:100%;padding:7px 9px;border:1px solid var(--bm);border-radius:var(--r);font-family:'IBM Plex Sans',sans-serif;font-size:13px;outline:none"></div>
           <div class="mrow" style="margin-top:10px"><label>Répétition</label>
             <select id="nassign-repeat" style="width:100%;padding:7px 9px;border:1px solid var(--bm);border-radius:var(--r);font-family:'IBM Plex Sans',sans-serif;font-size:13px;outline:none">
-              <option value="once">Ponctuelle</option><option value="weekly">Hebdomadaire</option><option value="monthly">Mensuelle</option>
+              <option value="once">Ponctuelle</option><option value="daily">Quotidienne</option><option value="weekly">Hebdomadaire</option><option value="monthly">Mensuelle</option>
             </select>
           </div>
         </div>
@@ -899,12 +896,12 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
           <div class="mrow"><label>Intitulé</label><input type="text" id="tache-titre" placeholder="Ex : Réassort téléphonie" style="width:100%;padding:7px 9px;border:1px solid var(--bm);border-radius:var(--r);font-family:'IBM Plex Sans',sans-serif;font-size:13px;outline:none"></div>
           <div class="mrow" style="margin-top:10px"><label>Assigné à</label>
             <select id="tache-uid" style="width:100%;padding:7px 9px;border:1px solid var(--bm);border-radius:var(--r);font-family:'IBM Plex Sans',sans-serif;font-size:13px;outline:none">
-              <option value="anthony">Anthony</option><option value="cathy">Cathy</option><option value="hubert">Hubert</option><option value="manon">Manon</option>
+              <!-- rempli dynamiquement par remplirChoixCollabs() -->
             </select>
           </div>
           <div class="mrow" style="margin-top:10px"><label>Répétition</label>
             <select id="tache-repeat" style="width:100%;padding:7px 9px;border:1px solid var(--bm);border-radius:var(--r);font-family:'IBM Plex Sans',sans-serif;font-size:13px;outline:none">
-              <option value="once">Ponctuelle</option><option value="weekly">Hebdomadaire</option><option value="monthly">Mensuelle</option>
+              <option value="once">Ponctuelle</option><option value="daily">Quotidienne</option><option value="weekly">Hebdomadaire</option><option value="monthly">Mensuelle</option>
             </select>
           </div>
           <div class="mrow" style="margin-top:10px"><label>Échéance</label><input type="date" id="tache-date" style="width:100%;padding:7px 9px;border:1px solid var(--bm);border-radius:var(--r);font-family:'IBM Plex Sans',sans-serif;font-size:13px;outline:none"></div>
@@ -3268,7 +3265,7 @@ function switchTachesTab(id, btn) {
 // STATE.taches = [{id, titre, uid, repeat, date, priority, note, doneWeeks:[], doneMonths:[]}]
 // STATE.nettoyage = {[gondoleId]: {history:[{who,dateISO}], assigned:{uid,dateISO,repeat}}}
 
-const REPEAT_LBL = {once:'Ponctuelle', weekly:'Hebdomadaire', monthly:'Mensuelle'};
+const REPEAT_LBL = {once:'Ponctuelle', daily:'Quotidienne', weekly:'Hebdomadaire', monthly:'Mensuelle'};
 const PRIORITY_LBL = {urgent:'Urgent', normal:'', low:'Basse priorité'};
 const PRIORITY_CLS = {urgent:'tp-am', normal:'tp-gy', low:'tp-gy'};
 
@@ -3277,6 +3274,10 @@ function getNettoyage() { return STATE.nettoyage || {}; }
 
 function isTacheDone(t) {
   const now = new Date();
+  if(t.repeat==='daily') {
+    // Quotidienne : à refaire chaque jour, cochée pour aujourd'hui seulement
+    return (t.doneDays||[]).includes(iso(now));
+  }
   if(t.repeat==='weekly') {
     const wk = monKey(0); // clé de la semaine courante
     return (t.doneWeeks||[]).includes(wk);
@@ -3330,7 +3331,13 @@ async function toggleTacheDone(id) {
   const t = STATE.taches.find(x=>x.id===id);
   if(!t) return;
   const done = isTacheDone(t);
-  if(t.repeat==='weekly') {
+  if(t.repeat==='daily') {
+    const dk = iso(new Date());
+    if(!t.doneDays) t.doneDays=[];
+    if(done) t.doneDays = t.doneDays.filter(d=>d!==dk);
+    else t.doneDays.push(dk);
+    t.doneDays = t.doneDays.slice(-120); // garder ~4 mois d'historique
+  } else if(t.repeat==='weekly') {
     const wk = monKey(0);
     if(!t.doneWeeks) t.doneWeeks=[];
     if(done) t.doneWeeks = t.doneWeeks.filter(w=>w!==wk);
@@ -3352,7 +3359,7 @@ async function toggleTacheDone(id) {
 function renderAdminTaches() {
   const el = document.getElementById('admin-taches-list');
   if(!el) return;
-  const taches = getTaches();
+  const taches = getTaches().filter(t => t.uid === 'allan' || !USERS[t.uid] || userMagasin(t.uid) === curMag);
   if(!taches.length) {
     el.innerHTML='<div style="font-size:12px;color:var(--t3);padding:10px 0;text-align:center">Aucune tâche créée</div>';
     return;
@@ -3375,14 +3382,45 @@ function renderAdminTaches() {
   }).join('');
 }
 
+// Listes de collaborateurs des tâches : équipe du magasin de la session (SIDS), plus à jour automatiquement
+// Collaborateurs actifs du magasin de la session (fiches en dur + fiches Équipe & PIN)
+function collabsDuMagasin() {
+  if (typeof syncCollabsFromState === 'function') syncCollabsFromState();
+  const ids = new Set(SIDS);
+  Object.keys(USERS).forEach(u => {
+    if (u !== 'allan' && USERS[u] && USERS[u].active !== false && userMagasin(u) === curMag) ids.add(u);
+  });
+  (STATE.collabs || []).forEach(c => {
+    if (c.id && c.id !== 'allan' && c.active !== false && (c.magasin || USERS[c.id]?.magasin || 'berck') === curMag) ids.add(c.id);
+  });
+  return [...ids];
+}
+function nomCourt(u) {
+  const c = (STATE.collabs || []).find(x => x.id === u);
+  return USERS[u]?.short || c?.short || (c?.nom || u).split(' ')[0];
+}
+function remplirChoixCollabs(selUid) {
+  const liste = collabsDuMagasin();
+  const sel = document.getElementById('tache-uid');
+  if (sel) {
+    const ids = [...liste];
+    if (selUid && !ids.includes(selUid) && USERS[selUid]) ids.push(selUid); // tâche existante d'un ancien collaborateur
+    sel.innerHTML = ids.map(u => `<option value="${u}">${nomCourt(u)}</option>`).join('');
+  }
+  const chips = document.getElementById('nassign-chips');
+  if (chips) chips.innerHTML = liste.map(u => `<div class="tache-chip" onclick="window.pickNchip(this,'${u}')">${nomCourt(u)}</div>`).join('');
+}
+
 function openTacheModal(id) {
+  const tEdit = id ? getTaches().find(x=>x.id===id) : null;
+  remplirChoixCollabs(tEdit?.uid);
   document.getElementById('tache-edit-id').value = id||'';
   document.getElementById('tache-modal-title').textContent = id?'Modifier la tâche':'Nouvelle tâche';
   if(id) {
     const t = getTaches().find(x=>x.id===id);
     if(t) {
       document.getElementById('tache-titre').value = t.titre||'';
-      document.getElementById('tache-uid').value = t.uid||'anthony';
+      document.getElementById('tache-uid').value = t.uid||SIDS[0]||'';
       document.getElementById('tache-repeat').value = t.repeat||'once';
       document.getElementById('tache-date').value = t.date||'';
       document.getElementById('tache-priority').value = t.priority||'normal';
@@ -3390,7 +3428,7 @@ function openTacheModal(id) {
     }
   } else {
     document.getElementById('tache-titre').value='';
-    document.getElementById('tache-uid').value='anthony';
+    document.getElementById('tache-uid').value=SIDS[0]||'';
     document.getElementById('tache-repeat').value='once';
     document.getElementById('tache-date').value='';
     document.getElementById('tache-priority').value='normal';
@@ -3597,6 +3635,7 @@ function openNassign() {
   const nums=[...nSelSet].sort((a,b)=>a-b);
   document.getElementById('nassign-list').textContent='Gondoles : '+nums.join(', ');
   nPickedCollab='';
+  remplirChoixCollabs();
   document.querySelectorAll('.tache-chip').forEach(c=>c.classList.remove('on'));
   const d=new Date(); d.setDate(d.getDate()+7);
   document.getElementById('nassign-date').value=d.toISOString().split('T')[0];
