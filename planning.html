@@ -443,7 +443,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
       oninput="window.onPinInput(this.value)"
       onkeydown="if(event.key==='Enter') window.tryLoginInput()">
     <button class="sbmit" style="width:100%;margin-top:4px" onclick="window.tryLoginInput()">Connexion</button>
-    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 08/10/2026 · <span id="collabs-load-status">chargement équipe…</span></div>
+    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 09/10/2026 · <span id="collabs-load-status">chargement équipe…</span></div>
   </div>
 </div>
 
@@ -488,7 +488,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
     <button class="tab" onclick="window.showTab('absences',this)">Mes absences</button>
     <button class="tab" onclick="window.showTab('retours',this)">💬 Retours</button>
     <button class="tab" onclick="window.showTab('objectifs',this)">📊 Objectifs</button>
-    <button class="tab" onclick="window.showTab('taches',this)">✅ Tâches</button>
+    <button class="tab" id="tab-taches" onclick="window.showTab('taches',this)">✅ Tâches <span id="taches-badge" style="display:none;background:var(--rd);color:#fff;border-radius:10px;font-size:10px;padding:1px 6px;margin-left:4px;font-weight:600"></span></button>
     <button class="tab adm" onclick="window.showTab('admin-abs',this)">Demandes</button>
     <button class="tab adm" onclick="window.showTab('admin-team',this)">Équipe &amp; PIN</button>
     <button class="tab" id="tab-briefs" onclick="window.showBriefs(this)">📋 Briefs</button>
@@ -1645,6 +1645,9 @@ function tryLogin(){
       if(isAdmin(uid)) document.querySelectorAll('.adm').forEach(e=>e.style.display='block');
       else document.querySelectorAll('.adm').forEach(e=>e.style.display='none');
       renderAll();updateNotifBadge();verifierSignatureAuLogin(uid);
+      // Les collaborateurs arrivent directement sur leurs tâches (Allan garde le planning)
+      if(uid!=='allan') showTab('taches', document.getElementById('tab-taches'));
+      updateTachesBadge();
     });
   }else{
     document.getElementById('lerr').style.display='block';
@@ -3289,6 +3292,33 @@ function isTacheDone(t) {
   return !!t.doneAt;
 }
 
+// Gondoles assignées (plan nettoyage) visibles dans « Mes tâches »
+// Allan voit toutes celles du magasin ; chaque collaborateur voit les siennes
+function getGondolesAssignees() {
+  const out = [];
+  if (curMag !== 'berck') return out; // plan de nettoyage = magasin de Berck
+  GIDS.forEach(n => {
+    const d = getNData(n);
+    const a = d.assigned;
+    if (!a || !a.uid) return;
+    if (cur !== 'allan' && a.uid !== cur) return;
+    out.push({ n, uid: a.uid, dateISO: a.dateISO || '', repeat: a.repeat || 'once' });
+  });
+  return out.sort((x, y) => (x.dateISO || '9999').localeCompare(y.dateISO || '9999') || x.n - y.n);
+}
+
+function tachesAFaireCount() {
+  const mine = getTaches().filter(t => t.uid === cur && !isTacheDone(t)).length;
+  const gond = getGondolesAssignees().filter(g => cur === 'allan' ? false : true).length;
+  return mine + gond;
+}
+function updateTachesBadge() {
+  const b = document.getElementById('taches-badge');
+  if (!b) return;
+  const n = (cur && cur !== 'allan') ? tachesAFaireCount() : 0;
+  b.textContent = n; b.style.display = n ? 'inline-block' : 'none';
+}
+
 function renderMesTaches() {
   const filter = document.getElementById('tache-filter')?.value || 'all';
   const el = document.getElementById('mes-taches-list');
@@ -3301,11 +3331,7 @@ function renderMesTaches() {
     if(filter==='done') return done;
     return true;
   });
-  if(!filtered.length) {
-    el.innerHTML = '<div style="font-size:12px;color:var(--t3);padding:10px 0;text-align:center">Aucune tâche</div>';
-    return;
-  }
-  el.innerHTML = filtered.map(t => {
+  const tachesHtml = filtered.map(t => {
     const done = isTacheDone(t);
     const u = USERS[t.uid];
     const ini = (u?.short||t.uid).substring(0,2).toUpperCase();
@@ -3313,18 +3339,77 @@ function renderMesTaches() {
     const repLbl = REPEAT_LBL[t.repeat]||t.repeat;
     const prioCls = PRIORITY_CLS[t.priority]||'tp-gy';
     const prioLbl = PRIORITY_LBL[t.priority]||'';
+    const qui = cur==='allan' ? `${u?.short||t.uid} · ` : '';
     return `<div class="tache-row">
       <div class="av" style="background:${bg};color:${ct}">${ini}</div>
       <div style="flex:1">
         <div class="tache-titre" style="${done?'text-decoration:line-through;color:var(--t3)':''}">${t.titre}</div>
-        <div class="tache-sub">${repLbl}${t.date?' · Avant le '+new Date(t.date).toLocaleDateString('fr-FR'):''}</div>
+        <div class="tache-sub">${qui}${repLbl}${t.date?' · Avant le '+new Date(t.date).toLocaleDateString('fr-FR'):''}</div>
         ${t.note?`<div style="font-size:10px;color:var(--t3);margin-top:2px">${t.note}</div>`:''}
       </div>
       ${prioLbl?`<span class="tache-pill ${prioCls}">${prioLbl}</span>`:''}
       <button class="tache-done-btn${done?' done':''}" onclick="window.toggleTacheDone('${t.id}')">${done?'✓ Fait':'Fait'}</button>
     </div>`;
   }).join('');
+
+  // Mobilier à nettoyer (toujours « à faire » tant que non nettoyé)
+  const today = iso(new Date());
+  const gond = filter==='done' ? [] : getGondolesAssignees();
+  const gondHtml = gond.map(g => {
+    const u = USERS[g.uid];
+    const ini = (u?.short||g.uid).substring(0,2).toUpperCase();
+    const late = g.dateISO && g.dateISO < today;
+    const dueLbl = g.dateISO ? (g.dateISO === today ? "Aujourd'hui" : 'Avant le '+new Date(g.dateISO+'T12:00:00').toLocaleDateString('fr-FR')) : '';
+    const qui = cur==='allan' ? `${u?.short||g.uid} · ` : '';
+    return `<div class="tache-row">
+      <div class="av" style="background:${u?.bg||'#EEE'};color:${u?.ct||'#333'}">${ini}</div>
+      <div style="flex:1">
+        <div class="tache-titre">🧹 Nettoyer la gondole ${g.n}</div>
+        <div class="tache-sub">${qui}${REPEAT_LBL[g.repeat]||'Ponctuelle'}${dueLbl?' · '+dueLbl:''}</div>
+      </div>
+      ${late?'<span class="tache-pill tp-rd">En retard</span>':''}
+      <button class="tache-done-btn" onclick="window.gondoleFaite(${g.n})">Fait</button>
+    </div>`;
+  }).join('');
+
+  if(!tachesHtml && !gondHtml) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--t3);padding:10px 0;text-align:center">Aucune tâche 🎉</div>';
+    updateTachesBadge();
+    return;
+  }
+  el.innerHTML =
+    (tachesHtml ? tachesHtml : '') +
+    (gondHtml ? `<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--t2);margin:${tachesHtml?'16px':'0'} 0 4px">🧹 Mobilier à nettoyer (${gond.length})</div>${gondHtml}` : '');
+  updateTachesBadge();
 }
+
+// Enregistre un nettoyage de gondole : historique + assignation suivante si répétée
+function enregistrerNettoyage(n, uid) {
+  const d = getNData(n);
+  const today = new Date();
+  d.history.unshift({ who: uid, dateISO: iso(today) });
+  if (d.history.length > 20) d.history = d.history.slice(0, 20);
+  const a = d.assigned;
+  if (a && ['daily','weekly','monthly'].includes(a.repeat)) {
+    const next = new Date(today);
+    if (a.repeat === 'daily') next.setDate(next.getDate() + 1);
+    if (a.repeat === 'weekly') next.setDate(next.getDate() + 7);
+    if (a.repeat === 'monthly') next.setMonth(next.getMonth() + 1);
+    d.assigned = { ...a, dateISO: iso(next) };
+  } else {
+    d.assigned = null;
+  }
+}
+
+window.gondoleFaite = async function(n) {
+  const d = getNData(n);
+  const uid = (cur === 'allan' && d.assigned?.uid) ? d.assigned.uid : cur;
+  enregistrerNettoyage(n, uid);
+  await saveState();
+  renderMesTaches();
+  if (typeof renderNettoyage === 'function') renderNettoyage();
+  toast(`✓ Gondole ${n} nettoyée`);
+};
 
 async function toggleTacheDone(id) {
   if(!STATE.taches) STATE.taches=[];
@@ -3354,6 +3439,7 @@ async function toggleTacheDone(id) {
   await saveState();
   renderMesTaches();
   renderAdminTaches();
+  updateTachesBadge();
 }
 
 function renderAdminTaches() {
@@ -3601,13 +3687,10 @@ async function doNclean() {
   } else {
     uid = cur; // Le collaborateur connecté
   }
-  const dateISO=iso(new Date());
-  const d=getNData(nActiveG);
-  d.history.unshift({who:uid,dateISO});
-  if(d.history.length>20) d.history=d.history.slice(0,20);
-  d.assigned=null;
+  enregistrerNettoyage(nActiveG, uid);
   await saveState();
   renderNettoyage();
+  renderMesTaches();
   onGondole(nActiveG);
   toast('✓ Nettoyage enregistré');
 }
@@ -3658,6 +3741,7 @@ async function confirmNassign() {
   await saveState();
   document.getElementById('modal-nassign').style.display='none';
   cancelNsel();
+  renderMesTaches();
   toast('✓ Gondoles assignées à '+USERS[nPickedCollab]?.short);
 }
 
