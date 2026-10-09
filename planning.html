@@ -443,7 +443,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
       oninput="window.onPinInput(this.value)"
       onkeydown="if(event.key==='Enter') window.tryLoginInput()">
     <button class="sbmit" style="width:100%;margin-top:4px" onclick="window.tryLoginInput()">Connexion</button>
-    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 09/10/2026 · <span id="collabs-load-status">chargement équipe…</span></div>
+    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 09/10/2026 b · <span id="collabs-load-status">chargement équipe…</span></div>
   </div>
 </div>
 
@@ -898,6 +898,11 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
             <select id="tache-uid" style="width:100%;padding:7px 9px;border:1px solid var(--bm);border-radius:var(--r);font-family:'IBM Plex Sans',sans-serif;font-size:13px;outline:none">
               <!-- rempli dynamiquement par remplirChoixCollabs() -->
             </select>
+            <div id="tache-multi" style="display:none">
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;margin:2px 0 6px;cursor:pointer"><input type="checkbox" id="tache-all" onchange="document.querySelectorAll('.tache-multi-cb').forEach(c=>c.checked=this.checked)"> Toute l'équipe</label>
+              <div id="tache-multi-list" style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px"></div>
+              <div style="font-size:10px;color:var(--t3);margin-top:6px">Chaque personne cochée reçoit sa propre tâche et la valide de son côté.</div>
+            </div>
           </div>
           <div class="mrow" style="margin-top:10px"><label>Répétition</label>
             <select id="tache-repeat" style="width:100%;padding:7px 9px;border:1px solid var(--bm);border-radius:var(--r);font-family:'IBM Plex Sans',sans-serif;font-size:13px;outline:none">
@@ -3493,6 +3498,9 @@ function remplirChoixCollabs(selUid) {
     if (selUid && !ids.includes(selUid) && USERS[selUid]) ids.push(selUid); // tâche existante d'un ancien collaborateur
     sel.innerHTML = ids.map(u => `<option value="${u}">${nomCourt(u)}</option>`).join('');
   }
+  const multi = document.getElementById('tache-multi-list');
+  if (multi) multi.innerHTML = liste.map(u => `<label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" class="tache-multi-cb" value="${u}"> ${nomCourt(u)}</label>`).join('');
+  const all = document.getElementById('tache-all'); if (all) all.checked = false;
   const chips = document.getElementById('nassign-chips');
   if (chips) chips.innerHTML = liste.map(u => `<div class="tache-chip" onclick="window.pickNchip(this,'${u}')">${nomCourt(u)}</div>`).join('');
 }
@@ -3500,6 +3508,9 @@ function remplirChoixCollabs(selUid) {
 function openTacheModal(id) {
   const tEdit = id ? getTaches().find(x=>x.id===id) : null;
   remplirChoixCollabs(tEdit?.uid);
+  // Création : plusieurs personnes possibles (cases) ; modification : une seule (liste)
+  document.getElementById('tache-uid').style.display = id ? '' : 'none';
+  document.getElementById('tache-multi').style.display = id ? 'none' : 'block';
   document.getElementById('tache-edit-id').value = id||'';
   document.getElementById('tache-modal-title').textContent = id?'Modifier la tâche':'Nouvelle tâche';
   if(id) {
@@ -3530,10 +3541,17 @@ async function saveTache() {
   if(!titre) { toast('⚠ Intitulé requis'); return; }
   if(!STATE.taches) STATE.taches=[];
   const editId = document.getElementById('tache-edit-id').value;
-  const data = {
-    id: editId||'t'+Date.now(),
+  let uids = [document.getElementById('tache-uid').value];
+  if(!editId) {
+    uids = [...document.querySelectorAll('.tache-multi-cb:checked')].map(c=>c.value);
+    if(!uids.length) { toast('⚠ Choisissez au moins une personne'); return; }
+  }
+  const prevT = editId ? getTaches().find(x=>x.id===editId) : null;
+  const base = Date.now();
+  const all = uids.map((uid, i) => ({
+    id: editId || ('t'+base+(uids.length>1?'_'+i:'')),
     titre,
-    uid: document.getElementById('tache-uid').value,
+    uid,
     repeat: document.getElementById('tache-repeat').value,
     date: document.getElementById('tache-date').value,
     priority: document.getElementById('tache-priority').value,
@@ -3542,12 +3560,14 @@ async function saveTache() {
     doneWeeks: editId ? (getTaches().find(x=>x.id===editId)?.doneWeeks||[]) : [],
     doneMonths: editId ? (getTaches().find(x=>x.id===editId)?.doneMonths||[]) : [],
     doneAt: editId ? (getTaches().find(x=>x.id===editId)?.doneAt||null) : null,
-  };
-  if(editId) STATE.taches = STATE.taches.map(x=>x.id===editId?data:x);
-  else STATE.taches.push(data);
+    doneDays: prevT?.doneDays || [],
+  }));
+  if(editId) STATE.taches = STATE.taches.map(x=>x.id===editId?all[0]:x);
+  else STATE.taches.push(...all);
   await saveState();
   document.getElementById('modal-tache').style.display='none';
-  toast(editId?'✓ Tâche modifiée':'✓ Tâche créée');
+  toast(editId?'✓ Tâche modifiée':(all.length>1?`✓ Tâche créée pour ${all.length} personnes`:'✓ Tâche créée'));
+  updateTachesBadge();
   renderAdminTaches();
   renderMesTaches();
 }
