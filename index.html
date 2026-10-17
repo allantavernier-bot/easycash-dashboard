@@ -1772,6 +1772,12 @@ const COLLABS_AUTRES = [
   {uid:'allan',        nom:'Allan (direction)', coef:null},
   {uid:'libre_service',nom:'Libre service / Internet', coef:null},
 ];
+// COLLABS_HORS_OBJ : pas d'objectif individuel, mais leur marge réduit l'objectif de l'équipe
+// (comme Allan et Libre Service). uid = celui de l'onglet Marge_par_vendeur.
+const COLLABS_HORS_OBJ = [
+  {uid:'kevin',    nom:'Kévin'},
+  {uid:'matthieu', nom:'Matthieu'},
+];
 window.vendeurRows = null;
 window.rvoPeriod   = 'hier';
 
@@ -1886,8 +1892,9 @@ function rvoRender(){
       // Objectif dynamique : déduire ce qu'Allan et Libre Service ont réellement fait
       const allanMarge  = vend.filter(v=>v.dateISO===dISO&&v.uid==='allan').reduce((s,r)=>s+(r.marge||0),0);
       const libreMarge  = vend.filter(v=>v.dateISO===dISO&&v.uid==='libre_service').reduce((s,r)=>s+(r.marge||0),0);
-      const autresMarge = allanMarge + libreMarge;
-      // Reste à faire par l'équipe = max(0, objectif - réalisé Allan - réalisé Libre Service)
+      const horsMarge   = vend.filter(v=>v.dateISO===dISO&&COLLABS_HORS_OBJ.some(h=>h.uid===v.uid)).reduce((s,r)=>s+(r.marge||0),0);
+      const autresMarge = allanMarge + libreMarge + horsMarge;
+      // Reste à faire par l'équipe = max(0, objectif - réalisé Allan - Libre Service - collaborateurs hors objectifs)
       const objEquipe   = Math.max(0, dayObj - autresMarge);
       const presentUIDs = vend.filter(v => v.dateISO === dISO && COEFS_RVO[v.uid]).map(v => v.uid);
       const totalPart   = presentUIDs.reduce((s,uid) => s + (COEFS_RVO[uid]||0)/100, 0);
@@ -1936,10 +1943,29 @@ function rvoRender(){
 
   // Séparateur entre équipe et direction/internet
   const separator = COLLABS_AUTRES.some(c => vend.some(r => r.uid === c.uid))
-    ? `<div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:16px 0 10px">Direction & Internet</div>`
+    ? `<div style="grid-column:1/-1;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:16px 0 0">Direction & Internet</div>`
     : '';
 
-  grid.innerHTML = cardsEquipe + separator + cardsAutres;
+  // Collaborateurs hors objectifs (Kévin, Matthieu) : info, leur marge réduit l'objectif équipe
+  const totalHors = vend.filter(r => COLLABS_HORS_OBJ.some(h => h.uid === r.uid)).reduce((s,r) => s + (r.marge||0), 0);
+  const cardsHors = COLLABS_HORS_OBJ.map(c => {
+    const rows = vend.filter(r => r.uid === c.uid);
+    const realMarge = rows.reduce((s,r) => s + (r.marge||0), 0);
+    const partTotal = margeTotal > 0 ? (realMarge/margeTotal*100) : 0;
+    return `<div class="rvo-card" style="border-left:3px solid var(--purple)">
+      <div class="rvo-card-name">🧩 ${c.nom}<span class="rvo-card-coef" style="background:rgba(188,140,255,.15);color:var(--purple);border-color:rgba(188,140,255,.3)">hors objectifs</span></div>
+      <div class="rvo-nums" style="margin-top:8px">
+        <div>
+          <div class="rvo-real">${fmtE(realMarge)}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">${rows.length} jour(s) · ${fmt(partTotal,1)}% de la marge totale</div>
+        </div>
+        <div style="text-align:right"><div style="font-size:11px;color:var(--muted)">Réduit l'objectif équipe</div></div>
+      </div>
+    </div>`;
+  }).join('');
+  const separatorHors = `<div style="grid-column:1/-1;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:16px 0 0">🧩 Collaborateurs hors objectifs — ${fmtE(totalHors)} déduits de l'objectif équipe</div>`;
+
+  grid.innerHTML = cardsEquipe + separator + cardsAutres + separatorHors + cardsHors;
 }
 </script>
 

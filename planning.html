@@ -443,7 +443,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
       oninput="window.onPinInput(this.value)"
       onkeydown="if(event.key==='Enter') window.tryLoginInput()">
     <button class="sbmit" style="width:100%;margin-top:4px" onclick="window.tryLoginInput()">Connexion</button>
-    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 09/10/2026 b · <span id="collabs-load-status">chargement équipe…</span></div>
+    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 17/10/2026 · <span id="collabs-load-status">chargement équipe…</span></div>
   </div>
 </div>
 
@@ -659,6 +659,10 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
               <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin:0"><input type="checkbox" id="cm-acces-abbeville"> Abbeville</label>
             </div>
             <div class="mrow" style="grid-column:1/-1;display:flex;align-items:center;gap:10px;padding:8px 0">
+              <input type="checkbox" id="cm-hors-obj" style="width:16px;height:16px;cursor:pointer">
+              <label for="cm-hors-obj" style="margin:0 14px 0 0;cursor:pointer;font-size:13px">Hors objectifs <span style="color:var(--t3);font-size:11px">(pas d'objectif perso, sa marge réduit celui de l'équipe)</span></label>
+            </div>
+            <div class="mrow" style="grid-column:1/-1;display:flex;align-items:center;gap:10px;padding:0 0 8px">
               <input type="checkbox" id="cm-admin" style="width:16px;height:16px;cursor:pointer">
               <label for="cm-admin" style="margin:0;cursor:pointer;font-size:13px">Accès administrateur (peut modifier le planning et gérer les demandes)</label>
             </div>
@@ -1375,6 +1379,23 @@ function ovKey(uid){ return (uid === 'allan' && curMag !== 'berck') ? `allan@${c
 function contratH(uid){ return (STATE.contrats && STATE.contrats[uid]) || (BASE_SCHEDULE[uid] && BASE_SCHEDULE[uid].h) || 35; }
 // Journée de formation = 1/5 du contrat (forfait) : 7h pour 35h, 5h pour 25h
 function minsFormation(uid){ return Math.round(contratH(uid) * 60 / 5); }
+
+// ── COLLABORATEURS HORS OBJECTIFS ──
+// N'ont pas d'objectif individuel, mais leur marge réduit l'objectif du reste de l'équipe
+// (comme Allan et Libre Service). Réglable dans Équipe & PIN (case « Hors objectifs »).
+const HORS_OBJ_DEFAUT = ['kevin', 'matthieu'];
+function prenomKey(uid){
+  const n = ((USERS[uid] && USERS[uid].name) || uid).split(' ')[0];
+  return n.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+function estHorsObjectifs(uid){
+  const c = (STATE.collabs || []).find(x => x.id === uid);
+  if (c && typeof c.horsObjectifs === 'boolean') return c.horsObjectifs;
+  return HORS_OBJ_DEFAUT.includes(uid) || HORS_OBJ_DEFAUT.includes(prenomKey(uid));
+}
+function idsEquipeObj(){ return SIDS.filter(u => !estHorsObjectifs(u)); }
+function idsHorsObj(){ return SIDS.filter(u => estHorsObjectifs(u)); }
+function margeHorsObjJour(dISO){ return idsHorsObj().reduce((s, u) => s + (vendeurData[`${dISO}|${u}`] || 0), 0); }
 
 // Minutes d'un créneau qui comptent pour les objectifs
 // (Formation = journée entière exclue ; horsObjMins = partie de journée exclue)
@@ -2564,6 +2585,17 @@ async function loadMargeData(){
       const marge = parseNumGviz(r[4]);
       if(uid&&marge!==null) vendeurData[dISO+'|'+uid] = marge;
     });
+    // Le pipeline enregistre les vendeurs par prénom (ex. « matthieu ») ; certains collaborateurs
+    // du planning ont un identifiant généré (« c17… ») : on rattache leurs ventes par prénom.
+    Object.keys(USERS).forEach(uid => {
+      if (uid === 'allan') return;
+      const pk = prenomKey(uid);
+      if (pk === uid) return;
+      Object.keys(vendeurData).forEach(k => {
+        const [d, u] = k.split('|');
+        if (u === pk && vendeurData[`${d}|${uid}`] === undefined) vendeurData[`${d}|${uid}`] = vendeurData[k];
+      });
+    });
 
     const tag=document.getElementById('marge-source-tag');
     if(tag){
@@ -2587,6 +2619,8 @@ function renderObjectifs(){
   }
   if (vObj) [...vObj.children].forEach(ch => { ch.style.display = (ch === noObj) === (curMag !== 'berck') ? '' : 'none'; });
   if (curMag !== 'berck') return;
+  const EQ = idsEquipeObj();   // collaborateurs avec objectif
+  const HO = idsHorsObj();     // collaborateurs hors objectifs
   const mon = monday(woff);
   const dates = DAYS.map((_,i)=>{ const d=new Date(mon); d.setDate(mon.getDate()+i); return d; });
   document.getElementById('marge-week-label').textContent = `S${wknum(mon)} — ${fmt(mon)} au ${fmt(dates[5])}`;
@@ -2620,7 +2654,7 @@ function renderObjectifs(){
   }
 
   // Poids total de l'équipe présente
-  const totalPoidsEquipe = SIDS.reduce((s, uid) => s + getPoids(uid), 0);
+  const totalPoidsEquipe = EQ.reduce((s, uid) => s + getPoids(uid), 0);
 
   // Objectif dynamique : déduire Allan + Libre Service
   function getObjEquipeJour(dISO) {
@@ -2628,20 +2662,22 @@ function renderObjectifs(){
     if (!objTotal) return 0;
     const allanMarge = vendeurData[`${dISO}|allan`] || 0;
     const libreMarge = vendeurData[`${dISO}|libre_service`] || 0;
-    return Math.max(0, objTotal - allanMarge - libreMarge);
+    return Math.max(0, objTotal - allanMarge - libreMarge - margeHorsObjJour(dISO));
   }
 
   // Info dynamique Allan + Libre Service
   const totalAllan  = dates.reduce((s,d) => s + (vendeurData[`${iso(d)}|allan`] || 0), 0);
   const totalLibre  = dates.reduce((s,d) => s + (vendeurData[`${iso(d)}|libre_service`] || 0), 0);
   const totalObjSem = dates.reduce((s,d) => s + (margeData[iso(d)] || 0), 0);
+  const totalHors   = dates.reduce((s,d) => s + margeHorsObjJour(iso(d)), 0);
+  const detailHors  = HO.map(u => `${USERS[u]?.short||u} ${Math.round(dates.reduce((s,d)=>s+(vendeurData[`${iso(d)}|${u}`]||0),0)).toLocaleString('fr-FR')} €`).join(' · ');
 
 
   const tbody2 = document.getElementById('marge-tbody');
   const tfoot = document.getElementById('marge-tfoot');
   let totalSemaine = 0;
 
-  tbody2.innerHTML = SIDS.map(uid => {
+  tbody2.innerHTML = EQ.map(uid => {
     const u = USERS[uid];
     const poids = getPoids(uid);
     const hSem = getHeuresSemaine(uid);
@@ -2665,7 +2701,7 @@ function renderObjectifs(){
       if(!objEquipe) return `<td style="text-align:center;color:var(--t3);font-size:10px">—</td>`;
 
       // Poids de l'équipe présente CE jour (basé sur les heures journalières)
-      const totalPartJour = SIDS.reduce((acc, u2) => {
+      const totalPartJour = EQ.reduce((acc, u2) => {
         const s2 = getSlot(u2, dayKey, dISO);
         const a2 = absStatus(u2, dISO);
         const iv2 = dISO >= VIERGE_FROM && !STATE.slotOverrides[`${u2}-${dISO}`] && !STATE.scheduleOverrides[`${u2}-${dayKey}`];
@@ -2730,19 +2766,20 @@ function renderObjectifs(){
     return `<td style="text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11px;padding:9px 10px">${txt}</td>`;
   });
   // Totaux réalisé et écart équipe
-  const totalRealEquipe = SIDS.reduce((s, uid) => {
+  const totalRealEquipe = EQ.reduce((s, uid) => {
     return s + dates.reduce((s2, d) => s2 + (vendeurData[`${iso(d)}|${uid}`] || 0), 0);
   }, 0);
   const totalEcartEquipe = totalRealEquipe - totalSemaine;
-  const hasAnyReal = SIDS.some(uid => dates.some(d => vendeurData[`${iso(d)}|${uid}`] !== undefined));
+  const hasAnyReal = EQ.some(uid => dates.some(d => vendeurData[`${iso(d)}|${uid}`] !== undefined));
   tfoot.innerHTML = `<td style="padding:9px 10px;font-size:11px" colspan="3">🎯 Objectif équipe (dyn.)</td>${footCells.join('')}<td style="text-align:right;font-family:'IBM Plex Mono',monospace;padding:9px 10px;color:var(--bl);border-left:2px solid var(--bm)">${totalSemaine>0?Math.round(totalSemaine).toLocaleString('fr-FR')+' €':'—'}</td><td style="text-align:right;font-family:'IBM Plex Mono',monospace;padding:9px 10px;font-weight:700">${hasAnyReal?Math.round(totalRealEquipe).toLocaleString('fr-FR')+' €':'—'}</td><td style="text-align:right;font-family:'IBM Plex Mono',monospace;padding:9px 10px;font-weight:700;color:${totalEcartEquipe>=0?'var(--gn)':'var(--rd)'}">${hasAnyReal?(totalEcartEquipe>=0?'+':'')+Math.round(totalEcartEquipe).toLocaleString('fr-FR')+' €':'—'}</td>`;
 
   const totalObj = dates.reduce((a, d) => a + (margeData[iso(d)] || 0), 0);
-  const partTheorStr = SIDS.map(uid => {
+  const partTheorStr = EQ.map(uid => {
     const p = totalPoidsEquipe > 0 ? Math.round(getPoids(uid)/totalPoidsEquipe*100) : 0;
     return `${USERS[uid].short} ${p}%`;
   }).join(' · ');
-  const resteEquipe = Math.max(0, totalObjSem - totalAllan - totalLibre);
+  const resteEquipe = Math.max(0, totalObjSem - totalAllan - totalLibre - totalHors);
+  const pctHors   = totalObjSem > 0 ? Math.round(totalHors / totalObjSem * 100) : 0;
   const pctAllan  = totalObjSem > 0 ? Math.round(totalAllan  / totalObjSem * 100) : 0;
   const pctLibre  = totalObjSem > 0 ? Math.round(totalLibre  / totalObjSem * 100) : 0;
   const pctEquipe = totalObjSem > 0 ? Math.round(resteEquipe / totalObjSem * 100) : 0;
@@ -2750,7 +2787,7 @@ function renderObjectifs(){
   document.getElementById('marge-stats').innerHTML = `
     <div style="background:var(--s2);border-radius:var(--r);padding:14px 18px;margin-bottom:14px">
       <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--t2);margin-bottom:12px">Décomposition de l'objectif semaine</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;text-align:center">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;text-align:center">
         <div style="border-radius:8px;padding:12px;background:var(--s3);border-top:3px solid var(--bl)">
           <div style="font-size:18px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--bl)">${totalObjSem>0?totalObjSem.toLocaleString('fr-FR')+' €':'—'}</div>
           <div style="font-size:10px;color:var(--t2);margin-top:4px;text-transform:uppercase;letter-spacing:.04em">🎯 Objectif global</div>
@@ -2767,11 +2804,17 @@ function renderObjectifs(){
           <div style="font-size:18px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--rd)">${totalLibre>0?totalLibre.toLocaleString('fr-FR')+' €':'—'}</div>
           <div style="font-size:10px;color:var(--t2);margin-top:4px;text-transform:uppercase;letter-spacing:.04em">🌐 Internet (${pctLibre}%)</div>
         </div>
+        <div style="border-radius:8px;padding:12px;background:var(--s3);border-top:3px solid var(--vl)">
+          <div style="font-size:18px;font-weight:700;font-family:'IBM Plex Mono',monospace;color:var(--vl)">${totalHors>0?Math.round(totalHors).toLocaleString('fr-FR')+' €':'—'}</div>
+          <div style="font-size:10px;color:var(--t2);margin-top:4px;text-transform:uppercase;letter-spacing:.04em">🧩 Collaborateurs hors objectifs (${pctHors}%)</div>
+          <div style="font-size:10px;color:var(--t3);margin-top:4px">${HO.length?detailHors:'Aucun'}</div>
+        </div>
       </div>
       <div style="margin-top:10px;height:6px;border-radius:3px;background:var(--s3);overflow:hidden;display:flex">
         <div style="width:${pctEquipe}%;background:var(--gn);transition:width .3s"></div>
         <div style="width:${pctAllan}%;background:var(--am);transition:width .3s"></div>
         <div style="width:${pctLibre}%;background:var(--rd);transition:width .3s"></div>
+        <div style="width:${pctHors}%;background:var(--vl);transition:width .3s"></div>
       </div>
       <div style="font-size:10px;color:var(--t2);margin-top:6px;text-align:right">Répartition théorique équipe : ${partTheorStr}</div>
     </div>`;
@@ -3043,7 +3086,7 @@ function rvoRender(){
   fill.style.width = pctMag+'%';
   fill.style.background = pctMag>=100?'var(--gn)':pctMag>=80?'var(--am)':'var(--rd)';
 
-  const collabs = SIDS.filter(uid=>uid!=='allan');
+  const collabs = SIDS.filter(uid=>uid!=='allan' && !estHorsObjectifs(uid));
   const hasVendeurData = collabs.some(uid=>datesInRange.some(d=>vendeurData[`${d}|${uid}`]!==undefined));
 
   const grid = document.getElementById('rvo-collabs-grid');
@@ -3129,7 +3172,7 @@ function renderCollabMgr(){
     return `<div style="display:grid;grid-template-columns:30px 1fr auto auto auto;align-items:center;gap:10px;padding:10px 12px;background:var(--sf);border:1px solid var(--b);border-radius:var(--r);margin-bottom:6px">
       <div class="av" style="width:30px;height:30px;font-size:10px;background:${c.bg||'#EEE'};color:${c.ct||'#333'};border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600">${ini}</div>
       <div>
-        <div style="font-weight:500;font-size:12px">${c.nom}${c.admin?'<span style="font-size:9px;background:var(--bl-l);color:var(--bl);border:1px solid var(--bl-b);padding:1px 6px;border-radius:10px;margin-left:6px">Admin</span>':''}</div>
+        <div style="font-weight:500;font-size:12px">${c.nom}${c.admin?'<span style="font-size:9px;background:var(--bl-l);color:var(--bl);border:1px solid var(--bl-b);padding:1px 6px;border-radius:10px;margin-left:6px">Admin</span>':''}${c.id!=='allan'&&estHorsObjectifs(c.id)?'<span style="font-size:9px;background:var(--s3);color:var(--vl);border:1px solid var(--bm);padding:1px 6px;border-radius:10px;margin-left:6px">Hors objectifs</span>':''}</div>
         <div style="font-size:10px;color:var(--t3)">${c.role||''} · ${c.h===0?'Forfait jours':c.h+'h/sem'} · PIN: ${c.pin} · 🏬 ${c.id==='allan'?'Tous':(MAGASIN_LBL[c.magasin||USERS[c.id]?.magasin||'berck']||'').replace('Easy Cash ','')}${(c.magasins_acces||USERS[c.id]?.magasins_acces||[]).length?' (+ accès '+(c.magasins_acces||USERS[c.id]?.magasins_acces).map(m=>(MAGASIN_LBL[m]||m).replace('Easy Cash ','')).join(', ')+')':''}</div>
       </div>
       <div style="font-size:10px;color:${signed?'var(--gn)':'var(--t3)'}">${signed?'✓ Signé':'Non signé'}</div>
@@ -3159,6 +3202,7 @@ function openCollabModal(mode, id){
     document.getElementById('cm-magasin').value=cMag==='all'?'berck':cMag;
     document.getElementById('cm-acces-berck').checked=cAcc.includes('berck');
     document.getElementById('cm-acces-abbeville').checked=cAcc.includes('abbeville');
+    document.getElementById('cm-hors-obj').checked=estHorsObjectifs(id);
   } else {
     ['cm-nom','cm-poste','cm-pin','cm-email'].forEach(i=>document.getElementById(i).value='');
     document.getElementById('cm-h').value='35';
@@ -3166,6 +3210,7 @@ function openCollabModal(mode, id){
     document.getElementById('cm-magasin').value=curMag;
     document.getElementById('cm-acces-berck').checked=false;
     document.getElementById('cm-acces-abbeville').checked=false;
+    document.getElementById('cm-hors-obj').checked=false;
     const adm=document.getElementById('cm-admin'); if(adm) adm.checked=false;
   }
   document.getElementById('modal-collab').style.display='flex';
@@ -3202,6 +3247,7 @@ async function saveCollab(){
     magasin: document.getElementById('cm-magasin').value||curMag,
     magasins_acces: ['berck','abbeville'].filter(m=>document.getElementById('cm-acces-'+m)?.checked && m!==document.getElementById('cm-magasin').value),
     active: true,
+    horsObjectifs: !!document.getElementById('cm-hors-obj')?.checked,
   };
   if(collabEditId==='allan') data.magasin='all';
 
@@ -4288,7 +4334,7 @@ function renderMonthlyPerf() {
     });
 
     const result = {};
-    SIDS.forEach(uid => {
+    idsEquipeObj().forEach(uid => {
       let objTotal = 0;
       let realTotal = 0;
       // Grouper par semaine pour appliquer la bonne config de coefs
@@ -4313,7 +4359,7 @@ function renderMonthlyPerf() {
         const hJour = isSat ? (h/5)*1.4 : h/5;
         const poidsUid = hJour * pct;
         // Poids total équipe ce jour (simplifié)
-        const totalPoids = SIDS.reduce((s,u2) => {
+        const totalPoids = idsEquipeObj().reduce((s,u2) => {
           const c2 = (getCoefsAtDate(weekKey)[u2]||0)/100;
           const h2 = BASE_SCHEDULE[u2]?.h || 35;
           const hj2 = isSat ? (h2/5)*1.4 : h2/5;
@@ -4322,7 +4368,7 @@ function renderMonthlyPerf() {
         // Objectif dynamique (déduction Allan + Internet)
         const allanDay = vendeurData[dISO+'|allan']||0;
         const libreDay = vendeurData[dISO+'|libre_service']||0;
-        const objEquipe = Math.max(0, dayObj - allanDay - libreDay);
+        const objEquipe = Math.max(0, dayObj - allanDay - libreDay - margeHorsObjJour(dISO));
         objTotal += totalPoids>0 ? (poidsUid/totalPoids)*objEquipe : 0;
         // Réalisé depuis vendeurData
         const real = vendeurData[dISO+'|'+uid];
@@ -4367,7 +4413,7 @@ function renderMonthlyPerf() {
     </tr></thead>
     <tbody>`;
 
-  SIDS.forEach(uid => {
+  idsEquipeObj().forEach(uid => {
     const u = USERS[uid];
     html += `<tr style="border-top:1px solid var(--brd)">
       <td style="padding:6px 8px;font-weight:600">${u.short}</td>
