@@ -469,7 +469,7 @@ body.halloween .hw-bat{position:fixed;font-size:22px;pointer-events:none;z-index
       oninput="window.onPinInput(this.value)"
       onkeydown="if(event.key==='Enter') window.tryLoginInput()">
     <button class="sbmit" style="width:100%;margin-top:4px" onclick="window.tryLoginInput()">Connexion</button>
-    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 19/10/2026 (h) 🎃 · <span id="collabs-load-status">chargement équipe…</span></div>
+    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 19/10/2026 (i) 🎃 · <span id="collabs-load-status">chargement équipe…</span></div>
   </div>
 </div>
 
@@ -2249,9 +2249,8 @@ function infosCP(uid){
   if(entree && entree>arr){ // embauché après l'arrêté : part de zéro à son entrée
     return { n1: aSolde?Number(v.cp):0, nArrete: 0, nAuto:true, depart: iso(new Date(new Date(entree+'T12:00:00').getTime()-864e5)) };
   }
-  const debut = entree && entree>debutPeriodeCP(arr) ? entree : debutPeriodeCP(arr);
-  const veille = iso(new Date(new Date(debut+'T12:00:00').getTime()-864e5));
-  const auto = Math.min(30, CP_PAR_MOIS*finsDeMois(veille, arr));
+  // Le solde RH inclut déjà tout ce qui a été acquis jusqu'à l'arrêté : on repart de 0 et +2,5 j à chaque fin de mois après l'arrêté (fin septembre = 1er crédit)
+  const auto = 0;
   const manuel = !(v.cpN===undefined||v.cpN===null||v.cpN==='');
   return { n1: aSolde?Number(v.cp):0, nArrete: manuel?Number(v.cpN):auto, nAuto:!manuel, depart: arr };
 }
@@ -2341,7 +2340,7 @@ function detailHtml(uid){
     if(cpt==='cp'){
       const mois=Math.round(d.acquis/CP_PAR_MOIS), moisFin=Math.round(d.acquisFin/CP_PAR_MOIS);
       return `<div style="font-size:12px;margin-top:4px;line-height:1.7"><b>${lib}</b><br>
-        Solde N-1 (RH, au ${fmtD(S.arrete)}) <b>${fmtJ(d.n1)}</b> + acquis N au ${fmtD(S.arrete)} <b>${fmtJ(d.nArrete)}</b>${d.nAuto?' <span style="color:var(--t3)">(calculé : 2,5 j × mois depuis le 1er juin)</span>':''}
+        Solde RH au ${fmtD(S.arrete)} <b>${fmtJ(d.n1)}</b>${d.nArrete?` + acquis N au ${fmtD(S.arrete)} <b>${fmtJ(d.nArrete)}</b>`:''}
         + acquis depuis <b>${fmtJ(d.acquis)}</b> <span style="color:var(--t3)">(${mois} fin${mois>1?'s':''} de mois × 2,5)</span>
         − posés <b>${fmtJ(d.pris)}</b> − prévus <b>${fmtJ(d.prevu)}</b> = <b style="color:${d.reste<0?'var(--rd)':'var(--gn)'}">${fmtJ(d.reste)} j à poser aujourd'hui</b><br>
         <span style="color:var(--vl)">Prévision au ${fmtD(S.echeanceCP)} : ${fmtJ(d.reste)} + ${fmtJ(d.acquisFin-d.acquis)} encore à acquérir (${moisFin-mois} mois) = <b>${fmtJ(d.prevision)} j</b></span>${d.attente?` <span style="color:var(--am)">· ${fmtJ(d.attente)} j en attente → ${fmtJ(d.prevision-d.attente)} j si acceptés</span>`:''}</div>`;
@@ -2381,7 +2380,7 @@ function renderSoldesAdmin(){
     <div style="font-size:11px;color:var(--t3);margin:4px 0 8px">CP : +2,5 j acquis à chaque fin de mois · N-1 à poser avant le ${fmtD(S.echeanceCP)} · RTT avant le ${fmtD(S.echeanceRTT)} · ${libMode()} · seules les absences après l'arrêté sont décomptées · <b>cliquer sur un nom pour voir le détail</b></div>
     <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
       <thead><tr><th style="text-align:left;padding:5px 8px;font-size:11px;color:var(--t2)">Salarié</th>
-        <th ${th}>Solde N-1</th><th ${th} title="Acquis sur la période en cours (2,5 j/mois)">Acquis N</th><th ${th}>Posés</th><th ${th}>Prévus (acceptés)</th><th ${th}>Reste à poser<br><span style="font-weight:400">aujourd'hui</span></th><th ${th}>Prévision<br><span style="font-weight:400">au ${fmtD(S.echeanceCP)}</span></th><th ${th}>En attente</th>
+        <th ${th}>Solde N-1</th><th ${th} title="+2,5 j à chaque fin de mois depuis l'arrêté RH">Acquis depuis<br><span style="font-weight:400">l'arrêté</span></th><th ${th}>Posés</th><th ${th}>Prévus (acceptés)</th><th ${th}>Reste à poser<br><span style="font-weight:400">aujourd'hui</span></th><th ${th}>Prévision<br><span style="font-weight:400">au ${fmtD(S.echeanceCP)}</span></th><th ${th}>En attente</th>
         <th style="border-left:1px solid var(--b)"></th><th ${th}>Solde RTT</th><th ${th}>Pris + prévu</th><th ${th}>Reste RTT</th></tr></thead>
       <tbody>${rows}</tbody></table></div>`;
 }
@@ -2419,7 +2418,7 @@ window.openSoldesModal=function(){
   const inp='style="width:70px;padding:5px 6px;border:1px solid #ddd;border-radius:5px;font-size:12px;text-align:right"';
   const lignes=ids.map(u=>{const v=S.vals[u]||{};return `<tr><td style="padding:3px 6px;font-size:12px">${nomComplet(u)}</td>
     <td><input type="number" step="0.5" data-u="${u}" data-k="cp" value="${v.cp??''}" ${inp}></td>
-    <td><input type="number" step="0.5" data-u="${u}" data-k="cpN" value="${v.cpN??''}" placeholder="auto" title="Vide = calcul auto (2,5 j × mois depuis le 1er juin)" ${inp}></td>
+    <td><input type="number" step="0.5" data-u="${u}" data-k="cpN" value="${v.cpN??''}" placeholder="0" title="Vide = 0 (le solde RH comprend déjà les acquis jusqu'à l'arrêté)" ${inp}></td>
     <td><input type="number" step="0.5" data-u="${u}" data-k="rtt" value="${v.rtt??''}" ${inp}></td>
     <td><input type="date" data-u="${u}" data-k="entree" value="${v.entree??''}" style="width:118px;padding:4px;border:1px solid #ddd;border-radius:5px;font-size:11px"></td></tr>`;}).join('');
   const m=document.createElement('div');
@@ -2434,7 +2433,7 @@ window.openSoldesModal=function(){
       <div><label ${lab}>RTT à poser avant le</label><input type="date" id="so-ertt" value="${S.echeanceRTT||''}" ${box}></div>
     </div>
     <table style="width:100%;border-collapse:collapse;margin-bottom:12px"><thead><tr><th style="text-align:left;font-size:11px;color:#666;padding:3px 6px">Salarié</th><th style="font-size:11px;color:#666">CP N-1</th><th style="font-size:11px;color:#666">Acquis N<br>à l'arrêté</th><th style="font-size:11px;color:#666">RTT</th><th style="font-size:11px;color:#666">Entrée le<br><span style="font-weight:400">(nouveaux)</span></th></tr></thead><tbody>${lignes}</tbody></table>
-    <div style="font-size:10px;color:#999;margin-bottom:12px">CP N-1 = solde communiqué par la RH. Acquis N vide = calcul automatique (2,5 j par fin de mois depuis le 1er juin). Ensuite +2,5 j à chaque fin de mois. Pour un nouveau salarié, indiquer seulement sa date d'entrée. Les congés acceptés après la date d'arrêté sont déduits automatiquement.</div>
+    <div style="font-size:10px;color:#999;margin-bottom:12px">CP N-1 = solde communiqué par la RH. Le solde RH comprend déjà tout ce qui est acquis jusqu'à la date d'arrêté ; l'outil ajoute ensuite +2,5 j à chaque fin de mois (1er crédit : fin du mois de l'arrêté). « Acquis N à l'arrêté » : à laisser vide, sauf si la RH donne un compteur séparé. Pour un nouveau salarié, indiquer seulement sa date d'entrée. Les congés acceptés après la date d'arrêté sont déduits automatiquement.</div>
     <div style="display:flex;gap:8px"><button id="so-cancel" style="flex:1;padding:9px;border:1px solid #ddd;background:#fff;border-radius:6px;cursor:pointer">Annuler</button>
     <button id="so-save" style="flex:1;padding:9px;background:#0F0F0E;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600">Enregistrer</button></div></div>`;
   document.body.appendChild(m);
