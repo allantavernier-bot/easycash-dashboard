@@ -443,7 +443,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
       oninput="window.onPinInput(this.value)"
       onkeydown="if(event.key==='Enter') window.tryLoginInput()">
     <button class="sbmit" style="width:100%;margin-top:4px" onclick="window.tryLoginInput()">Connexion</button>
-    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 19/10/2026 (e) · <span id="collabs-load-status">chargement équipe…</span></div>
+    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 19/10/2026 (f) · <span id="collabs-load-status">chargement équipe…</span></div>
   </div>
 </div>
 
@@ -2227,6 +2227,51 @@ function celluleReste(d){
   return `<b style="color:${col}">${fmtJ(d.reste)}</b>`;
 }
 
+// Détail ligne à ligne du décompte d'un salarié (CP + RTT) : chaque absence, ses jours, son statut
+const soldesOuverts = new Set();
+function lignesDetail(uid){
+  const S=getSoldes(); const today=iso(new Date()); const hier=new Date(); hier.setDate(hier.getDate()-1);
+  const out=[];
+  (STATE.absences||[]).filter(a=>a.uid===uid && (a.type==='conges'||a.type==='rtt') && a.status!=='refused')
+    .sort((x,y)=>x.start.localeCompare(y.start)).forEach(a=>{
+      const cpt=a.type==='conges'?'CP':'RTT';
+      const chev=(STATE.absences||[]).some(b=>b!==a&&b.uid===uid&&b.type===a.type&&b.status!=='refused'&&b.start<=a.end&&b.end>=a.start);
+      const base={a,cpt,chev,total:joursDecomptes(a.start,a.end,S.arrete)};
+      if(a.end<=S.arrete){ out.push({...base,statut:'avant',jours:joursDecomptes(a.start,a.end)}); return; }
+      if(a.status==='pending'){ out.push({...base,statut:'attente',jours:base.total}); return; }
+      const pose = a.start<today ? joursDecomptes(a.start, a.end<today?a.end:iso(hier), S.arrete) : 0;
+      const prevu = a.end>=today ? joursDecomptes(a.start>today?a.start:today, a.end, S.arrete) : 0;
+      out.push({...base,statut: pose&&prevu?'encours':pose?'pose':'prevu',pose,prevu,jours:base.total});
+    });
+  return out;
+}
+function detailHtml(uid){
+  const S=getSoldes(); const L=lignesDetail(uid);
+  const pill=(txt,bg,col)=>`<span style="font-size:10px;font-weight:600;padding:1px 7px;border-radius:9px;background:${bg};color:${col};white-space:nowrap">${txt}</span>`;
+  const st={pose:pill('✔ Posé','var(--gn-l)','var(--gn)'),prevu:pill('📅 Prévu (accepté)','var(--bl-l)','var(--bl)'),
+            attente:pill('⏳ En attente','var(--am-l)','var(--am)'),avant:pill('Avant l\'arrêté RH','var(--s3)','var(--t3)')};
+  const fd=x=>new Date(x+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'2-digit',year:'2-digit'});
+  const rows=L.map(l=>{
+    const per = l.a.start===l.a.end ? fd(l.a.start) : `${fd(l.a.start)} → ${fd(l.a.end)}`;
+    let badge = l.statut==='encours' ? st.pose+' '+st.prevu : st[l.statut];
+    let jours = l.statut==='encours' ? `${fmtJ(l.pose)} posé${l.pose>1?'s':''} + ${fmtJ(l.prevu)} prévu${l.prevu>1?'s':''}` : `${fmtJ(l.jours)} j`;
+    if(l.statut==='avant') jours = `<span style="color:var(--t3)">déjà dans le solde</span>`;
+    return `<tr style="border-top:1px dashed var(--b);${l.statut==='avant'?'opacity:.6':''}">
+      <td style="padding:4px 8px;font-size:11px;font-weight:600;color:var(--t2)">${l.cpt}</td>
+      <td style="padding:4px 8px;font-size:12px;white-space:nowrap">${per}</td>
+      <td style="padding:4px 8px;font-size:12px;text-align:right;white-space:nowrap;font-family:'IBM Plex Mono',monospace">${jours}</td>
+      <td style="padding:4px 8px">${badge}</td>
+      <td style="padding:4px 8px;font-size:11px;color:var(--t3)">${l.chev?'<span style="color:var(--rd);font-weight:600">⚠ chevauche une autre demande (jours comptés 2 fois) — à corriger</span> ':''}${l.a.comment||''}</td></tr>`;
+  }).join('');
+  const calc=(cpt,lib)=>{const d=decompte(uid,cpt); if(d.solde===null) return '';
+    return `<div style="font-size:12px;margin-top:4px"><b>${lib}</b> : solde RH ${fmtJ(d.solde)} − posés ${fmtJ(d.pris)} − prévus ${fmtJ(d.prevu)} = <b style="color:${d.reste<0?'var(--rd)':'var(--gn)'}">${fmtJ(d.reste)} j à poser</b>${d.attente?` <span style="color:var(--am)">(${fmtJ(d.attente)} j en attente → ${fmtJ(d.reste-d.attente)} j si acceptés)</span>`:''}</div>`;};
+  return `<div style="background:var(--s2);border:1px solid var(--b);border-radius:var(--r);padding:8px 10px;margin:4px 0 8px">
+    ${L.length?`<table style="width:100%;border-collapse:collapse">${rows}</table>`:'<div style="font-size:12px;color:var(--t3)">Aucun congé ni RTT demandé.</div>'}
+    <div style="border-top:1px solid var(--b);margin-top:6px;padding-top:4px">${calc('cp','Congés payés')}${calc('rtt','RTT')}</div></div>`;
+}
+window.toggleSoldeDetail=function(uid){ soldesOuverts.has(uid)?soldesOuverts.delete(uid):soldesOuverts.add(uid); renderSoldesAdmin(); };
+window.toggleSoldesTous=function(){ const ids=salariesDecompte(); if(ids.every(u=>soldesOuverts.has(u))) soldesOuverts.clear(); else ids.forEach(u=>soldesOuverts.add(u)); renderSoldesAdmin(); };
+
 function renderSoldesAdmin(){
   const el=document.getElementById('soldes-card'); if(!el) return;
   const S=getSoldes(); const ids=salariesDecompte();
@@ -2236,21 +2281,23 @@ function renderSoldesAdmin(){
     const c=decompte(u,'cp'), r=decompte(u,'rtt');
     const val = (x)=> x.solde===null?'<span style="color:var(--t3)">—</span>':fmtJ(x.solde);
     const z = n => n?fmtJ(n):'<span style="color:var(--t3)">0</span>';
-    return `<tr style="border-top:1px solid var(--b)">
-      <td style="padding:5px 8px;font-size:12px;font-weight:500;white-space:nowrap">${nomComplet(u)}</td>
+    const ouvert=soldesOuverts.has(u);
+    return `<tr style="border-top:1px solid var(--b);cursor:pointer;${ouvert?'background:var(--s2)':''}" onclick="window.toggleSoldeDetail('${u}')" title="Voir le détail">
+      <td style="padding:5px 8px;font-size:12px;font-weight:500;white-space:nowrap"><span style="display:inline-block;width:12px;color:var(--t3)">${ouvert?'▾':'▸'}</span>${nomComplet(u)}</td>
       <td ${td}>${val(c)}</td><td ${td}>${z(c.pris)}</td><td ${td}>${z(c.prevu)}</td><td ${td}>${celluleReste(c)}</td><td ${td}>${c.attente?'<span style="color:var(--am)">'+fmtJ(c.attente)+'</span>':'<span style="color:var(--t3)">0</span>'}</td>
       <td ${td} style="border-left:1px solid var(--b)"></td>
       <td ${td}>${val(r)}</td><td ${td}>${z(r.pris+r.prevu)}</td><td ${td}>${celluleReste(r)}</td>
-    </tr>`;
+    </tr>${ouvert?`<tr><td colspan="10" style="padding:0 8px">${detailHtml(u)}</td></tr>`:''}`;
   }).join('');
   el.innerHTML = `<div class="actitle" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
       <span>🏖 Décompte congés — soldes RH arrêtés au ${fmtD(S.arrete)}</span>
-      <button onclick="window.openSoldesModal()" style="background:var(--tx);color:#fff;border:none;padding:6px 14px;border-radius:var(--r);font-size:12px;font-weight:500;cursor:pointer;font-family:'IBM Plex Sans',sans-serif">✏️ Mettre à jour les soldes</button>
+      <span style="display:flex;gap:6px"><button onclick="window.toggleSoldesTous()" style="background:var(--s2);color:var(--tx);border:1px solid var(--bm);padding:6px 12px;border-radius:var(--r);font-size:12px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif">${salariesDecompte().every(u=>soldesOuverts.has(u))?'▴ Replier tout':'▾ Détail de tous'}</button>
+      <button onclick="window.openSoldesModal()" style="background:var(--tx);color:#fff;border:none;padding:6px 14px;border-radius:var(--r);font-size:12px;font-weight:500;cursor:pointer;font-family:'IBM Plex Sans',sans-serif">✏️ Mettre à jour les soldes</button></span>
     </div>
-    <div style="font-size:11px;color:var(--t3);margin:4px 0 8px">CP à poser avant le ${fmtD(S.echeanceCP)} · RTT avant le ${fmtD(S.echeanceRTT)} · ${libMode()} · seules les absences après l'arrêté sont décomptées</div>
+    <div style="font-size:11px;color:var(--t3);margin:4px 0 8px">CP à poser avant le ${fmtD(S.echeanceCP)} · RTT avant le ${fmtD(S.echeanceRTT)} · ${libMode()} · seules les absences après l'arrêté sont décomptées · <b>cliquer sur un nom pour voir le détail</b></div>
     <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
       <thead><tr><th style="text-align:left;padding:5px 8px;font-size:11px;color:var(--t2)">Salarié</th>
-        <th ${th}>Solde CP</th><th ${th}>Pris</th><th ${th}>Prévu (accepté)</th><th ${th}>Reste à poser</th><th ${th}>En attente</th>
+        <th ${th}>Solde CP</th><th ${th}>Posés</th><th ${th}>Prévus (acceptés)</th><th ${th}>Reste à poser</th><th ${th}>En attente</th>
         <th style="border-left:1px solid var(--b)"></th><th ${th}>Solde RTT</th><th ${th}>Pris + prévu</th><th ${th}>Reste RTT</th></tr></thead>
       <tbody>${rows}</tbody></table></div>`;
 }
@@ -2262,9 +2309,10 @@ function renderMonSolde(){
   const bloc=(titre,d,ech)=>d.solde===null?'':`<div style="flex:1;min-width:190px;background:var(--sf);border:1px solid var(--b);border-radius:var(--rl);padding:12px 14px">
       <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--t2)">${titre}</div>
       <div style="font-size:22px;font-weight:600;margin:2px 0;color:${d.reste<0?'var(--rd)':'var(--tx)'}">${fmtJ(d.reste)} j <span style="font-size:12px;font-weight:400;color:var(--t2)">restant${Math.abs(d.reste)>1?'s':''} à poser</span></div>
-      <div style="font-size:11px;color:var(--t2)">Solde au ${fmtD(S.arrete)} : ${fmtJ(d.solde)} j · pris ${fmtJ(d.pris)} · prévu ${fmtJ(d.prevu)}${d.attente?` · <span style="color:var(--am)">${fmtJ(d.attente)} en attente</span>`:''}</div>
+      <div style="font-size:11px;color:var(--t2)">Solde au ${fmtD(S.arrete)} : ${fmtJ(d.solde)} j · posés ${fmtJ(d.pris)} · prévus ${fmtJ(d.prevu)}${d.attente?` · <span style="color:var(--am)">${fmtJ(d.attente)} en attente</span>`:''}</div>
       <div style="font-size:10px;color:var(--t3);margin-top:2px">À poser avant le ${fmtD(ech)}</div></div>`;
-  el.innerHTML=`<div style="display:flex;gap:10px;flex-wrap:wrap">${bloc('Congés payés',c,S.echeanceCP)}${bloc('RTT',r,S.echeanceRTT)}</div>`;
+  el.innerHTML=`<div style="display:flex;gap:10px;flex-wrap:wrap">${bloc('Congés payés',c,S.echeanceCP)}${bloc('RTT',r,S.echeanceRTT)}</div>
+    <details style="margin-top:6px"><summary style="font-size:12px;cursor:pointer;color:var(--t2)">Voir le détail de mes congés posés et prévus</summary>${detailHtml(cur)}</details>`;
 }
 
 function majApercuDemande(){
