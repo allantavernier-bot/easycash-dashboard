@@ -443,7 +443,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
       oninput="window.onPinInput(this.value)"
       onkeydown="if(event.key==='Enter') window.tryLoginInput()">
     <button class="sbmit" style="width:100%;margin-top:4px" onclick="window.tryLoginInput()">Connexion</button>
-    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 17/10/2026 · <span id="collabs-load-status">chargement équipe…</span></div>
+    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 19/10/2026 (d) · <span id="collabs-load-status">chargement équipe…</span></div>
   </div>
 </div>
 
@@ -573,12 +573,14 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
 
     <!-- ABSENCES -->
     <div class="view" id="view-absences">
+      <div id="mon-solde" style="max-width:480px;margin-bottom:12px"></div>
       <div class="aform">
         <div class="stitle">Demande d'absence</div>
         <div class="frow">
           <label>Type</label>
           <select id="atype">
             <option value="conges">Congés payés</option>
+            <option value="rtt">RTT</option>
             <option value="repos_echange">Repos (échange de jour)</option>
             <option value="maladie">Arrêt maladie</option>
             <option value="perso">Absence personnelle</option>
@@ -589,6 +591,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
           <div class="frow"><label>Début</label><input type="date" id="astart"></div>
           <div class="frow"><label>Fin</label><input type="date" id="aend"></div>
         </div>
+        <div id="abs-preview" style="display:none;font-size:12px;border-radius:var(--r);padding:8px 11px;margin-bottom:10px"></div>
         <div class="frow"><label>Commentaire (optionnel)</label><textarea id="acomment" placeholder="Précisions…"></textarea></div>
         <button class="sbmit" onclick="window.submitAbs()">Envoyer →</button>
       </div>
@@ -597,6 +600,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
 
     <!-- ADMIN ABSENCES -->
     <div class="view" id="view-admin-abs">
+      <div class="acard" id="soldes-card" style="margin-bottom:12px"></div>
       <div class="agrid">
         <div class="acard"><div class="actitle">En attente</div><div id="pendlist"></div></div>
         <div class="acard"><div class="actitle">Historique</div><div id="histlist"></div></div>
@@ -1133,7 +1137,7 @@ const MAGASIN_FERME = ['2026-01-01','2026-05-01','2026-12-25'];
 const SOLIDARITE_DATE = '2026-12-25';
 const DAYS  = ['lun','mar','mer','jeu','ven','sam'];
 const DLBL  = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
-const ALBL  = {conges:'Congés payés',repos_echange:'Repos (échange)',maladie:'Arrêt maladie',perso:'Absence personnelle',autre:'Autre'};
+const ALBL  = {conges:'Congés payés',rtt:'RTT',repos_echange:'Repos (échange)',maladie:'Arrêt maladie',perso:'Absence personnelle',autre:'Autre'};
 
 // ═══════════════════════════════════════════════════════
 //  ÉTAT LOCAL + STORAGE PARTAGÉ
@@ -1147,6 +1151,9 @@ Object.defineProperty(window,'_state',{get:()=>STATE});
 
 // État synchronisé (partagé entre tous les utilisateurs via Firebase Firestore)
 let STATE = {
+  // Soldes communiqués par la RH (arrêtés à une date) — décompte = absences acceptées après cette date
+  soldes: {arrete:'2026-09-13', echeanceCP:'2027-05-31', echeanceRTT:'2026-12-31', mode:'ouvrables', modeV:2,
+    vals:{cathy:{cp:12}, hubert:{cp:8}, allan:{cp:12,rtt:10}, anthony:{cp:7}, manon:{cp:9}}},
   absences: [
     {id:1,uid:'manon',type:'repos_echange',label:'Repos (échange)',start:'2026-06-06',end:'2026-06-06',comment:'Récupéré sur lundi S23',status:'approved',date:'19/05/2026'},
     {id:2,uid:'manon',type:'repos_echange',label:'Repos (échange)',start:'2026-07-03',end:'2026-07-03',comment:'Récupéré sur jour non travaillé',status:'approved',date:'19/05/2026'},
@@ -1181,6 +1188,7 @@ async function loadState(){
     if(snap.exists()){
       const saved = snap.data();
       if(saved.absences) STATE.absences = saved.absences;
+      if(saved.soldes) STATE.soldes = saved.soldes;
       if(saved.slotOverrides) STATE.slotOverrides = saved.slotOverrides;
       if(saved.signatures) STATE.signatures = saved.signatures;
       if(saved.notifications) STATE.notifications = saved.notifications;
@@ -1217,6 +1225,7 @@ async function saveState(){
   try {
     await setDoc(STATE_DOC, {
       absences: STATE.absences,
+      soldes: STATE.soldes,
       slotOverrides: STATE.slotOverrides,
       signatures: STATE.signatures,
       notifications: STATE.notifications,
@@ -1317,6 +1326,7 @@ function startPolling(){
     if(snap.exists()){
       const saved = snap.data();
       if(saved.absences) STATE.absences = saved.absences;
+      if(saved.soldes) STATE.soldes = saved.soldes;
       if(saved.slotOverrides) STATE.slotOverrides = saved.slotOverrides;
       if(saved.signatures) STATE.signatures = saved.signatures;
       if(saved.notifications) STATE.notifications = saved.notifications;
@@ -2135,6 +2145,175 @@ function printSigs(){
   setTimeout(()=>document.body.classList.remove('print-signatures'),1000);
 }
 
+
+// ═══════════════════════════════════════════════════════
+//  DÉCOMPTE CP / RTT
+// ═══════════════════════════════════════════════════════
+// Jours fériés français pour n'importe quelle année (Pâques : algorithme de Meeus)
+const _feriesCache = {};
+function feriesAnnee(y){
+  if(_feriesCache[y]) return _feriesCache[y];
+  const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),
+        h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),
+        mo=Math.floor((h+l-7*m+114)/31),da=((h+l-7*m+114)%31)+1;
+  const paq=new Date(y,mo-1,da,12); const plus=n=>{const x=new Date(paq);x.setDate(x.getDate()+n);return iso(x);};
+  const set=new Set([`${y}-01-01`,plus(1),`${y}-05-01`,`${y}-05-08`,plus(39),plus(50),`${y}-07-14`,`${y}-08-15`,`${y}-11-01`,`${y}-11-11`,`${y}-12-25`]);
+  return (_feriesCache[y]=set);
+}
+function estFerieFR(dISO){ return feriesAnnee(+dISO.slice(0,4)).has(dISO); }
+
+function getSoldes(){
+  if(!STATE.soldes) STATE.soldes={arrete:'',echeanceCP:'',echeanceRTT:'',mode:'ouvrables',modeV:2,vals:{}};
+  if(!STATE.soldes.vals) STATE.soldes.vals={};
+  // Règle Easy Cash : jours ouvrables, semaine complète = 6 jours (5 semaines = 30 jours/an) — appliquée une fois aux soldes déjà enregistrés
+  if(STATE.soldes.modeV!==2){ STATE.soldes.mode='ouvrables'; STATE.soldes.modeV=2; delete STATE.soldes.modeOk; }
+  return STATE.soldes;
+}
+// Nombre de jours décomptés entre deux dates (incluses), à partir du lendemain de l'arrêté RH
+// ouvrables = lundi → samedi hors fériés ; ouvrés = lundi → vendredi hors fériés
+function joursDecomptes(start, end, apres){
+  const mode = getSoldes().mode || 'ouvrables';
+  let n=0; const d=new Date(start+'T12:00:00'), f=new Date(end+'T12:00:00');
+  const sem={}; // semaine5 : par semaine, min(jours lun→sam posés, 5) − fériés posés
+  for(; d<=f; d.setDate(d.getDate()+1)){
+    const k=iso(d), wd=d.getDay();
+    if(apres && k<=apres) continue;
+    if(wd===0) continue;
+    if(mode==='semaine5'){
+      const m=new Date(d); m.setDate(d.getDate()-(wd-1)); const wk=iso(m);
+      if(!sem[wk]) sem[wk]={j:0,f:0};
+      sem[wk].j++; if(estFerieFR(k)) sem[wk].f++;
+      continue;
+    }
+    if((mode==='ouvres' && wd===6) || estFerieFR(k)) continue;
+    n++;
+  }
+  if(mode==='semaine5') Object.values(sem).forEach(w=>{ n += Math.max(0, Math.min(w.j,5) - w.f); });
+  return n;
+}
+function libMode(){ const m=getSoldes().mode||'ouvrables'; return m==='semaine5'?'semaine complète = 5 jours (samedi compris, fériés déduits)':m==='ouvres'?'jours ouvrés (lun→ven) hors fériés':'jours ouvrables : semaine complète = 6 jours (lun→sam), fériés déduits'; }
+const fmtJ = n => (Math.round(n*100)/100).toLocaleString('fr-FR',{minimumFractionDigits:0,maximumFractionDigits:2});
+const fmtD = s => s ? new Date(s+'T12:00:00').toLocaleDateString('fr-FR') : '—';
+
+// Décompte d'un salarié pour un compteur ('cp' = type conges, 'rtt' = type rtt)
+function decompte(uid, cpt){
+  const S=getSoldes(); const type = cpt==='cp' ? 'conges' : 'rtt';
+  const v=S.vals[uid]||{}; const solde = (v[cpt]===undefined || v[cpt]===null || v[cpt]==='') ? null : Number(v[cpt]);
+  const today=iso(new Date());
+  let pris=0, prevu=0, attente=0;
+  (STATE.absences||[]).filter(a=>a.uid===uid && a.type===type && a.end>S.arrete).forEach(a=>{
+    if(a.status==='approved'){
+      // partie passée = prise, partie future = prévisionnel
+      const hier=new Date(); hier.setDate(hier.getDate()-1);
+      if(a.start<today) pris += joursDecomptes(a.start, a.end<today?a.end:iso(hier), S.arrete);
+      if(a.end>=today) prevu += joursDecomptes(a.start>today?a.start:today, a.end, S.arrete);
+    } else if(a.status==='pending') attente += joursDecomptes(a.start, a.end, S.arrete);
+  });
+  return {solde, pris, prevu, attente, reste: solde===null?null:solde-pris-prevu};
+}
+function nomComplet(uid){ const c=(STATE.collabs||[]).find(x=>x.id===uid); return USERS[uid]?.name || c?.nom || uid; }
+function salariesDecompte(){
+  const ids = typeof collabsDuMagasin==='function' ? collabsDuMagasin() : [...SIDS];
+  const S=getSoldes();
+  // Allan figure dans le tableau de Berck ; on ajoute toute personne ayant un solde saisi dans ce magasin
+  const out = (curMag==='berck' ? ['allan'] : []).concat(ids.filter(u=>u!=='allan'));
+  Object.keys(S.vals).forEach(u=>{ if(!out.includes(u) && (u==='allan'?curMag==='berck':userMagasin(u)===curMag)) out.push(u); });
+  return out;
+}
+function celluleReste(d){
+  if(d.solde===null) return '<span style="color:var(--t3)">—</span>';
+  const col = d.reste<0 ? 'var(--rd)' : d.reste===0 ? 'var(--t2)' : 'var(--gn)';
+  return `<b style="color:${col}">${fmtJ(d.reste)}</b>`;
+}
+
+function renderSoldesAdmin(){
+  const el=document.getElementById('soldes-card'); if(!el) return;
+  const S=getSoldes(); const ids=salariesDecompte();
+  const th='style="text-align:right;padding:5px 8px;font-weight:600;color:var(--t2);font-size:11px;white-space:nowrap"';
+  const td='style="text-align:right;padding:5px 8px;font-family:\'IBM Plex Mono\',monospace;font-size:12px"';
+  const rows = ids.map(u=>{
+    const c=decompte(u,'cp'), r=decompte(u,'rtt');
+    const val = (x)=> x.solde===null?'<span style="color:var(--t3)">—</span>':fmtJ(x.solde);
+    const z = n => n?fmtJ(n):'<span style="color:var(--t3)">0</span>';
+    return `<tr style="border-top:1px solid var(--b)">
+      <td style="padding:5px 8px;font-size:12px;font-weight:500;white-space:nowrap">${nomComplet(u)}</td>
+      <td ${td}>${val(c)}</td><td ${td}>${z(c.pris)}</td><td ${td}>${z(c.prevu)}</td><td ${td}>${celluleReste(c)}</td><td ${td}>${c.attente?'<span style="color:var(--am)">'+fmtJ(c.attente)+'</span>':'<span style="color:var(--t3)">0</span>'}</td>
+      <td ${td} style="border-left:1px solid var(--b)"></td>
+      <td ${td}>${val(r)}</td><td ${td}>${z(r.pris+r.prevu)}</td><td ${td}>${celluleReste(r)}</td>
+    </tr>`;
+  }).join('');
+  el.innerHTML = `<div class="actitle" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <span>🏖 Décompte congés — soldes RH arrêtés au ${fmtD(S.arrete)}</span>
+      <button onclick="window.openSoldesModal()" style="background:var(--tx);color:#fff;border:none;padding:6px 14px;border-radius:var(--r);font-size:12px;font-weight:500;cursor:pointer;font-family:'IBM Plex Sans',sans-serif">✏️ Mettre à jour les soldes</button>
+    </div>
+    <div style="font-size:11px;color:var(--t3);margin:4px 0 8px">CP à poser avant le ${fmtD(S.echeanceCP)} · RTT avant le ${fmtD(S.echeanceRTT)} · ${libMode()} · seules les absences après l'arrêté sont décomptées</div>
+    <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
+      <thead><tr><th style="text-align:left;padding:5px 8px;font-size:11px;color:var(--t2)">Salarié</th>
+        <th ${th}>Solde CP</th><th ${th}>Pris</th><th ${th}>Prévu (accepté)</th><th ${th}>Reste à poser</th><th ${th}>En attente</th>
+        <th style="border-left:1px solid var(--b)"></th><th ${th}>Solde RTT</th><th ${th}>Pris + prévu</th><th ${th}>Reste RTT</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>`;
+}
+
+function renderMonSolde(){
+  const el=document.getElementById('mon-solde'); if(!el) return;
+  const S=getSoldes(); const c=decompte(cur,'cp'), r=decompte(cur,'rtt');
+  if(c.solde===null && r.solde===null){ el.innerHTML=''; return; }
+  const bloc=(titre,d,ech)=>d.solde===null?'':`<div style="flex:1;min-width:190px;background:var(--sf);border:1px solid var(--b);border-radius:var(--rl);padding:12px 14px">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--t2)">${titre}</div>
+      <div style="font-size:22px;font-weight:600;margin:2px 0;color:${d.reste<0?'var(--rd)':'var(--tx)'}">${fmtJ(d.reste)} j <span style="font-size:12px;font-weight:400;color:var(--t2)">restant${Math.abs(d.reste)>1?'s':''} à poser</span></div>
+      <div style="font-size:11px;color:var(--t2)">Solde au ${fmtD(S.arrete)} : ${fmtJ(d.solde)} j · pris ${fmtJ(d.pris)} · prévu ${fmtJ(d.prevu)}${d.attente?` · <span style="color:var(--am)">${fmtJ(d.attente)} en attente</span>`:''}</div>
+      <div style="font-size:10px;color:var(--t3);margin-top:2px">À poser avant le ${fmtD(ech)}</div></div>`;
+  el.innerHTML=`<div style="display:flex;gap:10px;flex-wrap:wrap">${bloc('Congés payés',c,S.echeanceCP)}${bloc('RTT',r,S.echeanceRTT)}</div>`;
+}
+
+function majApercuDemande(){
+  const el=document.getElementById('abs-preview'); if(!el) return;
+  const type=document.getElementById('atype').value, st=document.getElementById('astart').value, en=document.getElementById('aend').value;
+  const cpt = type==='conges' ? 'cp' : type==='rtt' ? 'rtt' : null;
+  if(!cpt || !st || !en || en<st){ el.style.display='none'; return; }
+  const n=joursDecomptes(st,en,getSoldes().arrete); const d=decompte(cur,cpt);
+  el.style.display='block';
+  if(d.solde===null){ el.style.cssText+=';background:var(--s2);border:1px solid var(--b)'; el.innerHTML=`Cette demande représente <b>${fmtJ(n)} jour${n>1?'s':''}</b>.`; return; }
+  const apres=d.reste-d.attente-n; const ko=apres<0;
+  el.style.background = ko?'var(--rd-l)':'var(--gn-l)'; el.style.border='1px solid '+(ko?'var(--rd-b)':'var(--gn-b)'); el.style.color = ko?'var(--rd)':'var(--gn)';
+  el.innerHTML=`Cette demande = <b>${fmtJ(n)} jour${n>1?'s':''}</b> · reste après acceptation : <b>${fmtJ(apres)} j</b>${d.attente?` (en tenant compte de ${fmtJ(d.attente)} j déjà en attente)`:''}${ko?' — dépasse le solde':''}`;
+}
+['atype','astart','aend'].forEach(id=>document.getElementById(id)?.addEventListener('change',majApercuDemande));
+
+window.openSoldesModal=function(){
+  const S=getSoldes(); const ids=salariesDecompte();
+  const inp='style="width:70px;padding:5px 6px;border:1px solid #ddd;border-radius:5px;font-size:12px;text-align:right"';
+  const lignes=ids.map(u=>{const v=S.vals[u]||{};return `<tr><td style="padding:3px 6px;font-size:12px">${nomComplet(u)}</td>
+    <td><input type="number" step="0.5" data-u="${u}" data-k="cp" value="${v.cp??''}" ${inp}></td>
+    <td><input type="number" step="0.5" data-u="${u}" data-k="rtt" value="${v.rtt??''}" ${inp}></td></tr>`;}).join('');
+  const m=document.createElement('div');
+  m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  const lab='style="font-size:11px;color:#666;display:block;margin-bottom:2px"', box='style="width:100%;padding:6px;border:1px solid #ddd;border-radius:6px;font-size:12px;box-sizing:border-box"';
+  m.innerHTML=`<div style="background:#fff;border-radius:12px;padding:20px;width:420px;max-width:100%;max-height:90vh;overflow:auto;font-family:'IBM Plex Sans',sans-serif">
+    <div style="font-weight:600;font-size:15px;margin-bottom:12px">🏖 Soldes communiqués par la RH</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      <div><label ${lab}>Soldes arrêtés au</label><input type="date" id="so-arrete" value="${S.arrete||''}" ${box}></div>
+      <div><label ${lab}>Mode de décompte</label><select id="so-mode" ${box}><option value="ouvrables" ${(S.mode||'ouvrables')==='ouvrables'?'selected':''}>Jours ouvrables : semaine = 6 jours (lun→sam)</option><option value="semaine5" ${S.mode==='semaine5'?'selected':''}>Semaine complète = 5 jours</option><option value="ouvres" ${S.mode==='ouvres'?'selected':''}>Jours ouvrés (lun→ven)</option></select></div>
+      <div><label ${lab}>CP à poser avant le</label><input type="date" id="so-ecp" value="${S.echeanceCP||''}" ${box}></div>
+      <div><label ${lab}>RTT à poser avant le</label><input type="date" id="so-ertt" value="${S.echeanceRTT||''}" ${box}></div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:12px"><thead><tr><th style="text-align:left;font-size:11px;color:#666;padding:3px 6px">Salarié</th><th style="font-size:11px;color:#666">Solde CP</th><th style="font-size:11px;color:#666">Solde RTT</th></tr></thead><tbody>${lignes}</tbody></table>
+    <div style="font-size:10px;color:#999;margin-bottom:12px">Laisser vide = pas de compteur pour ce salarié. Les congés acceptés après la date d'arrêté sont déduits automatiquement.</div>
+    <div style="display:flex;gap:8px"><button id="so-cancel" style="flex:1;padding:9px;border:1px solid #ddd;background:#fff;border-radius:6px;cursor:pointer">Annuler</button>
+    <button id="so-save" style="flex:1;padding:9px;background:#0F0F0E;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600">Enregistrer</button></div></div>`;
+  document.body.appendChild(m);
+  m.onclick=e=>{if(e.target===m)m.remove();};
+  m.querySelector('#so-cancel').onclick=()=>m.remove();
+  m.querySelector('#so-save').onclick=async()=>{
+    S.arrete=m.querySelector('#so-arrete').value; S.mode=m.querySelector('#so-mode').value; S.modeV=2;
+    S.echeanceCP=m.querySelector('#so-ecp').value; S.echeanceRTT=m.querySelector('#so-ertt').value;
+    m.querySelectorAll('input[data-u]').forEach(i=>{const u=i.dataset.u,k=i.dataset.k; if(!S.vals[u])S.vals[u]={};
+      if(i.value==='') delete S.vals[u][k]; else S.vals[u][k]=Number(i.value);
+      if(!Object.keys(S.vals[u]).length) delete S.vals[u];});
+    m.remove(); await saveState(); renderSoldesAdmin(); renderMonSolde(); toast('✓ Soldes mis à jour');
+  };
+};
+
 // ═══════════════════════════════════════════════════════
 //  ABSENCES
 // ═══════════════════════════════════════════════════════
@@ -2159,9 +2338,10 @@ function renderMyAbs(){
   mine.slice().reverse().forEach(a=>{
     const sc={pending:'p-pend',approved:'p-ok',refused:'p-no'}[a.status];
     const sl={pending:'En attente',approved:'Approuvée',refused:'Refusée'}[a.status];
-    h+=`<div class="aitem"><div><div class="adate">${ALBL[a.type]||a.type} · du ${a.start} au ${a.end}</div><div class="areason">${a.comment||'Pas de commentaire'} · Soumis le ${a.date}</div></div><span class="pill ${sc}">${sl}</span></div>`;
+    h+=`<div class="aitem"><div><div class="adate">${ALBL[a.type]||a.type} · du ${a.start} au ${a.end}${(a.type==='conges'||a.type==='rtt')?` · ${fmtJ(joursDecomptes(a.start,a.end))} j`:''}</div><div class="areason">${a.comment||'Pas de commentaire'} · Soumis le ${a.date}</div></div><span class="pill ${sc}">${sl}</span></div>`;
   });
   document.getElementById('myalist').innerHTML=h;
+  renderMonSolde(); majApercuDemande();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -2172,7 +2352,7 @@ function renderAdminAbs(){
   const hist=STATE.absences.filter(a=>a.status!=='pending');
   let pH=pend.length===0?'<span style="font-size:11px;color:var(--t3)">Aucune demande.</span>':'';
   pend.forEach(a=>{
-    pH+=`<div class="pitem"><div><div class="pname">${USERS[a.uid].name}</div><div class="pdet">${ALBL[a.type]||a.type} · ${a.start} → ${a.end}${a.comment?' · '+a.comment:''}</div></div><div class="pbtns"><button class="okbtn" onclick="window.decide(${a.id},'approved')">✓ Approuver</button><button class="nobtn" onclick="window.decide(${a.id},'refused')">✗ Refuser</button></div></div>`;
+    pH+=`<div class="pitem"><div><div class="pname">${USERS[a.uid].name}</div><div class="pdet">${ALBL[a.type]||a.type} · ${a.start} → ${a.end}${a.comment?' · '+a.comment:''}${(()=>{const c=a.type==='conges'?'cp':a.type==='rtt'?'rtt':null;if(!c)return '';const n=joursDecomptes(a.start,a.end,getSoldes().arrete);const d=decompte(a.uid,c);return ` · <b>${fmtJ(n)} j</b>`+(d.solde===null?'':` · reste après : <b style="color:${d.reste-n<0?'var(--rd)':'var(--gn)'}">${fmtJ(d.reste-n)} j</b>`);})()}</div></div><div class="pbtns"><button class="okbtn" onclick="window.decide(${a.id},'approved')">✓ Approuver</button><button class="nobtn" onclick="window.decide(${a.id},'refused')">✗ Refuser</button></div></div>`;
   });
   document.getElementById('pendlist').innerHTML=pH;
   let hH=hist.length===0?'<span style="font-size:11px;color:var(--t3)">Aucun historique.</span>':'';
@@ -2183,6 +2363,7 @@ function renderAdminAbs(){
     hH+=`<div class="aitem" style="margin-bottom:5px"><div><div class="adate">${USERS[a.uid].short} · ${ALBL[a.type]||a.type}</div><div class="areason">${a.start} → ${a.end}</div></div><div style="display:flex;align-items:center"><span class="pill ${sc}">${sl}</span>${editBtn}</div></div>`;
   });
   document.getElementById('histlist').innerHTML=hH;
+  renderSoldesAdmin();
 }
 
 function decide(id,status){
@@ -3326,21 +3507,43 @@ const PRIORITY_CLS = {urgent:'tp-am', normal:'tp-gy', low:'tp-gy'};
 function getTaches() { return STATE.taches || []; }
 function getNettoyage() { return STATE.nettoyage || {}; }
 
-function isTacheDone(t) {
-  const now = new Date();
+// Occurrence d'une tâche périodique pour une date de référence :
+// key = clé de la période (jour / lundi de la semaine / AAAA-MM), due = échéance dans cette période,
+// nextStart = début de la période suivante (date à laquelle la tâche réapparaît)
+function periodeTache(t, ref) {
+  const r = ref ? new Date(ref) : new Date(); r.setHours(12,0,0,0);
+  const base = t.date ? new Date(t.date+'T12:00:00') : null;
   if(t.repeat==='daily') {
-    // Quotidienne : à refaire chaque jour, cochée pour aujourd'hui seulement
-    return (t.doneDays||[]).includes(iso(now));
+    const n = new Date(r); n.setDate(n.getDate()+1);
+    return { key: iso(r), due: new Date(r), nextStart: n };
   }
   if(t.repeat==='weekly') {
-    const wk = monKey(0); // clé de la semaine courante
-    return (t.doneWeeks||[]).includes(wk);
+    const mon = new Date(r); mon.setDate(r.getDate() + (r.getDay()===0 ? -6 : 1-r.getDay()));
+    const off = base ? (base.getDay()+6)%7 : 6; // même jour de semaine que l'échéance (sinon dimanche)
+    const due = new Date(mon); due.setDate(mon.getDate()+off);
+    const n = new Date(mon); n.setDate(mon.getDate()+7);
+    return { key: iso(mon), due, nextStart: n };
   }
   if(t.repeat==='monthly') {
-    const mk = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
-    return (t.doneMonths||[]).includes(mk);
+    const y = r.getFullYear(), m = r.getMonth();
+    const last = new Date(y, m+1, 0, 12).getDate();
+    const due = new Date(y, m, Math.min(base ? base.getDate() : last, last), 12);
+    return { key: y+'-'+String(m+1).padStart(2,'0'), due, nextStart: new Date(y, m+1, 1, 12) };
   }
-  return !!t.doneAt;
+  return null;
+}
+function prochaineOccurrence(t) {
+  const p = periodeTache(t);
+  return p ? periodeTache(t, p.nextStart) : null;
+}
+const fmtJour = d => d.toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'2-digit'});
+
+function isTacheDone(t) {
+  const p = periodeTache(t);
+  if(!p) return !!t.doneAt;
+  if(t.repeat==='daily')  return (t.doneDays||[]).includes(p.key);
+  if(t.repeat==='weekly') return (t.doneWeeks||[]).includes(p.key);
+  return (t.doneMonths||[]).includes(p.key);
 }
 
 // Gondoles assignées (plan nettoyage) visibles dans « Mes tâches »
@@ -3382,6 +3585,12 @@ function renderMesTaches() {
     if(filter==='done') return done;
     return true;
   });
+  const todayISO = iso(new Date());
+  // À faire d'abord (échéance la plus proche), puis les tâches périodiques déjà faites (prochaine occurrence)
+  const ordre = t => { const p = periodeTache(t); const d = isTacheDone(t);
+    const due = p ? iso(d ? prochaineOccurrence(t).due : p.due) : (t.date||'9999');
+    return (d?'1':'0') + due; };
+  filtered.sort((x,y)=>ordre(x).localeCompare(ordre(y)));
   const tachesHtml = filtered.map(t => {
     const done = isTacheDone(t);
     const u = USERS[t.uid];
@@ -3391,15 +3600,37 @@ function renderMesTaches() {
     const prioCls = PRIORITY_CLS[t.priority]||'tp-gy';
     const prioLbl = PRIORITY_LBL[t.priority]||'';
     const qui = cur==='allan' ? `${u?.short||t.uid} · ` : '';
-    return `<div class="tache-row">
+    const p = periodeTache(t);
+    let quand = '', etat = '', late = false, barre = done;
+    if(p) {
+      barre = false; // une tâche périodique n'est jamais « barrée » : on affiche l'occurrence suivante
+      if(!done) {
+        const dueISO = iso(p.due);
+        late = dueISO < todayISO;
+        quand = t.repeat==='daily' ? "Aujourd'hui" : (dueISO===todayISO ? "Aujourd'hui" : 'Avant le '+fmtJour(p.due));
+      } else {
+        const nx = prochaineOccurrence(t);
+        quand = t.repeat==='daily' ? 'Prochaine : demain' : `Prochaine : à partir du ${fmtJour(p.nextStart)} · avant le ${fmtJour(nx.due)}`;
+        etat = `<div style="font-size:10px;color:var(--gn);margin-top:2px">✓ Faite pour ${t.repeat==='daily'?"aujourd'hui":t.repeat==='weekly'?'cette semaine':'ce mois-ci'}</div>`;
+      }
+    } else if(t.date) {
+      quand = 'Avant le '+new Date(t.date+'T12:00:00').toLocaleDateString('fr-FR');
+      late = !done && t.date < todayISO;
+    }
+    const btn = p && done
+      ? `<button class="tache-done-btn" title="Annuler" style="opacity:.6" onclick="window.toggleTacheDone('${t.id}')">↺ Annuler</button>`
+      : `<button class="tache-done-btn${done?' done':''}" onclick="window.toggleTacheDone('${t.id}')">${done?'✓ Fait':'Fait'}</button>`;
+    return `<div class="tache-row" style="${p&&done?'opacity:.65':''}">
       <div class="av" style="background:${bg};color:${ct}">${ini}</div>
       <div style="flex:1">
-        <div class="tache-titre" style="${done?'text-decoration:line-through;color:var(--t3)':''}">${t.titre}</div>
-        <div class="tache-sub">${qui}${repLbl}${t.date?' · Avant le '+new Date(t.date).toLocaleDateString('fr-FR'):''}</div>
+        <div class="tache-titre" style="${barre?'text-decoration:line-through;color:var(--t3)':''}">${t.repeat!=='once'&&p?'🔁 ':''}${t.titre}</div>
+        <div class="tache-sub">${qui}${repLbl}${quand?' · '+quand:''}</div>
+        ${etat}
         ${t.note?`<div style="font-size:10px;color:var(--t3);margin-top:2px">${t.note}</div>`:''}
       </div>
+      ${late?'<span class="tache-pill tp-rd">En retard</span>':''}
       ${prioLbl?`<span class="tache-pill ${prioCls}">${prioLbl}</span>`:''}
-      <button class="tache-done-btn${done?' done':''}" onclick="window.toggleTacheDone('${t.id}')">${done?'✓ Fait':'Fait'}</button>
+      ${btn}
     </div>`;
   }).join('');
 
@@ -3467,23 +3698,15 @@ async function toggleTacheDone(id) {
   const t = STATE.taches.find(x=>x.id===id);
   if(!t) return;
   const done = isTacheDone(t);
-  if(t.repeat==='daily') {
-    const dk = iso(new Date());
-    if(!t.doneDays) t.doneDays=[];
-    if(done) t.doneDays = t.doneDays.filter(d=>d!==dk);
-    else t.doneDays.push(dk);
-    t.doneDays = t.doneDays.slice(-120); // garder ~4 mois d'historique
-  } else if(t.repeat==='weekly') {
-    const wk = monKey(0);
-    if(!t.doneWeeks) t.doneWeeks=[];
-    if(done) t.doneWeeks = t.doneWeeks.filter(w=>w!==wk);
-    else t.doneWeeks.push(wk);
-  } else if(t.repeat==='monthly') {
-    const now=new Date();
-    const mk=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
-    if(!t.doneMonths) t.doneMonths=[];
-    if(done) t.doneMonths=t.doneMonths.filter(m=>m!==mk);
-    else t.doneMonths.push(mk);
+  const p = periodeTache(t);
+  if(p) {
+    const champ = t.repeat==='daily' ? 'doneDays' : t.repeat==='weekly' ? 'doneWeeks' : 'doneMonths';
+    let arr = (t[champ]||[]).filter(k=>k!==p.key);
+    if(!done) arr.push(p.key);
+    t[champ] = arr.slice(-120); // ~4 mois d'historique pour les quotidiennes
+    if(!t.doneLog) t.doneLog = {};
+    if(done) delete t.doneLog[p.key]; else t.doneLog[p.key] = { who: cur, at: new Date().toISOString() };
+    const ks = Object.keys(t.doneLog).sort(); if(ks.length>120) ks.slice(0,ks.length-120).forEach(k=>delete t.doneLog[k]);
   } else {
     t.doneAt = done ? null : new Date().toISOString();
   }
@@ -3491,6 +3714,7 @@ async function toggleTacheDone(id) {
   renderMesTaches();
   renderAdminTaches();
   updateTachesBadge();
+  if(p && !done) { toast(`✓ Fait — revient ${t.repeat==='daily'?'demain':'le '+fmtJour(p.nextStart)}`); }
 }
 
 function renderAdminTaches() {
@@ -3510,9 +3734,9 @@ function renderAdminTaches() {
       <div class="av" style="background:${bg};color:${ct}">${ini}</div>
       <div style="flex:1">
         <div class="tache-titre">${t.titre}</div>
-        <div class="tache-sub">${u?.short||t.uid} · ${REPEAT_LBL[t.repeat]||t.repeat}</div>
+        <div class="tache-sub">${u?.short||t.uid} · ${REPEAT_LBL[t.repeat]||t.repeat}${(()=>{const p=periodeTache(t);if(!p)return '';const d=done?prochaineOccurrence(t).due:p.due;return ' · '+(done?'prochaine avant le ':'avant le ')+fmtJour(d);})()}</div>
       </div>
-      <span class="tache-pill ${done?'tp-gn':'tp-gy'}">${done?'Fait':'En cours'}</span>
+      <span class="tache-pill ${done?'tp-gn':'tp-gy'}">${done?(t.repeat==='daily'?"Fait aujourd'hui":t.repeat==='weekly'?'Fait cette semaine':t.repeat==='monthly'?'Fait ce mois':'Fait'):'En cours'}</span>
       <button onclick="window.editTache('${t.id}')" style="background:none;border:1px solid var(--bm);padding:3px 8px;border-radius:var(--r);cursor:pointer;font-size:11px;font-family:'IBM Plex Sans',sans-serif">✏️</button>
       <button onclick="window.deleteTache('${t.id}')" style="background:var(--rd-l);border:1px solid var(--rd-b);color:var(--rd);padding:3px 8px;border-radius:var(--r);cursor:pointer;font-size:11px;font-family:'IBM Plex Sans',sans-serif">🗑</button>
     </div>`;
@@ -3607,6 +3831,7 @@ async function saveTache() {
     doneMonths: editId ? (getTaches().find(x=>x.id===editId)?.doneMonths||[]) : [],
     doneAt: editId ? (getTaches().find(x=>x.id===editId)?.doneAt||null) : null,
     doneDays: prevT?.doneDays || [],
+    doneLog: prevT?.doneLog || {},
   }));
   if(editId) STATE.taches = STATE.taches.map(x=>x.id===editId?all[0]:x);
   else STATE.taches.push(...all);
