@@ -443,7 +443,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
       oninput="window.onPinInput(this.value)"
       onkeydown="if(event.key==='Enter') window.tryLoginInput()">
     <button class="sbmit" style="width:100%;margin-top:4px" onclick="window.tryLoginInput()">Connexion</button>
-    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 19/10/2026 (d) · <span id="collabs-load-status">chargement équipe…</span></div>
+    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 19/10/2026 (e) · <span id="collabs-load-status">chargement équipe…</span></div>
   </div>
 </div>
 
@@ -1354,6 +1354,7 @@ function startPolling(){
     renderPlanning();
     updateNotifBadge();
     if(document.getElementById('view-admin-abs').classList.contains('on')) renderAdminAbs();
+    if(document.getElementById('view-absences')?.classList.contains('on')) renderMyAbs();
     if(document.getElementById('view-signatures').classList.contains('on')) renderSigPage();
     // Rafraîchir la vue tâches si active
     if(document.getElementById('view-taches')?.classList.contains('on')){
@@ -2359,7 +2360,7 @@ function renderAdminAbs(){
   hist.slice().reverse().forEach(a=>{
     const sc={approved:'p-ok',refused:'p-no'}[a.status];
     const sl={approved:'Approuvée',refused:'Refusée'}[a.status];
-    const editBtn=a.status==='approved'?`<button onclick="window.editAbs(${a.id})" style="font-size:10px;padding:2px 8px;border:1px solid var(--brd);background:var(--s2);border-radius:4px;cursor:pointer;margin-left:6px">✏️ Corriger</button>`:''
+    const editBtn=(a.status==='approved'||a.status==='refused')?`<button onclick="window.editAbs(${a.id})" style="font-size:10px;padding:2px 8px;border:1px solid var(--brd);background:var(--s2);border-radius:4px;cursor:pointer;margin-left:6px">✏️ Corriger</button>`:''
     hH+=`<div class="aitem" style="margin-bottom:5px"><div><div class="adate">${USERS[a.uid].short} · ${ALBL[a.type]||a.type}</div><div class="areason">${a.start} → ${a.end}</div></div><div style="display:flex;align-items:center"><span class="pill ${sc}">${sl}</span>${editBtn}</div></div>`;
   });
   document.getElementById('histlist').innerHTML=hH;
@@ -2370,11 +2371,18 @@ function decide(id,status){
   const a=STATE.absences.find(x=>x.id===id);
   if(!a)return;
   a.status=status;
+  a.decidedAt=new Date().toISOString();
+  const cpt=a.type==='conges'?'cp':a.type==='rtt'?'rtt':null;
+  const d=cpt?decompte(a.uid,cpt):null;
+  const resteTxt=(d&&d.solde!==null)?` Reste à poser : ${fmtJ(d.reste)} j.`:'';
   const msg=status==='approved'
-    ?`✅ Votre demande de ${ALBL[a.type]||a.type} (${a.start} → ${a.end}) a été approuvée.`
-    :`❌ Votre demande de ${ALBL[a.type]||a.type} (${a.start} → ${a.end}) a été refusée.`;
+    ?`✅ Votre demande de ${ALBL[a.type]||a.type} (${a.start} → ${a.end}) a été approuvée.${resteTxt}`
+    :`❌ Votre demande de ${ALBL[a.type]||a.type} (${a.start} → ${a.end}) a été refusée.${resteTxt}`;
   addNotif(a.uid,msg);
-  saveState().then(()=>{toast(status==='approved'?'Approuvée ✓':'Refusée.');renderAdminAbs();renderPlanning();});
+  // Recalcul immédiat des soldes (avant même la fin de l'enregistrement)
+  renderAdminAbs(); renderMonSolde();
+  toast((status==='approved'?'Approuvée ✓':'Refusée.')+(resteTxt?` ${nomCourt(a.uid)} :${resteTxt.replace(' Reste à poser','')}`:''));
+  saveState().then(()=>{renderAdminAbs();renderPlanning();});
 }
 
 window.editAbs = function(id) {
@@ -2387,6 +2395,9 @@ window.editAbs = function(id) {
     <div style="font-weight:700;font-size:15px;margin-bottom:16px">✏️ Corriger l'absence — ${USERS[a.uid].name}</div>
     <label style="font-size:12px;color:#666">Type</label>
     <select id="ea-type" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;margin-bottom:10px;font-size:13px">${types}</select>
+    <label style="font-size:12px;color:#666">Statut</label>
+    <select id="ea-status" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;margin-bottom:10px;font-size:13px">
+      <option value="approved" ${a.status==='approved'?'selected':''}>Approuvée</option><option value="refused" ${a.status==='refused'?'selected':''}>Refusée</option><option value="pending" ${a.status==='pending'?'selected':''}>En attente</option></select>
     <label style="font-size:12px;color:#666">Date début</label>
     <input type="date" id="ea-start" value="${a.start}" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;margin-bottom:10px;font-size:13px;box-sizing:border-box">
     <label style="font-size:12px;color:#666">Date fin</label>
@@ -2401,8 +2412,11 @@ window.editAbs = function(id) {
     a.type  = modal.querySelector('#ea-type').value;
     a.start = modal.querySelector('#ea-start').value;
     a.end   = modal.querySelector('#ea-end').value;
+    const ns = modal.querySelector('#ea-status').value;
+    if(ns!==a.status){ a.status=ns; addNotif(a.uid,`ℹ️ Votre demande de ${ALBL[a.type]||a.type} (${a.start} → ${a.end}) est maintenant : ${{approved:'approuvée',refused:'refusée',pending:'en attente'}[ns]}.`); }
     modal.remove();
-    saveState().then(()=>{ toast('Absence corrigée ✓'); renderAdminAbs(); renderPlanning(); });
+    renderAdminAbs(); renderMonSolde();
+    saveState().then(()=>{ toast('Absence corrigée ✓ — soldes recalculés'); renderAdminAbs(); renderPlanning(); });
   };
   modal.onclick = function(e){ if(e.target===modal) modal.remove(); };
 };
