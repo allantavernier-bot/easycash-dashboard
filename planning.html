@@ -469,7 +469,7 @@ body.halloween .hw-bat{position:fixed;font-size:22px;pointer-events:none;z-index
       oninput="window.onPinInput(this.value)"
       onkeydown="if(event.key==='Enter') window.tryLoginInput()">
     <button class="sbmit" style="width:100%;margin-top:4px" onclick="window.tryLoginInput()">Connexion</button>
-    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 19/10/2026 (i) 🎃 · <span id="collabs-load-status">chargement équipe…</span></div>
+    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 19/10/2026 (j) 🎃 · <span id="collabs-load-status">chargement équipe…</span></div>
   </div>
 </div>
 
@@ -2240,50 +2240,71 @@ function finsDeMois(apres, jusqua){
 // Début de la période d'acquisition (1er juin) contenant une date
 function debutPeriodeCP(dISO){ const y=+dISO.slice(0,4), m=+dISO.slice(5,7); return `${m>=6?y:y-1}-06-01`; }
 // Infos d'acquisition d'un salarié : base (solde RH N-1 + acquis N à l'arrêté), point de départ des acquisitions
+// Deux compteurs CP :
+//  • CP N-1 = solde « acquis » donné par la RH (cumulé du 1er juin N-1 au 31 mai N) : figé, à poser avant l'échéance (31/05)
+//  • CP en cours = acquis depuis le 1er juin (2,5 j par fin de mois, 30 j max) : utilisables après l'échéance (à partir du 1er juin suivant)
+function periodeEnCours(){ const S=getSoldes(); return debutPeriodeCP(S.arrete || iso(new Date())); }
+function moisAnnee(dISO){ return new Date(dISO+'T12:00:00').toLocaleDateString('fr-FR',{month:'2-digit',year:'2-digit'}); }
 function infosCP(uid){
   const S=getSoldes(); const v=S.vals[uid]||{};
   const aSolde = !(v.cp===undefined||v.cp===null||v.cp==='');
   const entree = v.entree||'';
   if(!aSolde && !entree) return null;
-  const arr = S.arrete || iso(new Date());
-  if(entree && entree>arr){ // embauché après l'arrêté : part de zéro à son entrée
-    return { n1: aSolde?Number(v.cp):0, nArrete: 0, nAuto:true, depart: iso(new Date(new Date(entree+'T12:00:00').getTime()-864e5)) };
-  }
-  // Le solde RH inclut déjà tout ce qui a été acquis jusqu'à l'arrêté : on repart de 0 et +2,5 j à chaque fin de mois après l'arrêté (fin septembre = 1er crédit)
-  const auto = 0;
-  const manuel = !(v.cpN===undefined||v.cpN===null||v.cpN==='');
-  return { n1: aSolde?Number(v.cp):0, nArrete: manuel?Number(v.cpN):auto, nAuto:!manuel, depart: arr };
+  const debut = entree && entree>periodeEnCours() ? entree : periodeEnCours();
+  return { n1: aSolde?Number(v.cp):0, depart: iso(new Date(new Date(debut+'T12:00:00').getTime()-864e5)) };
 }
-function acquisCP(uid, jusqua){ const I=infosCP(uid); return I ? CP_PAR_MOIS*finsDeMois(I.depart, jusqua) : 0; }
+// CP en cours acquis jusqu'à une date (2,5 j par fin de mois, plafond 30 j)
+function acquisCP(uid, jusqua){ const I=infosCP(uid); return I ? Math.min(30, CP_PAR_MOIS*finsDeMois(I.depart, jusqua)) : 0; }
+
+// Jours d'une absence compris dans une fenêtre [de, a] (dates ISO, bornes incluses), après l'arrêté RH
+function joursFenetre(ab, de, a){
+  const st = de && de>ab.start ? de : ab.start, en = a && a<ab.end ? a : ab.end;
+  return en<st ? 0 : joursDecomptes(st, en, getSoldes().arrete);
+}
+const lendemain = d => iso(new Date(new Date(d+'T12:00:00').getTime()+864e5));
+const veille = d => iso(new Date(new Date(d+'T12:00:00').getTime()-864e5));
 
 // Décompte d'un salarié pour un compteur ('cp' = type conges, 'rtt' = type rtt)
 function decompte(uid, cpt){
   const S=getSoldes(); const type = cpt==='cp' ? 'conges' : 'rtt';
   const v=S.vals[uid]||{};
-  const today=iso(new Date());
-  let solde, n1=null, nArrete=0, acquis=0, acquisFin=0, I=null;
-  if(cpt==='cp'){
-    I=infosCP(uid);
-    solde = I ? I.n1 + I.nArrete : null;
-    if(I){ n1=I.n1; nArrete=I.nArrete; acquis=acquisCP(uid,today); acquisFin=acquisCP(uid,S.echeanceCP||today); }
-  } else solde = (v.rtt===undefined || v.rtt===null || v.rtt==='') ? null : Number(v.rtt);
-  let pris=0, prevu=0, attente=0;
+  const today=iso(new Date()), hier=veille(today);
+  const ech = (cpt==='cp' ? S.echeanceCP : S.echeanceRTT) || '9999-12-31';
+  let solde;
+  if(cpt==='cp'){ const I=infosCP(uid); solde = I ? I.n1 : null; }
+  else solde = (v.rtt===undefined || v.rtt===null || v.rtt==='') ? null : Number(v.rtt);
+  // pris/prevu/attente : sur le compteur N-1 (congés jusqu'à l'échéance) ; nPris/nPrevu : congés après l'échéance (sur les CP en cours)
+  let pris=0, prevu=0, attente=0, nPris=0, nPrevu=0, nAttente=0;
+  const apresEch = lendemain(ech);
   (STATE.absences||[]).filter(a=>a.uid===uid && a.type===type && a.end>S.arrete).forEach(a=>{
     if(a.status==='approved'){
-      // partie passée = posée, partie future = prévisionnel
-      const hier=new Date(); hier.setDate(hier.getDate()-1);
-      if(a.start<today) pris += joursDecomptes(a.start, a.end<today?a.end:iso(hier), S.arrete);
-      if(a.end>=today) prevu += joursDecomptes(a.start>today?a.start:today, a.end, S.arrete);
-    } else if(a.status==='pending') attente += joursDecomptes(a.start, a.end, S.arrete);
+      pris  += joursFenetre(a, null, hier<ech?hier:ech);
+      prevu += joursFenetre(a, today, ech);
+      nPris += joursFenetre(a, apresEch, hier);
+      nPrevu+= joursFenetre(a, today>apresEch?today:apresEch, null);
+    } else if(a.status==='pending'){
+      attente  += joursFenetre(a, null, ech);
+      nAttente += joursFenetre(a, apresEch, null);
+    }
   });
-  const reste = solde===null?null:solde+acquis-pris-prevu;
-  const prevision = solde===null?null:solde+acquisFin-pris-prevu;
-  return {solde, n1, nArrete, nAuto:I?.nAuto, acquis, acquisFin, pris, prevu, attente, reste, prevision};
+  const reste = solde===null?null:solde-pris-prevu;
+  const out = {solde, pris, prevu, attente, reste};
+  if(cpt==='cp' && solde!==null){
+    out.acquis = acquisCP(uid, today);                 // CP en cours acquis à ce jour
+    out.acquisFin = acquisCP(uid, ech);                // CP en cours acquis à l'échéance
+    out.anticipe = reste<0 ? -reste : 0;               // dépassement du N-1 → pris par anticipation sur les CP en cours
+    out.nPris=nPris; out.nPrevu=nPrevu; out.nAttente=nAttente;
+    out.nDispo = out.acquisFin - out.anticipe - nPris - nPrevu; // CP en cours utilisables à partir du lendemain de l'échéance
+    out.prevision = out.nDispo;
+  } else if(solde!==null) out.prevision = reste;
+  return out;
 }
-// Disponible à une date donnée (acquisitions jusqu'à cette date, tous les congés acceptés déduits)
+// Disponible à une date donnée pour poser un congé
 function dispoAu(uid, cpt, dISO){
   const d=decompte(uid,cpt); if(d.solde===null) return null;
-  return d.solde + (cpt==='cp'?acquisCP(uid,dISO):0) - d.pris - d.prevu;
+  const ech = (cpt==='cp' ? getSoldes().echeanceCP : getSoldes().echeanceRTT) || '9999-12-31';
+  if(cpt!=='cp' || dISO<=ech) return d.reste;
+  return d.nDispo;
 }
 function nomComplet(uid){ const c=(STATE.collabs||[]).find(x=>x.id===uid); return USERS[uid]?.name || c?.nom || uid; }
 function salariesDecompte(){
@@ -2307,7 +2328,7 @@ function lignesDetail(uid){
   const out=[];
   (STATE.absences||[]).filter(a=>a.uid===uid && (a.type==='conges'||a.type==='rtt') && a.status!=='refused')
     .sort((x,y)=>x.start.localeCompare(y.start)).forEach(a=>{
-      const cpt=a.type==='conges'?'CP':'RTT';
+      const cpt=a.type==='conges'?(a.start>(S.echeanceCP||'9999')?'CP en cours':a.end>(S.echeanceCP||'9999')?'CP N-1 / en cours':'CP N-1'):'RTT';
       const chev=(STATE.absences||[]).some(b=>b!==a&&b.uid===uid&&b.type===a.type&&b.status!=='refused'&&b.start<=a.end&&b.end>=a.start);
       const base={a,cpt,chev,total:joursDecomptes(a.start,a.end,S.arrete)};
       if(a.end<=S.arrete){ out.push({...base,statut:'avant',jours:joursDecomptes(a.start,a.end)}); return; }
@@ -2339,11 +2360,9 @@ function detailHtml(uid){
   const calc=(cpt,lib)=>{const d=decompte(uid,cpt); if(d.solde===null) return '';
     if(cpt==='cp'){
       const mois=Math.round(d.acquis/CP_PAR_MOIS), moisFin=Math.round(d.acquisFin/CP_PAR_MOIS);
-      return `<div style="font-size:12px;margin-top:4px;line-height:1.7"><b>${lib}</b><br>
-        Solde RH au ${fmtD(S.arrete)} <b>${fmtJ(d.n1)}</b>${d.nArrete?` + acquis N au ${fmtD(S.arrete)} <b>${fmtJ(d.nArrete)}</b>`:''}
-        + acquis depuis <b>${fmtJ(d.acquis)}</b> <span style="color:var(--t3)">(${mois} fin${mois>1?'s':''} de mois × 2,5)</span>
-        − posés <b>${fmtJ(d.pris)}</b> − prévus <b>${fmtJ(d.prevu)}</b> = <b style="color:${d.reste<0?'var(--rd)':'var(--gn)'}">${fmtJ(d.reste)} j à poser aujourd'hui</b><br>
-        <span style="color:var(--vl)">Prévision au ${fmtD(S.echeanceCP)} : ${fmtJ(d.reste)} + ${fmtJ(d.acquisFin-d.acquis)} encore à acquérir (${moisFin-mois} mois) = <b>${fmtJ(d.prevision)} j</b></span>${d.attente?` <span style="color:var(--am)">· ${fmtJ(d.attente)} j en attente → ${fmtJ(d.prevision-d.attente)} j si acceptés</span>`:''}</div>`;
+      return `<div style="font-size:12px;margin-top:4px;line-height:1.7"><b>CP N-1</b> (solde RH figé, à poser avant le ${fmtD(S.echeanceCP)}) :
+        ${fmtJ(d.solde)} − posés <b>${fmtJ(d.pris)}</b> − prévus <b>${fmtJ(d.prevu)}</b> = <b style="color:${d.reste<0?'var(--rd)':'var(--gn)'}">${fmtJ(d.reste)} j à poser</b>${d.attente?` <span style="color:var(--am)">(${fmtJ(d.attente)} j en attente → ${fmtJ(d.reste-d.attente)} j si acceptés)</span>`:''}${d.reste<0?` <span style="color:var(--rd)">⚠ ${fmtJ(-d.reste)} j pris par anticipation sur les CP en cours</span>`:''}<br>
+        <span style="color:var(--vl)"><b>CP en cours</b> (depuis le ${fmtD(periodeEnCours())}) : acquis à ce jour <b>${fmtJ(d.acquis)} j</b> (${mois} mois × 2,5) · prévision au ${fmtD(S.echeanceCP)} <b>${fmtJ(d.acquisFin)} j</b>${(d.anticipe+d.nPris+d.nPrevu)?` − ${fmtJ(d.anticipe+d.nPris+d.nPrevu)} j déjà engagés = <b>${fmtJ(d.nDispo)} j</b>`:''} utilisables à partir du ${fmtD(lendemain(S.echeanceCP))}</span></div>`;
     }
     return `<div style="font-size:12px;margin-top:4px"><b>${lib}</b> : solde RH ${fmtJ(d.solde)} − posés ${fmtJ(d.pris)} − prévus ${fmtJ(d.prevu)} = <b style="color:${d.reste<0?'var(--rd)':'var(--gn)'}">${fmtJ(d.reste)} j à poser</b>${d.attente?` <span style="color:var(--am)">(${fmtJ(d.attente)} j en attente → ${fmtJ(d.reste-d.attente)} j si acceptés)</span>`:''}</div>`;};
   return `<div style="background:var(--s2);border:1px solid var(--b);border-radius:var(--r);padding:8px 10px;margin:4px 0 8px">
@@ -2362,26 +2381,32 @@ function renderSoldesAdmin(){
     const c=decompte(u,'cp'), r=decompte(u,'rtt');
     const val = (x)=> x.solde===null?'<span style="color:var(--t3)">—</span>':fmtJ(x.solde);
     const tiret='<span style="color:var(--t3)">—</span>';
-    const prevCell = c.solde===null?tiret:`<b style="color:${c.prevision<0?'var(--rd)':'var(--vl)'}">${fmtJ(c.prevision)}</b>`;
+    const nCell = (x,col)=> c.solde===null?tiret:`<b style="color:${col}">${fmtJ(x)}</b>`;
     const z = n => n?fmtJ(n):'<span style="color:var(--t3)">0</span>';
     const ouvert=soldesOuverts.has(u);
     return `<tr style="border-top:1px solid var(--b);cursor:pointer;${ouvert?'background:var(--s2)':''}" onclick="window.toggleSoldeDetail('${u}')" title="Voir le détail">
       <td style="padding:5px 8px;font-size:12px;font-weight:500;white-space:nowrap"><span style="display:inline-block;width:12px;color:var(--t3)">${ouvert?'▾':'▸'}</span>${nomComplet(u)}</td>
-      <td ${td}>${c.solde===null?tiret:fmtJ(c.n1)}</td><td ${td}>${c.solde===null?tiret:'+'+fmtJ(c.nArrete+c.acquis)}</td><td ${td}>${z(c.pris)}</td><td ${td}>${z(c.prevu)}</td><td ${td}>${celluleReste(c)}</td><td ${td}>${prevCell}</td><td ${td}>${c.attente?'<span style="color:var(--am)">'+fmtJ(c.attente)+'</span>':'<span style="color:var(--t3)">0</span>'}</td>
+      <td ${td}>${val(c)}</td><td ${td}>${z(c.pris)}</td><td ${td}>${z(c.prevu)}</td><td ${td}>${c.attente?'<span style="color:var(--am)">'+fmtJ(c.attente)+'</span>':'<span style="color:var(--t3)">0</span>'}</td><td ${td}>${celluleReste(c)}</td>
+      <td ${td} style="border-left:1px solid var(--b)">${nCell(c.acquis,'var(--tx)')}</td><td ${td}>${nCell(c.acquisFin,'var(--vl)')}</td><td ${td}>${c.solde===null?tiret:(c.anticipe+c.nPris+c.nPrevu?'<span style="color:var(--rd)">−'+fmtJ(c.anticipe+c.nPris+c.nPrevu)+'</span>':'<span style="color:var(--t3)">0</span>')}</td>
       <td ${td} style="border-left:1px solid var(--b)"></td>
       <td ${td}>${val(r)}</td><td ${td}>${z(r.pris+r.prevu)}</td><td ${td}>${celluleReste(r)}</td>
-    </tr>${ouvert?`<tr><td colspan="12" style="padding:0 8px">${detailHtml(u)}</td></tr>`:''}`;
+    </tr>${ouvert?`<tr><td colspan="13" style="padding:0 8px">${detailHtml(u)}</td></tr>`:''}`;
   }).join('');
   el.innerHTML = `<div class="actitle" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
       <span>🏖 Décompte congés — soldes RH arrêtés au ${fmtD(S.arrete)}</span>
       <span style="display:flex;gap:6px"><button onclick="window.toggleSoldesTous()" style="background:var(--s2);color:var(--tx);border:1px solid var(--bm);padding:6px 12px;border-radius:var(--r);font-size:12px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif">${salariesDecompte().every(u=>soldesOuverts.has(u))?'▴ Replier tout':'▾ Détail de tous'}</button>
       <button onclick="window.openSoldesModal()" style="background:var(--tx);color:#fff;border:none;padding:6px 14px;border-radius:var(--r);font-size:12px;font-weight:500;cursor:pointer;font-family:'IBM Plex Sans',sans-serif">✏️ Mettre à jour les soldes</button></span>
     </div>
-    <div style="font-size:11px;color:var(--t3);margin:4px 0 8px">CP : +2,5 j acquis à chaque fin de mois · N-1 à poser avant le ${fmtD(S.echeanceCP)} · RTT avant le ${fmtD(S.echeanceRTT)} · ${libMode()} · seules les absences après l'arrêté sont décomptées · <b>cliquer sur un nom pour voir le détail</b></div>
+    <div style="font-size:11px;color:var(--t3);margin:4px 0 8px">Le solde RH (CP N-1) est figé : il diminue seulement avec les congés posés. Les CP en cours s'acquièrent à 2,5 j par fin de mois et seront utilisables à partir du ${fmtD(lendemain(S.echeanceCP||'2027-05-31'))} · RTT avant le ${fmtD(S.echeanceRTT)} · ${libMode()} · seules les absences après l'arrêté sont décomptées · <b>cliquer sur un nom pour voir le détail</b></div>
     <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
-      <thead><tr><th style="text-align:left;padding:5px 8px;font-size:11px;color:var(--t2)">Salarié</th>
-        <th ${th}>Solde N-1</th><th ${th} title="+2,5 j à chaque fin de mois depuis l'arrêté RH">Acquis depuis<br><span style="font-weight:400">l'arrêté</span></th><th ${th}>Posés</th><th ${th}>Prévus (acceptés)</th><th ${th}>Reste à poser<br><span style="font-weight:400">aujourd'hui</span></th><th ${th}>Prévision<br><span style="font-weight:400">au ${fmtD(S.echeanceCP)}</span></th><th ${th}>En attente</th>
-        <th style="border-left:1px solid var(--b)"></th><th ${th}>Solde RTT</th><th ${th}>Pris + prévu</th><th ${th}>Reste RTT</th></tr></thead>
+      <thead><tr><th></th>
+        <th colspan="5" style="text-align:center;font-size:11px;padding:4px;background:var(--gn-l);color:var(--gn);border-radius:6px 6px 0 0">CP N-1 · acquis 06/${String(+periodeEnCours().slice(2,4)-1).padStart(2,'0')} → 05/${periodeEnCours().slice(2,4)} · à poser avant le ${fmtD(S.echeanceCP)}</th>
+        <th colspan="3" style="text-align:center;font-size:11px;padding:4px;background:var(--vl-l);color:var(--vl);border-radius:6px 6px 0 0">CP en cours · acquis depuis le ${fmtD(periodeEnCours())} (+2,5 j/mois)</th>
+        <th></th><th colspan="3" style="text-align:center;font-size:11px;padding:4px;background:var(--s3);color:var(--t2);border-radius:6px 6px 0 0">RTT</th></tr>
+        <tr><th style="text-align:left;padding:5px 8px;font-size:11px;color:var(--t2)">Salarié</th>
+        <th ${th}>Solde RH</th><th ${th}>Posés</th><th ${th}>Prévus<br><span style="font-weight:400">(acceptés)</span></th><th ${th}>En attente</th><th ${th}>Reste<br><span style="font-weight:400">à poser</span></th>
+        <th ${th} style="border-left:1px solid var(--b)">Acquis<br><span style="font-weight:400">à ce jour</span></th><th ${th}>Prévision<br><span style="font-weight:400">au ${fmtD(S.echeanceCP)}</span></th><th ${th} title="Jours déjà engagés sur les CP en cours (dépassement du N-1 ou congés après l'échéance)">Déjà<br><span style="font-weight:400">engagés</span></th>
+        <th style="border-left:1px solid var(--b)"></th><th ${th}>Solde</th><th ${th}>Pris + prévu</th><th ${th}>Reste</th></tr></thead>
       <tbody>${rows}</tbody></table></div>`;
 }
 
@@ -2389,13 +2414,23 @@ function renderMonSolde(){
   const el=document.getElementById('mon-solde'); if(!el) return;
   const S=getSoldes(); const c=decompte(cur,'cp'), r=decompte(cur,'rtt');
   if(c.solde===null && r.solde===null){ el.innerHTML=''; return; }
-  const bloc=(titre,d,ech)=>d.solde===null?'':`<div style="flex:1;min-width:190px;background:var(--sf);border:1px solid var(--b);border-radius:var(--rl);padding:12px 14px">
-      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--t2)">${titre}</div>
-      <div style="font-size:22px;font-weight:600;margin:2px 0;color:${d.reste<0?'var(--rd)':'var(--tx)'}">${fmtJ(d.reste)} j <span style="font-size:12px;font-weight:400;color:var(--t2)">restant${Math.abs(d.reste)>1?'s':''} à poser</span></div>
-      <div style="font-size:11px;color:var(--t2)">Solde au ${fmtD(S.arrete)} : ${fmtJ(d.solde)} j${d.acquis?` · acquis depuis +${fmtJ(d.acquis)}`:''} · posés ${fmtJ(d.pris)} · prévus ${fmtJ(d.prevu)}${d.attente?` · <span style="color:var(--am)">${fmtJ(d.attente)} en attente</span>`:''}</div>
-      ${d.prevision!=null&&titre==='Congés payés'?`<div style="font-size:11px;color:var(--vl);margin-top:2px">Prévision au ${fmtD(ech)} (+2,5 j/mois) : <b>${fmtJ(d.prevision)} j</b></div>`:''}
-      <div style="font-size:10px;color:var(--t3);margin-top:2px">${titre==='Congés payés'?'Solde N-1 à poser':'À poser'} avant le ${fmtD(ech)}</div></div>`;
-  el.innerHTML=`<div style="display:flex;gap:10px;flex-wrap:wrap">${bloc('Congés payés',c,S.echeanceCP)}${bloc('RTT',r,S.echeanceRTT)}</div>
+  const carte=(titre,grand,sous,lignes,coul)=>`<div style="flex:1;min-width:190px;background:var(--sf);border:1px solid var(--b);border-radius:var(--rl);padding:12px 14px">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:${coul||'var(--t2)'}">${titre}</div>
+      <div style="font-size:22px;font-weight:600;margin:2px 0">${grand} <span style="font-size:12px;font-weight:400;color:var(--t2)">${sous}</span></div>
+      ${lignes}</div>`;
+  const petit=t=>`<div style="font-size:11px;color:var(--t2)">${t}</div>`;
+  let h='';
+  if(c.solde!==null){
+    h+=carte('CP N-1 (solde RH)', `<span style="color:${c.reste<0?'var(--rd)':'var(--tx)'}">${fmtJ(c.reste)} j</span>`, 'restants à poser',
+      petit(`Solde au ${fmtD(S.arrete)} : ${fmtJ(c.solde)} j · posés ${fmtJ(c.pris)} · prévus ${fmtJ(c.prevu)}${c.attente?` · <span style="color:var(--am)">${fmtJ(c.attente)} en attente</span>`:''}`)+
+      `<div style="font-size:10px;color:var(--t3);margin-top:2px">À poser avant le ${fmtD(S.echeanceCP)}</div>`);
+    h+=carte('CP en cours', `${fmtJ(c.acquis)} j`, 'acquis à ce jour',
+      petit(`+2,5 j par mois depuis le ${fmtD(periodeEnCours())}`)+
+      `<div style="font-size:11px;color:var(--vl);margin-top:2px">Prévision au ${fmtD(S.echeanceCP)} : <b>${fmtJ(c.nDispo)} j</b></div>
+       <div style="font-size:10px;color:var(--t3);margin-top:2px">Utilisables à partir du ${fmtD(lendemain(S.echeanceCP))}</div>`, 'var(--vl)');
+  }
+  if(r.solde!==null) h+=carte('RTT', `${fmtJ(r.reste)} j`, 'restants à poser', petit(`Solde ${fmtJ(r.solde)} j · posés ${fmtJ(r.pris)} · prévus ${fmtJ(r.prevu)}`)+`<div style="font-size:10px;color:var(--t3);margin-top:2px">À poser avant le ${fmtD(S.echeanceRTT)}</div>`);
+  el.innerHTML=`<div style="display:flex;gap:10px;flex-wrap:wrap">${h}</div>
     <details style="margin-top:6px"><summary style="font-size:12px;cursor:pointer;color:var(--t2)">Voir le détail de mes congés posés et prévus</summary>${detailHtml(cur)}</details>`;
 }
 
@@ -2409,7 +2444,8 @@ function majApercuDemande(){
   if(d.solde===null){ el.style.cssText+=';background:var(--s2);border:1px solid var(--b)'; el.innerHTML=`Cette demande représente <b>${fmtJ(n)} jour${n>1?'s':''}</b>.`; return; }
   const dispo=dispoAu(cur,cpt,st); const apres=dispo-d.attente-n; const ko=apres<0;
   el.style.background = ko?'var(--rd-l)':'var(--gn-l)'; el.style.border='1px solid '+(ko?'var(--rd-b)':'var(--gn-b)'); el.style.color = ko?'var(--rd)':'var(--gn)';
-  el.innerHTML=`Cette demande = <b>${fmtJ(n)} jour${n>1?'s':''}</b> · disponible au ${fmtD(st)} (acquisitions comprises) : ${fmtJ(dispo)} j · reste après acceptation : <b>${fmtJ(apres)} j</b>${d.attente?` (en tenant compte de ${fmtJ(d.attente)} j déjà en attente)`:''}${ko?' — dépasse le solde':''}`;
+  const surN1 = cpt==='cp' && st<=(getSoldes().echeanceCP||'9999');
+  el.innerHTML=`Cette demande = <b>${fmtJ(n)} jour${n>1?'s':''}</b> · ${cpt==='rtt'?'RTT':surN1?'sur le solde CP N-1':'sur les CP en cours'} : ${fmtJ(dispo)} j disponibles · reste après acceptation : <b>${fmtJ(apres)} j</b>${d.attente?` (en tenant compte de ${fmtJ(d.attente)} j déjà en attente)`:''}${ko?(surN1?` — dépasse le solde N-1 (les CP en cours ne sont utilisables qu'à partir du ${fmtD(lendemain(getSoldes().echeanceCP))})`:' — dépasse le solde'):''}`;
 }
 ['atype','astart','aend'].forEach(id=>document.getElementById(id)?.addEventListener('change',majApercuDemande));
 
@@ -2418,7 +2454,6 @@ window.openSoldesModal=function(){
   const inp='style="width:70px;padding:5px 6px;border:1px solid #ddd;border-radius:5px;font-size:12px;text-align:right"';
   const lignes=ids.map(u=>{const v=S.vals[u]||{};return `<tr><td style="padding:3px 6px;font-size:12px">${nomComplet(u)}</td>
     <td><input type="number" step="0.5" data-u="${u}" data-k="cp" value="${v.cp??''}" ${inp}></td>
-    <td><input type="number" step="0.5" data-u="${u}" data-k="cpN" value="${v.cpN??''}" placeholder="0" title="Vide = 0 (le solde RH comprend déjà les acquis jusqu'à l'arrêté)" ${inp}></td>
     <td><input type="number" step="0.5" data-u="${u}" data-k="rtt" value="${v.rtt??''}" ${inp}></td>
     <td><input type="date" data-u="${u}" data-k="entree" value="${v.entree??''}" style="width:118px;padding:4px;border:1px solid #ddd;border-radius:5px;font-size:11px"></td></tr>`;}).join('');
   const m=document.createElement('div');
@@ -2432,8 +2467,8 @@ window.openSoldesModal=function(){
       <div><label ${lab}>CP à poser avant le</label><input type="date" id="so-ecp" value="${S.echeanceCP||''}" ${box}></div>
       <div><label ${lab}>RTT à poser avant le</label><input type="date" id="so-ertt" value="${S.echeanceRTT||''}" ${box}></div>
     </div>
-    <table style="width:100%;border-collapse:collapse;margin-bottom:12px"><thead><tr><th style="text-align:left;font-size:11px;color:#666;padding:3px 6px">Salarié</th><th style="font-size:11px;color:#666">CP N-1</th><th style="font-size:11px;color:#666">Acquis N<br>à l'arrêté</th><th style="font-size:11px;color:#666">RTT</th><th style="font-size:11px;color:#666">Entrée le<br><span style="font-weight:400">(nouveaux)</span></th></tr></thead><tbody>${lignes}</tbody></table>
-    <div style="font-size:10px;color:#999;margin-bottom:12px">CP N-1 = solde communiqué par la RH. Le solde RH comprend déjà tout ce qui est acquis jusqu'à la date d'arrêté ; l'outil ajoute ensuite +2,5 j à chaque fin de mois (1er crédit : fin du mois de l'arrêté). « Acquis N à l'arrêté » : à laisser vide, sauf si la RH donne un compteur séparé. Pour un nouveau salarié, indiquer seulement sa date d'entrée. Les congés acceptés après la date d'arrêté sont déduits automatiquement.</div>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:12px"><thead><tr><th style="text-align:left;font-size:11px;color:#666;padding:3px 6px">Salarié</th><th style="font-size:11px;color:#666">CP N-1<br><span style="font-weight:400">(solde RH)</span></th><th style="font-size:11px;color:#666">RTT</th><th style="font-size:11px;color:#666">Entrée le<br><span style="font-weight:400">(nouveaux)</span></th></tr></thead><tbody>${lignes}</tbody></table>
+    <div style="font-size:10px;color:#999;margin-bottom:12px">CP N-1 = solde « acquis » communiqué par la RH (figé, ne diminue qu'avec les congés posés). Les CP en cours sont calculés automatiquement : 2,5 j par fin de mois depuis le 1er juin. Pour un nouveau salarié, indiquer seulement sa date d'entrée. Les congés acceptés après la date d'arrêté sont déduits automatiquement.</div>
     <div style="display:flex;gap:8px"><button id="so-cancel" style="flex:1;padding:9px;border:1px solid #ddd;background:#fff;border-radius:6px;cursor:pointer">Annuler</button>
     <button id="so-save" style="flex:1;padding:9px;background:#0F0F0E;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600">Enregistrer</button></div></div>`;
   document.body.appendChild(m);
@@ -2487,7 +2522,7 @@ function renderAdminAbs(){
   const hist=STATE.absences.filter(a=>a.status!=='pending');
   let pH=pend.length===0?'<span style="font-size:11px;color:var(--t3)">Aucune demande.</span>':'';
   pend.forEach(a=>{
-    pH+=`<div class="pitem"><div><div class="pname">${USERS[a.uid].name}</div><div class="pdet">${ALBL[a.type]||a.type} · ${a.start} → ${a.end}${a.comment?' · '+a.comment:''}${(()=>{const c=a.type==='conges'?'cp':a.type==='rtt'?'rtt':null;if(!c)return '';const n=joursDecomptes(a.start,a.end,getSoldes().arrete);const d=decompte(a.uid,c);if(d.solde===null)return ` · <b>${fmtJ(n)} j</b>`;const dp=dispoAu(a.uid,c,a.start);return ` · <b>${fmtJ(n)} j</b> · dispo au ${fmtD(a.start)} : ${fmtJ(dp)} j · reste après : <b style="color:${dp-n<0?'var(--rd)':'var(--gn)'}">${fmtJ(dp-n)} j</b>`;})()}</div></div><div class="pbtns"><button class="okbtn" onclick="window.decide(${a.id},'approved')">✓ Approuver</button><button class="nobtn" onclick="window.decide(${a.id},'refused')">✗ Refuser</button></div></div>`;
+    pH+=`<div class="pitem"><div><div class="pname">${USERS[a.uid].name}</div><div class="pdet">${ALBL[a.type]||a.type} · ${a.start} → ${a.end}${a.comment?' · '+a.comment:''}${(()=>{const c=a.type==='conges'?'cp':a.type==='rtt'?'rtt':null;if(!c)return '';const n=joursDecomptes(a.start,a.end,getSoldes().arrete);const d=decompte(a.uid,c);if(d.solde===null)return ` · <b>${fmtJ(n)} j</b>`;const dp=dispoAu(a.uid,c,a.start);return ` · <b>${fmtJ(n)} j</b> · dispo ${c==='cp'?(a.start<=(getSoldes().echeanceCP||'9999')?'N-1':'CP en cours'):'RTT'} : ${fmtJ(dp)} j · reste après : <b style="color:${dp-n<0?'var(--rd)':'var(--gn)'}">${fmtJ(dp-n)} j</b>`;})()}</div></div><div class="pbtns"><button class="okbtn" onclick="window.decide(${a.id},'approved')">✓ Approuver</button><button class="nobtn" onclick="window.decide(${a.id},'refused')">✗ Refuser</button></div></div>`;
   });
   document.getElementById('pendlist').innerHTML=pH;
   let hH=hist.length===0?'<span style="font-size:11px;color:var(--t3)">Aucun historique.</span>':'';
