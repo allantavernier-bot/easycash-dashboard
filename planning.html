@@ -413,6 +413,32 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
   header{padding:0 10px;}
   #scroll-hint{display:block!important;}
 }
+
+/* ═══ THÈME HALLOWEEN (actif automatiquement jusqu'au 01/11 inclus — voir script en bas de page) ═══ */
+body.halloween{--bg:#FFF1E2;--s2:#FFF7EE;--s3:#FBE7D3;
+  --bl:#B84A00;--bl-l:#FFE9D6;--bl-b:#F4B583;--vl:#5B2A86;--vl-l:#F1E6FA;--vl-b:#CDB2E6;
+  background-color:#FFF1E2;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220'%3E%3Cg fill='%235B2A86' opacity='.07'%3E%3Cpath d='M30 40c6-8 14-8 18-2 2-5 6-6 8-2 2-4 6-3 8 2 4-6 12-6 18 2-8-2-12 2-14 6-4-3-8-3-10 1-2-4-6-4-10-1-2-4-6-8-14-6z'/%3E%3Cpath d='M150 140c5-7 12-7 15-2 2-4 5-5 7-2 2-3 5-2 7 2 3-5 10-5 15 2-7-2-10 2-12 5-3-3-7-3-9 1-2-4-5-4-8-1-2-3-5-7-12-5z'/%3E%3C/g%3E%3Ctext x='160' y='60' font-size='22' opacity='.13'%3E🎃%3C/text%3E%3Ctext x='40' y='170' font-size='18' opacity='.12'%3E👻%3C/text%3E%3C/svg%3E");}
+body.halloween header{background:linear-gradient(90deg,#2B1640,#4A2366);border-bottom:3px solid #FF7A00;color:#FFE7CC;}
+body.halloween header .htitle,body.halloween header .huser,body.halloween header .huser b,body.halloween header #sync-label{color:#FFE7CC!important;}
+body.halloween header .hbadge,body.halloween .lbadge{background:#FF7A00;color:#2B1640;}
+body.halloween header .logbtn{color:#FFE7CC;border-color:rgba(255,231,204,.4);}
+body.halloween header .logbtn:hover{background:rgba(255,122,0,.25);}
+body.halloween header .htitle::after{content:" 🎃";}
+body.halloween .tabs{background:#FFF7EE;border-bottom:1px solid #F4B583;}
+body.halloween .tab.on{color:#B84A00;border-bottom-color:#FF7A00;}
+body.halloween .tab:hover{color:#B84A00;}
+body.halloween .sbmit{background:#FF7A00;color:#2B1640;font-weight:600;}
+body.halloween .sbmit:hover{background:#E86A00;}
+body.halloween .acard,body.halloween .aform{border-color:#F4D2B0;}
+body.halloween .actitle::before{content:"🦇 ";}
+body.halloween #login{background:radial-gradient(circle at 50% 30%,#4A2366 0%,#2B1640 55%,#160A22 100%);}
+body.halloween #login .lbox{border:2px solid #FF7A00;box-shadow:0 0 40px rgba(255,122,0,.35);position:relative;}
+body.halloween #login .lbox::before{content:"🎃 Joyeux Halloween 🎃";position:absolute;top:-34px;left:0;right:0;text-align:center;color:#FFB15C;font-weight:600;letter-spacing:.05em;font-size:14px;}
+body.halloween .hw-bat{position:fixed;font-size:22px;pointer-events:none;z-index:1;opacity:.55;animation:hwfly 18s linear infinite;}
+@keyframes hwfly{0%{transform:translate(-10vw,0) rotate(-8deg)}25%{transform:translate(25vw,-30px) rotate(8deg)}50%{transform:translate(55vw,10px) rotate(-6deg)}75%{transform:translate(85vw,-25px) rotate(6deg)}100%{transform:translate(110vw,0) rotate(0)}}
+@media (prefers-reduced-motion:reduce){body.halloween .hw-bat{display:none}}
+@media print{body.halloween{background:#fff!important}body.halloween .hw-bat{display:none}}
 </style>
 </head>
 <body>
@@ -443,7 +469,7 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
       oninput="window.onPinInput(this.value)"
       onkeydown="if(event.key==='Enter') window.tryLoginInput()">
     <button class="sbmit" style="width:100%;margin-top:4px" onclick="window.tryLoginInput()">Connexion</button>
-    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 19/10/2026 (f) · <span id="collabs-load-status">chargement équipe…</span></div>
+    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 19/10/2026 (h) 🎃 · <span id="collabs-load-status">chargement équipe…</span></div>
   </div>
 </div>
 
@@ -2197,20 +2223,68 @@ const fmtJ = n => (Math.round(n*100)/100).toLocaleString('fr-FR',{minimumFractio
 const fmtD = s => s ? new Date(s+'T12:00:00').toLocaleDateString('fr-FR') : '—';
 
 // Décompte d'un salarié pour un compteur ('cp' = type conges, 'rtt' = type rtt)
+// ── Acquisition des CP : 2,5 jours par mois (30 j/an), crédités à chaque fin de mois ──
+const CP_PAR_MOIS = 2.5;
+// Nombre de fins de mois m telles que apres < m ≤ jusqua (dates ISO)
+function finsDeMois(apres, jusqua){
+  if(!apres || !jusqua || jusqua<=apres) return 0;
+  let n=0; const d=new Date(apres.slice(0,7)+'-01T12:00:00');
+  for(let k=0;k<240;k++){
+    const fin=iso(new Date(d.getFullYear(), d.getMonth()+1, 0, 12));
+    if(fin>jusqua) break;
+    if(fin>apres) n++;
+    d.setMonth(d.getMonth()+1);
+  }
+  return n;
+}
+// Début de la période d'acquisition (1er juin) contenant une date
+function debutPeriodeCP(dISO){ const y=+dISO.slice(0,4), m=+dISO.slice(5,7); return `${m>=6?y:y-1}-06-01`; }
+// Infos d'acquisition d'un salarié : base (solde RH N-1 + acquis N à l'arrêté), point de départ des acquisitions
+function infosCP(uid){
+  const S=getSoldes(); const v=S.vals[uid]||{};
+  const aSolde = !(v.cp===undefined||v.cp===null||v.cp==='');
+  const entree = v.entree||'';
+  if(!aSolde && !entree) return null;
+  const arr = S.arrete || iso(new Date());
+  if(entree && entree>arr){ // embauché après l'arrêté : part de zéro à son entrée
+    return { n1: aSolde?Number(v.cp):0, nArrete: 0, nAuto:true, depart: iso(new Date(new Date(entree+'T12:00:00').getTime()-864e5)) };
+  }
+  const debut = entree && entree>debutPeriodeCP(arr) ? entree : debutPeriodeCP(arr);
+  const veille = iso(new Date(new Date(debut+'T12:00:00').getTime()-864e5));
+  const auto = Math.min(30, CP_PAR_MOIS*finsDeMois(veille, arr));
+  const manuel = !(v.cpN===undefined||v.cpN===null||v.cpN==='');
+  return { n1: aSolde?Number(v.cp):0, nArrete: manuel?Number(v.cpN):auto, nAuto:!manuel, depart: arr };
+}
+function acquisCP(uid, jusqua){ const I=infosCP(uid); return I ? CP_PAR_MOIS*finsDeMois(I.depart, jusqua) : 0; }
+
+// Décompte d'un salarié pour un compteur ('cp' = type conges, 'rtt' = type rtt)
 function decompte(uid, cpt){
   const S=getSoldes(); const type = cpt==='cp' ? 'conges' : 'rtt';
-  const v=S.vals[uid]||{}; const solde = (v[cpt]===undefined || v[cpt]===null || v[cpt]==='') ? null : Number(v[cpt]);
+  const v=S.vals[uid]||{};
   const today=iso(new Date());
+  let solde, n1=null, nArrete=0, acquis=0, acquisFin=0, I=null;
+  if(cpt==='cp'){
+    I=infosCP(uid);
+    solde = I ? I.n1 + I.nArrete : null;
+    if(I){ n1=I.n1; nArrete=I.nArrete; acquis=acquisCP(uid,today); acquisFin=acquisCP(uid,S.echeanceCP||today); }
+  } else solde = (v.rtt===undefined || v.rtt===null || v.rtt==='') ? null : Number(v.rtt);
   let pris=0, prevu=0, attente=0;
   (STATE.absences||[]).filter(a=>a.uid===uid && a.type===type && a.end>S.arrete).forEach(a=>{
     if(a.status==='approved'){
-      // partie passée = prise, partie future = prévisionnel
+      // partie passée = posée, partie future = prévisionnel
       const hier=new Date(); hier.setDate(hier.getDate()-1);
       if(a.start<today) pris += joursDecomptes(a.start, a.end<today?a.end:iso(hier), S.arrete);
       if(a.end>=today) prevu += joursDecomptes(a.start>today?a.start:today, a.end, S.arrete);
     } else if(a.status==='pending') attente += joursDecomptes(a.start, a.end, S.arrete);
   });
-  return {solde, pris, prevu, attente, reste: solde===null?null:solde-pris-prevu};
+  const reste = solde===null?null:solde+acquis-pris-prevu;
+  const prevision = solde===null?null:solde+acquisFin-pris-prevu;
+  return {solde, n1, nArrete, nAuto:I?.nAuto, acquis, acquisFin, pris, prevu, attente, reste, prevision};
+}
+// Disponible à une date donnée (acquisitions jusqu'à cette date, tous les congés acceptés déduits)
+function dispoAu(uid, cpt, dISO){
+  const d=decompte(uid,cpt); if(d.solde===null) return null;
+  return d.solde + (cpt==='cp'?acquisCP(uid,dISO):0) - d.pris - d.prevu;
 }
 function nomComplet(uid){ const c=(STATE.collabs||[]).find(x=>x.id===uid); return USERS[uid]?.name || c?.nom || uid; }
 function salariesDecompte(){
@@ -2264,6 +2338,14 @@ function detailHtml(uid){
       <td style="padding:4px 8px;font-size:11px;color:var(--t3)">${l.chev?'<span style="color:var(--rd);font-weight:600">⚠ chevauche une autre demande (jours comptés 2 fois) — à corriger</span> ':''}${l.a.comment||''}</td></tr>`;
   }).join('');
   const calc=(cpt,lib)=>{const d=decompte(uid,cpt); if(d.solde===null) return '';
+    if(cpt==='cp'){
+      const mois=Math.round(d.acquis/CP_PAR_MOIS), moisFin=Math.round(d.acquisFin/CP_PAR_MOIS);
+      return `<div style="font-size:12px;margin-top:4px;line-height:1.7"><b>${lib}</b><br>
+        Solde N-1 (RH, au ${fmtD(S.arrete)}) <b>${fmtJ(d.n1)}</b> + acquis N au ${fmtD(S.arrete)} <b>${fmtJ(d.nArrete)}</b>${d.nAuto?' <span style="color:var(--t3)">(calculé : 2,5 j × mois depuis le 1er juin)</span>':''}
+        + acquis depuis <b>${fmtJ(d.acquis)}</b> <span style="color:var(--t3)">(${mois} fin${mois>1?'s':''} de mois × 2,5)</span>
+        − posés <b>${fmtJ(d.pris)}</b> − prévus <b>${fmtJ(d.prevu)}</b> = <b style="color:${d.reste<0?'var(--rd)':'var(--gn)'}">${fmtJ(d.reste)} j à poser aujourd'hui</b><br>
+        <span style="color:var(--vl)">Prévision au ${fmtD(S.echeanceCP)} : ${fmtJ(d.reste)} + ${fmtJ(d.acquisFin-d.acquis)} encore à acquérir (${moisFin-mois} mois) = <b>${fmtJ(d.prevision)} j</b></span>${d.attente?` <span style="color:var(--am)">· ${fmtJ(d.attente)} j en attente → ${fmtJ(d.prevision-d.attente)} j si acceptés</span>`:''}</div>`;
+    }
     return `<div style="font-size:12px;margin-top:4px"><b>${lib}</b> : solde RH ${fmtJ(d.solde)} − posés ${fmtJ(d.pris)} − prévus ${fmtJ(d.prevu)} = <b style="color:${d.reste<0?'var(--rd)':'var(--gn)'}">${fmtJ(d.reste)} j à poser</b>${d.attente?` <span style="color:var(--am)">(${fmtJ(d.attente)} j en attente → ${fmtJ(d.reste-d.attente)} j si acceptés)</span>`:''}</div>`;};
   return `<div style="background:var(--s2);border:1px solid var(--b);border-radius:var(--r);padding:8px 10px;margin:4px 0 8px">
     ${L.length?`<table style="width:100%;border-collapse:collapse">${rows}</table>`:'<div style="font-size:12px;color:var(--t3)">Aucun congé ni RTT demandé.</div>'}
@@ -2280,24 +2362,26 @@ function renderSoldesAdmin(){
   const rows = ids.map(u=>{
     const c=decompte(u,'cp'), r=decompte(u,'rtt');
     const val = (x)=> x.solde===null?'<span style="color:var(--t3)">—</span>':fmtJ(x.solde);
+    const tiret='<span style="color:var(--t3)">—</span>';
+    const prevCell = c.solde===null?tiret:`<b style="color:${c.prevision<0?'var(--rd)':'var(--vl)'}">${fmtJ(c.prevision)}</b>`;
     const z = n => n?fmtJ(n):'<span style="color:var(--t3)">0</span>';
     const ouvert=soldesOuverts.has(u);
     return `<tr style="border-top:1px solid var(--b);cursor:pointer;${ouvert?'background:var(--s2)':''}" onclick="window.toggleSoldeDetail('${u}')" title="Voir le détail">
       <td style="padding:5px 8px;font-size:12px;font-weight:500;white-space:nowrap"><span style="display:inline-block;width:12px;color:var(--t3)">${ouvert?'▾':'▸'}</span>${nomComplet(u)}</td>
-      <td ${td}>${val(c)}</td><td ${td}>${z(c.pris)}</td><td ${td}>${z(c.prevu)}</td><td ${td}>${celluleReste(c)}</td><td ${td}>${c.attente?'<span style="color:var(--am)">'+fmtJ(c.attente)+'</span>':'<span style="color:var(--t3)">0</span>'}</td>
+      <td ${td}>${c.solde===null?tiret:fmtJ(c.n1)}</td><td ${td}>${c.solde===null?tiret:'+'+fmtJ(c.nArrete+c.acquis)}</td><td ${td}>${z(c.pris)}</td><td ${td}>${z(c.prevu)}</td><td ${td}>${celluleReste(c)}</td><td ${td}>${prevCell}</td><td ${td}>${c.attente?'<span style="color:var(--am)">'+fmtJ(c.attente)+'</span>':'<span style="color:var(--t3)">0</span>'}</td>
       <td ${td} style="border-left:1px solid var(--b)"></td>
       <td ${td}>${val(r)}</td><td ${td}>${z(r.pris+r.prevu)}</td><td ${td}>${celluleReste(r)}</td>
-    </tr>${ouvert?`<tr><td colspan="10" style="padding:0 8px">${detailHtml(u)}</td></tr>`:''}`;
+    </tr>${ouvert?`<tr><td colspan="12" style="padding:0 8px">${detailHtml(u)}</td></tr>`:''}`;
   }).join('');
   el.innerHTML = `<div class="actitle" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
       <span>🏖 Décompte congés — soldes RH arrêtés au ${fmtD(S.arrete)}</span>
       <span style="display:flex;gap:6px"><button onclick="window.toggleSoldesTous()" style="background:var(--s2);color:var(--tx);border:1px solid var(--bm);padding:6px 12px;border-radius:var(--r);font-size:12px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif">${salariesDecompte().every(u=>soldesOuverts.has(u))?'▴ Replier tout':'▾ Détail de tous'}</button>
       <button onclick="window.openSoldesModal()" style="background:var(--tx);color:#fff;border:none;padding:6px 14px;border-radius:var(--r);font-size:12px;font-weight:500;cursor:pointer;font-family:'IBM Plex Sans',sans-serif">✏️ Mettre à jour les soldes</button></span>
     </div>
-    <div style="font-size:11px;color:var(--t3);margin:4px 0 8px">CP à poser avant le ${fmtD(S.echeanceCP)} · RTT avant le ${fmtD(S.echeanceRTT)} · ${libMode()} · seules les absences après l'arrêté sont décomptées · <b>cliquer sur un nom pour voir le détail</b></div>
+    <div style="font-size:11px;color:var(--t3);margin:4px 0 8px">CP : +2,5 j acquis à chaque fin de mois · N-1 à poser avant le ${fmtD(S.echeanceCP)} · RTT avant le ${fmtD(S.echeanceRTT)} · ${libMode()} · seules les absences après l'arrêté sont décomptées · <b>cliquer sur un nom pour voir le détail</b></div>
     <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">
       <thead><tr><th style="text-align:left;padding:5px 8px;font-size:11px;color:var(--t2)">Salarié</th>
-        <th ${th}>Solde CP</th><th ${th}>Posés</th><th ${th}>Prévus (acceptés)</th><th ${th}>Reste à poser</th><th ${th}>En attente</th>
+        <th ${th}>Solde N-1</th><th ${th} title="Acquis sur la période en cours (2,5 j/mois)">Acquis N</th><th ${th}>Posés</th><th ${th}>Prévus (acceptés)</th><th ${th}>Reste à poser<br><span style="font-weight:400">aujourd'hui</span></th><th ${th}>Prévision<br><span style="font-weight:400">au ${fmtD(S.echeanceCP)}</span></th><th ${th}>En attente</th>
         <th style="border-left:1px solid var(--b)"></th><th ${th}>Solde RTT</th><th ${th}>Pris + prévu</th><th ${th}>Reste RTT</th></tr></thead>
       <tbody>${rows}</tbody></table></div>`;
 }
@@ -2309,8 +2393,9 @@ function renderMonSolde(){
   const bloc=(titre,d,ech)=>d.solde===null?'':`<div style="flex:1;min-width:190px;background:var(--sf);border:1px solid var(--b);border-radius:var(--rl);padding:12px 14px">
       <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--t2)">${titre}</div>
       <div style="font-size:22px;font-weight:600;margin:2px 0;color:${d.reste<0?'var(--rd)':'var(--tx)'}">${fmtJ(d.reste)} j <span style="font-size:12px;font-weight:400;color:var(--t2)">restant${Math.abs(d.reste)>1?'s':''} à poser</span></div>
-      <div style="font-size:11px;color:var(--t2)">Solde au ${fmtD(S.arrete)} : ${fmtJ(d.solde)} j · posés ${fmtJ(d.pris)} · prévus ${fmtJ(d.prevu)}${d.attente?` · <span style="color:var(--am)">${fmtJ(d.attente)} en attente</span>`:''}</div>
-      <div style="font-size:10px;color:var(--t3);margin-top:2px">À poser avant le ${fmtD(ech)}</div></div>`;
+      <div style="font-size:11px;color:var(--t2)">Solde au ${fmtD(S.arrete)} : ${fmtJ(d.solde)} j${d.acquis?` · acquis depuis +${fmtJ(d.acquis)}`:''} · posés ${fmtJ(d.pris)} · prévus ${fmtJ(d.prevu)}${d.attente?` · <span style="color:var(--am)">${fmtJ(d.attente)} en attente</span>`:''}</div>
+      ${d.prevision!=null&&titre==='Congés payés'?`<div style="font-size:11px;color:var(--vl);margin-top:2px">Prévision au ${fmtD(ech)} (+2,5 j/mois) : <b>${fmtJ(d.prevision)} j</b></div>`:''}
+      <div style="font-size:10px;color:var(--t3);margin-top:2px">${titre==='Congés payés'?'Solde N-1 à poser':'À poser'} avant le ${fmtD(ech)}</div></div>`;
   el.innerHTML=`<div style="display:flex;gap:10px;flex-wrap:wrap">${bloc('Congés payés',c,S.echeanceCP)}${bloc('RTT',r,S.echeanceRTT)}</div>
     <details style="margin-top:6px"><summary style="font-size:12px;cursor:pointer;color:var(--t2)">Voir le détail de mes congés posés et prévus</summary>${detailHtml(cur)}</details>`;
 }
@@ -2323,9 +2408,9 @@ function majApercuDemande(){
   const n=joursDecomptes(st,en,getSoldes().arrete); const d=decompte(cur,cpt);
   el.style.display='block';
   if(d.solde===null){ el.style.cssText+=';background:var(--s2);border:1px solid var(--b)'; el.innerHTML=`Cette demande représente <b>${fmtJ(n)} jour${n>1?'s':''}</b>.`; return; }
-  const apres=d.reste-d.attente-n; const ko=apres<0;
+  const dispo=dispoAu(cur,cpt,st); const apres=dispo-d.attente-n; const ko=apres<0;
   el.style.background = ko?'var(--rd-l)':'var(--gn-l)'; el.style.border='1px solid '+(ko?'var(--rd-b)':'var(--gn-b)'); el.style.color = ko?'var(--rd)':'var(--gn)';
-  el.innerHTML=`Cette demande = <b>${fmtJ(n)} jour${n>1?'s':''}</b> · reste après acceptation : <b>${fmtJ(apres)} j</b>${d.attente?` (en tenant compte de ${fmtJ(d.attente)} j déjà en attente)`:''}${ko?' — dépasse le solde':''}`;
+  el.innerHTML=`Cette demande = <b>${fmtJ(n)} jour${n>1?'s':''}</b> · disponible au ${fmtD(st)} (acquisitions comprises) : ${fmtJ(dispo)} j · reste après acceptation : <b>${fmtJ(apres)} j</b>${d.attente?` (en tenant compte de ${fmtJ(d.attente)} j déjà en attente)`:''}${ko?' — dépasse le solde':''}`;
 }
 ['atype','astart','aend'].forEach(id=>document.getElementById(id)?.addEventListener('change',majApercuDemande));
 
@@ -2334,11 +2419,13 @@ window.openSoldesModal=function(){
   const inp='style="width:70px;padding:5px 6px;border:1px solid #ddd;border-radius:5px;font-size:12px;text-align:right"';
   const lignes=ids.map(u=>{const v=S.vals[u]||{};return `<tr><td style="padding:3px 6px;font-size:12px">${nomComplet(u)}</td>
     <td><input type="number" step="0.5" data-u="${u}" data-k="cp" value="${v.cp??''}" ${inp}></td>
-    <td><input type="number" step="0.5" data-u="${u}" data-k="rtt" value="${v.rtt??''}" ${inp}></td></tr>`;}).join('');
+    <td><input type="number" step="0.5" data-u="${u}" data-k="cpN" value="${v.cpN??''}" placeholder="auto" title="Vide = calcul auto (2,5 j × mois depuis le 1er juin)" ${inp}></td>
+    <td><input type="number" step="0.5" data-u="${u}" data-k="rtt" value="${v.rtt??''}" ${inp}></td>
+    <td><input type="date" data-u="${u}" data-k="entree" value="${v.entree??''}" style="width:118px;padding:4px;border:1px solid #ddd;border-radius:5px;font-size:11px"></td></tr>`;}).join('');
   const m=document.createElement('div');
   m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
   const lab='style="font-size:11px;color:#666;display:block;margin-bottom:2px"', box='style="width:100%;padding:6px;border:1px solid #ddd;border-radius:6px;font-size:12px;box-sizing:border-box"';
-  m.innerHTML=`<div style="background:#fff;border-radius:12px;padding:20px;width:420px;max-width:100%;max-height:90vh;overflow:auto;font-family:'IBM Plex Sans',sans-serif">
+  m.innerHTML=`<div style="background:#fff;border-radius:12px;padding:20px;width:560px;max-width:100%;max-height:90vh;overflow:auto;font-family:'IBM Plex Sans',sans-serif">
     <div style="font-weight:600;font-size:15px;margin-bottom:12px">🏖 Soldes communiqués par la RH</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
       <div><label ${lab}>Soldes arrêtés au</label><input type="date" id="so-arrete" value="${S.arrete||''}" ${box}></div>
@@ -2346,8 +2433,8 @@ window.openSoldesModal=function(){
       <div><label ${lab}>CP à poser avant le</label><input type="date" id="so-ecp" value="${S.echeanceCP||''}" ${box}></div>
       <div><label ${lab}>RTT à poser avant le</label><input type="date" id="so-ertt" value="${S.echeanceRTT||''}" ${box}></div>
     </div>
-    <table style="width:100%;border-collapse:collapse;margin-bottom:12px"><thead><tr><th style="text-align:left;font-size:11px;color:#666;padding:3px 6px">Salarié</th><th style="font-size:11px;color:#666">Solde CP</th><th style="font-size:11px;color:#666">Solde RTT</th></tr></thead><tbody>${lignes}</tbody></table>
-    <div style="font-size:10px;color:#999;margin-bottom:12px">Laisser vide = pas de compteur pour ce salarié. Les congés acceptés après la date d'arrêté sont déduits automatiquement.</div>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:12px"><thead><tr><th style="text-align:left;font-size:11px;color:#666;padding:3px 6px">Salarié</th><th style="font-size:11px;color:#666">CP N-1</th><th style="font-size:11px;color:#666">Acquis N<br>à l'arrêté</th><th style="font-size:11px;color:#666">RTT</th><th style="font-size:11px;color:#666">Entrée le<br><span style="font-weight:400">(nouveaux)</span></th></tr></thead><tbody>${lignes}</tbody></table>
+    <div style="font-size:10px;color:#999;margin-bottom:12px">CP N-1 = solde communiqué par la RH. Acquis N vide = calcul automatique (2,5 j par fin de mois depuis le 1er juin). Ensuite +2,5 j à chaque fin de mois. Pour un nouveau salarié, indiquer seulement sa date d'entrée. Les congés acceptés après la date d'arrêté sont déduits automatiquement.</div>
     <div style="display:flex;gap:8px"><button id="so-cancel" style="flex:1;padding:9px;border:1px solid #ddd;background:#fff;border-radius:6px;cursor:pointer">Annuler</button>
     <button id="so-save" style="flex:1;padding:9px;background:#0F0F0E;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600">Enregistrer</button></div></div>`;
   document.body.appendChild(m);
@@ -2357,7 +2444,7 @@ window.openSoldesModal=function(){
     S.arrete=m.querySelector('#so-arrete').value; S.mode=m.querySelector('#so-mode').value; S.modeV=2;
     S.echeanceCP=m.querySelector('#so-ecp').value; S.echeanceRTT=m.querySelector('#so-ertt').value;
     m.querySelectorAll('input[data-u]').forEach(i=>{const u=i.dataset.u,k=i.dataset.k; if(!S.vals[u])S.vals[u]={};
-      if(i.value==='') delete S.vals[u][k]; else S.vals[u][k]=Number(i.value);
+      if(i.value==='') delete S.vals[u][k]; else S.vals[u][k]= k==='entree' ? i.value : Number(i.value);
       if(!Object.keys(S.vals[u]).length) delete S.vals[u];});
     m.remove(); await saveState(); renderSoldesAdmin(); renderMonSolde(); toast('✓ Soldes mis à jour');
   };
@@ -2401,7 +2488,7 @@ function renderAdminAbs(){
   const hist=STATE.absences.filter(a=>a.status!=='pending');
   let pH=pend.length===0?'<span style="font-size:11px;color:var(--t3)">Aucune demande.</span>':'';
   pend.forEach(a=>{
-    pH+=`<div class="pitem"><div><div class="pname">${USERS[a.uid].name}</div><div class="pdet">${ALBL[a.type]||a.type} · ${a.start} → ${a.end}${a.comment?' · '+a.comment:''}${(()=>{const c=a.type==='conges'?'cp':a.type==='rtt'?'rtt':null;if(!c)return '';const n=joursDecomptes(a.start,a.end,getSoldes().arrete);const d=decompte(a.uid,c);return ` · <b>${fmtJ(n)} j</b>`+(d.solde===null?'':` · reste après : <b style="color:${d.reste-n<0?'var(--rd)':'var(--gn)'}">${fmtJ(d.reste-n)} j</b>`);})()}</div></div><div class="pbtns"><button class="okbtn" onclick="window.decide(${a.id},'approved')">✓ Approuver</button><button class="nobtn" onclick="window.decide(${a.id},'refused')">✗ Refuser</button></div></div>`;
+    pH+=`<div class="pitem"><div><div class="pname">${USERS[a.uid].name}</div><div class="pdet">${ALBL[a.type]||a.type} · ${a.start} → ${a.end}${a.comment?' · '+a.comment:''}${(()=>{const c=a.type==='conges'?'cp':a.type==='rtt'?'rtt':null;if(!c)return '';const n=joursDecomptes(a.start,a.end,getSoldes().arrete);const d=decompte(a.uid,c);if(d.solde===null)return ` · <b>${fmtJ(n)} j</b>`;const dp=dispoAu(a.uid,c,a.start);return ` · <b>${fmtJ(n)} j</b> · dispo au ${fmtD(a.start)} : ${fmtJ(dp)} j · reste après : <b style="color:${dp-n<0?'var(--rd)':'var(--gn)'}">${fmtJ(dp-n)} j</b>`;})()}</div></div><div class="pbtns"><button class="okbtn" onclick="window.decide(${a.id},'approved')">✓ Approuver</button><button class="nobtn" onclick="window.decide(${a.id},'refused')">✗ Refuser</button></div></div>`;
   });
   document.getElementById('pendlist').innerHTML=pH;
   let hH=hist.length===0?'<span style="font-size:11px;color:var(--t3)">Aucun historique.</span>':'';
@@ -5052,5 +5139,18 @@ startPolling();
   </div>
 </div>
 
+
+<!-- Thème Halloween : s'active tout seul du 15/10 au 01/11 (supprimer ce bloc pour le retirer) -->
+<script>
+(function(){
+  var d=new Date(), m=d.getMonth()+1, j=d.getDate();
+  if(!((m===10&&j>=15)||(m===11&&j===1))) return;
+  document.body.classList.add('halloween');
+  [['🦇','12%','0s'],['🦇','28%','6s'],['🦇','64%','11s']].forEach(function(b){
+    var e=document.createElement('div'); e.className='hw-bat'; e.textContent=b[0];
+    e.style.top=b[1]; e.style.left='0'; e.style.animationDelay=b[2]; document.body.appendChild(e);
+  });
+})();
+</script>
 </body>
 </html>
