@@ -469,7 +469,7 @@ body.halloween .hw-bat{position:fixed;font-size:22px;pointer-events:none;z-index
       oninput="window.onPinInput(this.value)"
       onkeydown="if(event.key==='Enter') window.tryLoginInput()">
     <button class="sbmit" style="width:100%;margin-top:4px" onclick="window.tryLoginInput()">Connexion</button>
-    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 23/10/2026 🎃 · <span id="collabs-load-status">chargement équipe…</span></div>
+    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 23/10/2026 (b) 🎃 · <span id="collabs-load-status">chargement équipe…</span></div>
   </div>
 </div>
 
@@ -1464,6 +1464,27 @@ function idsRenforts(){
 function idsEquipeObj(){ return SIDS.filter(u => !estHorsObjectifs(u)); }
 function idsHorsObj(){ return [...SIDS.filter(u => estHorsObjectifs(u)), ...idsRenforts()]; }
 function margeHorsObjJour(dISO){ return idsHorsObj().reduce((s, u) => s + (vendeurData[`${dISO}|${u}`] || 0), 0); }
+
+// Objectif de l'équipe pour un jour — déduction LISSÉE SUR LA SEMAINE (décision Allan 23/10/2026) :
+// la marge réalisée par Allan, Internet (libre service) et les collaborateurs hors objectifs sur toute
+// la semaine est retirée de l'objectif de chaque jour au prorata de son objectif global.
+// Le total de la semaine est inchangé ; une grosse journée Internet ne fait plus tomber un seul jour à ~0 €.
+function deductionsJour(dISO){
+  return (vendeurData[`${dISO}|allan`] || 0) + (vendeurData[`${dISO}|libre_service`] || 0) + margeHorsObjJour(dISO);
+}
+function joursSemaineISO(dISO){
+  const d = new Date(dISO + 'T12:00:00'); const dow = d.getDay() === 0 ? 6 : d.getDay() - 1;
+  const m = new Date(d); m.setDate(d.getDate() - dow);
+  return DAYS.map((_, i) => { const x = new Date(m); x.setDate(m.getDate() + i); return iso(x); });
+}
+function objEquipeJour(dISO){
+  const obj = margeData[dISO] || 0;
+  if (!obj) return 0;
+  const js = joursSemaineISO(dISO);
+  const objSem = js.reduce((s, k) => s + (margeData[k] || 0), 0);
+  const dedSem = js.reduce((s, k) => s + deductionsJour(k), 0);
+  return Math.max(0, obj - (objSem > 0 ? dedSem * obj / objSem : 0));
+}
 
 // Minutes d'un créneau qui comptent pour les objectifs
 // (Formation = journée entière exclue ; horsObjMins = partie de journée exclue)
@@ -3057,9 +3078,7 @@ function renderObjectifs(){
   function getObjEquipeJour(dISO) {
     const objTotal = margeData[dISO] || 0;
     if (!objTotal) return 0;
-    const allanMarge = vendeurData[`${dISO}|allan`] || 0;
-    const libreMarge = vendeurData[`${dISO}|libre_service`] || 0;
-    return Math.max(0, objTotal - allanMarge - libreMarge - margeHorsObjJour(dISO));
+    return objEquipeJour(dISO);
   }
 
   // Info dynamique Allan + Libre Service
@@ -4818,9 +4837,7 @@ function renderMonthlyPerf() {
           return s + hj2*c2;
         }, 0);
         // Objectif dynamique (déduction Allan + Internet)
-        const allanDay = vendeurData[dISO+'|allan']||0;
-        const libreDay = vendeurData[dISO+'|libre_service']||0;
-        const objEquipe = Math.max(0, dayObj - allanDay - libreDay - margeHorsObjJour(dISO));
+        const objEquipe = objEquipeJour(dISO); // déduction lissée sur la semaine
         objTotal += totalPoids>0 ? (poidsUid/totalPoids)*objEquipe : 0;
         // Réalisé depuis vendeurData
         const real = vendeurData[dISO+'|'+uid];

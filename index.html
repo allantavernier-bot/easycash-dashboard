@@ -1780,6 +1780,22 @@ const COLLABS_HORS_OBJ = [
   {uid:'jeremy',   nom:'Jérémy (renfort Abbeville)'},
 ];
 window.vendeurRows = null;
+// Part de la semaine (lun→sam) de dISO à déduire de l'objectif du jour : marge Allan + Internet + hors objectifs
+// de toute la semaine × (objectif du jour / objectif de la semaine).
+function deductionLisseeJour(dISO, dayObj){
+  // Mêmes clés de date que le reste de l'onglet (toISOString des dates du Sheet)
+  const keyOf = g => g.toISOString().substring(0,10);
+  const monOf = g => { const m = new Date(g); const dow = m.getDay() === 0 ? 6 : m.getDay() - 1; m.setDate(m.getDate() - dow); return m.toDateString(); };
+  const rows = (typeof allRows !== 'undefined' && allRows) ? allRows : [];
+  const r0 = rows.find(r => { const g = gdate(r['A']); return g && keyOf(g) === dISO; });
+  if (!r0) return 0;
+  const sem = monOf(gdate(r0['A']));
+  const jours = new Set(); let objSem = 0;
+  rows.forEach(r => { const g = gdate(r['A']); if (g && monOf(g) === sem) { jours.add(keyOf(g)); objSem += parseNum(r['F']) || 0; } });
+  const ded = (window.vendeurRows || []).filter(v => jours.has(v.dateISO) && (v.uid === 'allan' || v.uid === 'libre_service' || COLLABS_HORS_OBJ.some(h => h.uid === v.uid)))
+                                        .reduce((s, r) => s + (r.marge || 0), 0);
+  return objSem > 0 ? ded * dayObj / objSem : 0;
+}
 window.rvoPeriod   = 'hier';
 
 async function loadVendeurData() {
@@ -1891,10 +1907,9 @@ function rvoRender(){
       const dayObj = parseNum(dayRow['F']) || 0;
       if (!dayObj) return;
       // Objectif dynamique : déduire ce qu'Allan et Libre Service ont réellement fait
-      const allanMarge  = vend.filter(v=>v.dateISO===dISO&&v.uid==='allan').reduce((s,r)=>s+(r.marge||0),0);
-      const libreMarge  = vend.filter(v=>v.dateISO===dISO&&v.uid==='libre_service').reduce((s,r)=>s+(r.marge||0),0);
-      const horsMarge   = vend.filter(v=>v.dateISO===dISO&&COLLABS_HORS_OBJ.some(h=>h.uid===v.uid)).reduce((s,r)=>s+(r.marge||0),0);
-      const autresMarge = allanMarge + libreMarge + horsMarge;
+      // Déduction LISSÉE SUR LA SEMAINE (décision 23/10/2026) : la marge d'Allan, Internet et des
+      // collaborateurs hors objectifs de toute la semaine est répartie au prorata de l'objectif de chaque jour.
+      const autresMarge = deductionLisseeJour(dISO, dayObj);
       // Reste à faire par l'équipe = max(0, objectif - réalisé Allan - Libre Service - collaborateurs hors objectifs)
       const objEquipe   = Math.max(0, dayObj - autresMarge);
       const presentUIDs = vend.filter(v => v.dateISO === dISO && COEFS_RVO[v.uid]).map(v => v.uid);
