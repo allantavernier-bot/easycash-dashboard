@@ -469,7 +469,7 @@ body.halloween .hw-bat{position:fixed;font-size:22px;pointer-events:none;z-index
       oninput="window.onPinInput(this.value)"
       onkeydown="if(event.key==='Enter') window.tryLoginInput()">
     <button class="sbmit" style="width:100%;margin-top:4px" onclick="window.tryLoginInput()">Connexion</button>
-    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 19/10/2026 (j) 🎃 · <span id="collabs-load-status">chargement équipe…</span></div>
+    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 23/10/2026 🎃 · <span id="collabs-load-status">chargement équipe…</span></div>
   </div>
 </div>
 
@@ -691,6 +691,11 @@ body.halloween .hw-bat{position:fixed;font-size:22px;pointer-events:none;z-index
             <div class="mrow" style="grid-column:1/-1;display:flex;align-items:center;gap:10px;padding:8px 0">
               <input type="checkbox" id="cm-hors-obj" style="width:16px;height:16px;cursor:pointer">
               <label for="cm-hors-obj" style="margin:0 14px 0 0;cursor:pointer;font-size:13px">Hors objectifs <span style="color:var(--t3);font-size:11px">(pas d'objectif perso, sa marge réduit celui de l'équipe)</span></label>
+            </div>
+            <div class="mrow" style="grid-column:1/-1;display:flex;align-items:center;gap:14px;padding:0 0 8px;flex-wrap:wrap">
+              <span style="font-size:13px">Renfort (ventes comptées hors objectifs) à :</span>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin:0;cursor:pointer"><input type="checkbox" id="cm-renfort-berck"> Berck</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin:0;cursor:pointer"><input type="checkbox" id="cm-renfort-abbeville"> Abbeville</label>
             </div>
             <div class="mrow" style="grid-column:1/-1;display:flex;align-items:center;gap:10px;padding:0 0 8px">
               <input type="checkbox" id="cm-admin" style="width:16px;height:16px;cursor:pointer">
@@ -1087,7 +1092,7 @@ const USERS = {
   kevin:   {name:'Kévin Guffroy',      short:'Kévin',   role:'Vendeur · Alternance',  pin:'3107', admin:false, bg:'#FFF0E6',ct:'#8A3B0C', magasin:'berck'},
   jeremy:  {name:'Jérémy Huysschaert', short:'Jérémy',  role:'Vendeur / Acheteur',    pin:'4512', admin:false, bg:'#E6F4FF',ct:'#0B4F80', magasin:'abbeville'},
   remy:    {name:'Rémy Cardon',        short:'Rémy',    role:'Vendeur / Acheteur',    pin:'4628', admin:false, bg:'#EEF7E6',ct:'#2F6410', magasin:'abbeville'},
-  julie:   {name:'Julie Vilbert',      short:'Julie',   role:'Vendeuse / Acheteuse',  pin:'4735', admin:false, bg:'#FBE9F5',ct:'#7A1F5C', magasin:'abbeville'},
+  julie:   {name:'Julie Vilbert',      short:'Julie',   role:'Vendeuse / Acheteuse',  pin:'4735', admin:false, bg:'#FBE9F5',ct:'#7A1F5C', magasin:'abbeville', active:false}, // supprimée le 23/10/2026
   ludovic: {name:'Ludovic Journée',    short:'Ludovic', role:'Vendeur / Acheteur',    pin:'4851', admin:false, bg:'#F2EEFF',ct:'#45309A', magasin:'abbeville'}
 };
 // Collaborateurs à créer une fois dans Firestore (Équipe & PIN) au 1er login admin
@@ -1095,7 +1100,7 @@ const NOUVEAUX_COLLABS_20261001 = [
   {id:'kevin',   h:35, coef:50},
   {id:'jeremy',  h:35, coef:100},
   {id:'remy',    h:35, coef:100},
-  {id:'julie',   h:35, coef:100},
+  {id:'julie',   h:35, coef:100, inactive:true}, // supprimée le 23/10/2026 : ne plus recréer
   {id:'ludovic', h:25, coef:100},
 ];
 const SIDS = ['anthony','cathy','hubert','manon'];
@@ -1138,7 +1143,14 @@ const MAGASIN_LBL = { berck:'Easy Cash Berck', abbeville:'Easy Cash Abbeville' }
 let curMag = 'berck';
 function userMagasin(uid){ return (USERS[uid] && USERS[uid].magasin) || 'berck'; }
 // SIDS = salariés du magasin de la session (Allan à part)
+// Collaborateurs supprimés (Équipe & PIN) : restent inactifs même s'ils ont une fiche en dur dans USERS.
+// Leurs données passées (absences, signatures, ventes) sont conservées.
+function appliquerSuppressions(){
+  (STATE.collabs_supprimes || []).forEach(id => { if (USERS[id]) USERS[id].active = false; });
+  (STATE.collabs_supprimes || []).forEach(id => { const i = SIDS.indexOf(id); if (i > -1) SIDS.splice(i, 1); });
+}
 function applyMagasinScope(){
+  if (typeof STATE !== 'undefined') appliquerSuppressions();
   const ids = Object.keys(USERS).filter(uid =>
     uid !== 'allan' && USERS[uid].active !== false && BASE_SCHEDULE[uid] && userMagasin(uid) === curMag);
   SIDS.splice(0, SIDS.length, ...ids);
@@ -1178,6 +1190,7 @@ Object.defineProperty(window,'_state',{get:()=>STATE});
 // État synchronisé (partagé entre tous les utilisateurs via Firebase Firestore)
 let STATE = {
   // Soldes communiqués par la RH (arrêtés à une date) — décompte = absences acceptées après cette date
+  collabs_supprimes: ['julie'],
   soldes: {arrete:'2026-09-13', echeanceCP:'2027-05-31', echeanceRTT:'2026-12-31', mode:'ouvrables', modeV:2,
     vals:{cathy:{cp:12}, hubert:{cp:8}, allan:{cp:12,rtt:10}, anthony:{cp:7}, manon:{cp:9}}},
   absences: [
@@ -1215,6 +1228,7 @@ async function loadState(){
       const saved = snap.data();
       if(saved.absences) STATE.absences = saved.absences;
       if(saved.soldes) STATE.soldes = saved.soldes;
+      if(Array.isArray(saved.collabs_supprimes)) STATE.collabs_supprimes = [...new Set([...saved.collabs_supprimes, 'julie'])];
       if(saved.slotOverrides) STATE.slotOverrides = saved.slotOverrides;
       if(saved.signatures) STATE.signatures = saved.signatures;
       if(saved.notifications) STATE.notifications = saved.notifications;
@@ -1252,6 +1266,7 @@ async function saveState(){
     await setDoc(STATE_DOC, {
       absences: STATE.absences,
       soldes: STATE.soldes,
+      collabs_supprimes: STATE.collabs_supprimes || [],
       slotOverrides: STATE.slotOverrides,
       signatures: STATE.signatures,
       notifications: STATE.notifications,
@@ -1285,6 +1300,7 @@ function setSyncStatus(s){
 // Écoute temps réel Firebase — mise à jour automatique pour tous les utilisateurs
 // Synchroniser USERS/SIDS depuis STATE.collabs (collabs dynamiques)
 function syncCollabsFromState() {
+  appliquerSuppressions();
   if (!STATE.collabs || !STATE.collabs.length) return;
   STATE.collabs.forEach(c => {
     if (!c.id || c.id === 'allan') return; // allan reste en dur
@@ -1313,6 +1329,7 @@ function syncCollabsFromState() {
       USERS[c.id].magasin = c.magasin || USERS[c.id].magasin || 'berck';
       USERS[c.id].magasins_acces = c.magasins_acces || USERS[c.id].magasins_acces || [];
     }
+    if ((STATE.collabs_supprimes || []).includes(c.id)) { USERS[c.id].active = false; return; }
     // Ajouter dans SIDS si actif et absent
     if (c.active !== false && !SIDS.includes(c.id)) {
       SIDS.push(c.id);
@@ -1353,6 +1370,7 @@ function startPolling(){
       const saved = snap.data();
       if(saved.absences) STATE.absences = saved.absences;
       if(saved.soldes) STATE.soldes = saved.soldes;
+      if(Array.isArray(saved.collabs_supprimes)) STATE.collabs_supprimes = [...new Set([...saved.collabs_supprimes, 'julie'])];
       if(saved.slotOverrides) STATE.slotOverrides = saved.slotOverrides;
       if(saved.signatures) STATE.signatures = saved.signatures;
       if(saved.notifications) STATE.notifications = saved.notifications;
@@ -1430,8 +1448,21 @@ function estHorsObjectifs(uid){
   if (c && typeof c.horsObjectifs === 'boolean') return c.horsObjectifs;
   return HORS_OBJ_DEFAUT.includes(uid) || HORS_OBJ_DEFAUT.includes(prenomKey(uid));
 }
+// Renforts : collaborateurs d'un autre magasin dont les ventes faites ici sont comptées
+// « hors objectifs » (pas d'objectif perso, leur marge réduit l'objectif de l'équipe).
+// Réglable dans Équipe & PIN (case « Renfort à … ») ; par défaut Jérémy (Abbeville) à Berck.
+const RENFORTS_DEFAUT = { berck: ['jeremy'] };
+function estRenfort(uid, mag){
+  const c = (STATE.collabs || []).find(x => x.id === uid);
+  if (c && Array.isArray(c.renfortMags)) return c.renfortMags.includes(mag);
+  return (RENFORTS_DEFAUT[mag] || []).includes(uid);
+}
+function idsRenforts(){
+  return Object.keys(USERS).filter(u => u !== 'allan' && !SIDS.includes(u) && USERS[u] && USERS[u].active !== false
+    && userMagasin(u) !== curMag && userMagasin(u) !== 'all' && estRenfort(u, curMag));
+}
 function idsEquipeObj(){ return SIDS.filter(u => !estHorsObjectifs(u)); }
-function idsHorsObj(){ return SIDS.filter(u => estHorsObjectifs(u)); }
+function idsHorsObj(){ return [...SIDS.filter(u => estHorsObjectifs(u)), ...idsRenforts()]; }
 function margeHorsObjJour(dISO){ return idsHorsObj().reduce((s, u) => s + (vendeurData[`${dISO}|${u}`] || 0), 0); }
 
 // Minutes d'un créneau qui comptent pour les objectifs
@@ -1688,6 +1719,8 @@ function upd(){/* input natif */}
 function tryLogin(){
   const uid=document.getElementById('usel').value;
   if(!uid){pinbuf='';upd();return;}
+  const magChoisi=(document.getElementById('msel')||{}).value||'berck';
+  if(USERS[uid]&&!peutSeConnecter(uid,magChoisi)){pinbuf='';const inp=document.getElementById('pin-input');if(inp)inp.value='';document.getElementById('lerr').style.display='block';return;}
   if(USERS[uid]&&pinbuf===USERS[uid].pin){
     cur=uid;window._cur=uid;pinbuf='';upd();
     curMag=(document.getElementById('msel')||{}).value||'berck';
@@ -3034,7 +3067,7 @@ function renderObjectifs(){
   const totalLibre  = dates.reduce((s,d) => s + (vendeurData[`${iso(d)}|libre_service`] || 0), 0);
   const totalObjSem = dates.reduce((s,d) => s + (margeData[iso(d)] || 0), 0);
   const totalHors   = dates.reduce((s,d) => s + margeHorsObjJour(iso(d)), 0);
-  const detailHors  = HO.map(u => `${USERS[u]?.short||u} ${Math.round(dates.reduce((s,d)=>s+(vendeurData[`${iso(d)}|${u}`]||0),0)).toLocaleString('fr-FR')} €`).join(' · ');
+  const detailHors  = HO.map(u => `${USERS[u]?.short||u}${SIDS.includes(u)?'':' (renfort)'} ${Math.round(dates.reduce((s,d)=>s+(vendeurData[`${iso(d)}|${u}`]||0),0)).toLocaleString('fr-FR')} €`).join(' · ');
 
 
   const tbody2 = document.getElementById('marge-tbody');
@@ -3298,6 +3331,7 @@ async function seedNouveauxCollabs(){
   const cl = (STATE.collabs && STATE.collabs.length) ? STATE.collabs.map(c=>({...c})) : getActiveCollabs().map(c=>({...c}));
   const pinsPris = new Set(cl.map(c=>c.pin));
   NOUVEAUX_COLLABS_20261001.forEach(n=>{
+    if(n.inactive || (STATE.collabs_supprimes||[]).includes(n.id)) return;
     if(cl.some(c=>c.id===n.id)) return;
     const u = USERS[n.id];
     let pin = u.pin;
@@ -3567,6 +3601,7 @@ function openCollabModal(mode, id){
     document.getElementById('cm-acces-berck').checked=cAcc.includes('berck');
     document.getElementById('cm-acces-abbeville').checked=cAcc.includes('abbeville');
     document.getElementById('cm-hors-obj').checked=estHorsObjectifs(id);
+    ['berck','abbeville'].forEach(m=>{const e=document.getElementById('cm-renfort-'+m); if(e) e.checked=estRenfort(id,m);});
   } else {
     ['cm-nom','cm-poste','cm-pin','cm-email'].forEach(i=>document.getElementById(i).value='');
     document.getElementById('cm-h').value='35';
@@ -3575,6 +3610,7 @@ function openCollabModal(mode, id){
     document.getElementById('cm-acces-berck').checked=false;
     document.getElementById('cm-acces-abbeville').checked=false;
     document.getElementById('cm-hors-obj').checked=false;
+    ['berck','abbeville'].forEach(m=>{const e=document.getElementById('cm-renfort-'+m); if(e) e.checked=false;});
     const adm=document.getElementById('cm-admin'); if(adm) adm.checked=false;
   }
   document.getElementById('modal-collab').style.display='flex';
@@ -3612,6 +3648,7 @@ async function saveCollab(){
     magasins_acces: ['berck','abbeville'].filter(m=>document.getElementById('cm-acces-'+m)?.checked && m!==document.getElementById('cm-magasin').value),
     active: true,
     horsObjectifs: !!document.getElementById('cm-hors-obj')?.checked,
+    renfortMags: ['berck','abbeville'].filter(m=>document.getElementById('cm-renfort-'+m)?.checked && m!==document.getElementById('cm-magasin').value),
   };
   if(collabEditId==='allan') data.magasin='all';
 
@@ -3652,6 +3689,13 @@ async function confirmDelCollab(){
   // Retirer de STATE.collabs
   const cl=getActiveCollabs().filter(c=>c.id!==collabDelId);
   STATE.collabs=cl;
+  // Suppression durable : la fiche en dur (USERS) devient inactive et l'id est mémorisé
+  if(USERS[collabDelId]) USERS[collabDelId].active=false;
+  STATE.collabs_supprimes=[...new Set([...(STATE.collabs_supprimes||[]), collabDelId])];
+  // Tâches : retirer celles qui lui restaient à faire (les ponctuelles déjà faites sont gardées pour l'historique)
+  STATE.taches=(STATE.taches||[]).filter(t=>t.uid!==collabDelId || (t.repeat==='once' && t.doneAt));
+  // Gondoles qui lui étaient assignées : assignation retirée
+  Object.values(STATE.nettoyage||{}).forEach(d=>{ if(d && d.assigned && d.assigned.uid===collabDelId) d.assigned=null; });
   await saveState();
   document.getElementById('modal-del-collab').style.display='none';
   renderCollabMgr();
