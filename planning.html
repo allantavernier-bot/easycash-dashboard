@@ -469,7 +469,7 @@ body.halloween .hw-bat{position:fixed;font-size:22px;pointer-events:none;z-index
       oninput="window.onPinInput(this.value)"
       onkeydown="if(event.key==='Enter') window.tryLoginInput()">
     <button class="sbmit" style="width:100%;margin-top:4px" onclick="window.tryLoginInput()">Connexion</button>
-    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 24/10/2026 (b) 🎃 · <span id="collabs-load-status">chargement équipe…</span></div>
+    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 24/10/2026 (e) 🎃 · <span id="collabs-load-status">chargement équipe…</span></div>
   </div>
 </div>
 
@@ -853,6 +853,7 @@ body.halloween .hw-bat{position:fixed;font-size:22px;pointer-events:none;z-index
             <option value="all">Toutes</option>
             <option value="todo">En cours</option>
             <option value="done">Terminées</option>
+            <option value="archives" id="opt-archives" style="display:none">📦 Archivées</option>
           </select>
         </div>
         <div class="acard" id="mes-taches-list"></div>
@@ -3798,6 +3799,32 @@ function prochaineOccurrence(t) {
 }
 const fmtJour = d => d.toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'2-digit'});
 
+// ── Archivage (Allan) : une tâche « faite » vérifiée disparaît de la liste ──
+// Ponctuelle : archivée définitivement (t.archivedAt). Périodique : seule l'occurrence en cours est archivée
+// (t.archives = clés de période) ; la tâche réapparaît normalement à la période suivante.
+function estArchivee(t) {
+  const p = periodeTache(t);
+  if (p) return (t.archives || []).includes(p.key);
+  return !!t.archivedAt;
+}
+async function archiverTache(id, restaurer) {
+  if (cur !== 'allan') return;
+  const t = (STATE.taches || []).find(x => x.id === id);
+  if (!t) return;
+  const p = periodeTache(t);
+  if (p) {
+    let a = (t.archives || []).filter(k => k !== p.key);
+    if (!restaurer) a.push(p.key);
+    t.archives = a.slice(-120);
+  } else {
+    t.archivedAt = restaurer ? null : new Date().toISOString();
+  }
+  renderMesTaches(); renderAdminTaches();
+  await saveState();
+  toast(restaurer ? '↩ Tâche restaurée' : '📦 Tâche archivée');
+}
+window.archiverTache = archiverTache;
+
 function isTacheDone(t) {
   const p = periodeTache(t);
   if(!p) return !!t.doneAt;
@@ -3839,8 +3866,14 @@ function renderMesTaches() {
   if(!el) return;
   const taches = getTaches().filter(t => t.uid === cur || USERS[cur]?.admin);
   const myTaches = cur==='allan' ? taches : taches.filter(t=>t.uid===cur);
+  const optA = document.getElementById('opt-archives'); if (optA) optA.style.display = cur==='allan' ? '' : 'none';
   const filtered = myTaches.filter(t => {
     const done = isTacheDone(t);
+    if(cur==='allan') {
+      const arch = done && estArchivee(t);
+      if(filter==='archives') return arch;
+      if(arch) return false; // archivées : masquées de la vue normale
+    } else if(filter==='archives') return false;
     if(filter==='todo') return !done;
     if(filter==='done') return done;
     return true;
@@ -3891,13 +3924,16 @@ function renderMesTaches() {
       ${late?'<span class="tache-pill tp-rd">En retard</span>':''}
       ${prioLbl?`<span class="tache-pill ${prioCls}">${prioLbl}</span>`:''}
       ${btn}
+      ${cur==='allan' && done ? (estArchivee(t)
+        ? `<button class="tache-done-btn" title="Remettre dans la liste" onclick="window.archiverTache('${t.id}', true)">↩ Restaurer</button>`
+        : `<button class="tache-done-btn" title="Vérifiée : retirer de la liste" style="background:var(--s3)" onclick="window.archiverTache('${t.id}')">📦 Archiver</button>`) : ''}
     </div>`;
   };
   const tachesHtml = filtered.map(rowT).join('');
 
   // Mobilier à nettoyer (toujours « à faire » tant que non nettoyé)
   const today = iso(new Date());
-  const gond = filter==='done' ? [] : getGondolesAssignees();
+  const gond = (filter==='done' || filter==='archives') ? [] : getGondolesAssignees();
   const rowG = g => {
     const u = USERS[g.uid];
     const ini = (u?.short||g.uid).substring(0,2).toUpperCase();
@@ -3943,13 +3979,15 @@ function groupesParSalarie(taches, gond, rowT, rowG){
   return uids.map(uid => {
     const tt = taches.filter(t => t.uid === uid), gg = (gond || []).filter(g => g.uid === uid);
     const aFaire = tt.filter(t => !isTacheDone(t)).length + gg.length;
+    const aVerifier = cur === 'allan' && rowG ? tt.filter(t => isTacheDone(t) && !estArchivee(t)).length : 0;
     const u = USERS[uid] || {};
     const ini = (u.short || uid).substring(0, 2).toUpperCase();
-    return `<details ${aFaire ? 'open' : ''} style="border:1px solid var(--b);border-radius:var(--r);margin-bottom:8px;background:var(--sf)">
+    return `<details ${aFaire || aVerifier ? 'open' : ''} style="border:1px solid var(--b);border-radius:var(--r);margin-bottom:8px;background:var(--sf)">
       <summary style="cursor:pointer;padding:8px 10px;display:flex;align-items:center;gap:8px;list-style:none">
         <div class="av" style="background:${u.bg || '#EEE'};color:${u.ct || '#333'}">${ini}</div>
         <b style="font-size:13px;flex:1">${u.name || nomCourt(uid)}</b>
         ${aFaire ? `<span class="tache-pill tp-am">${aFaire} à faire</span>` : '<span class="tache-pill tp-gn">Tout est fait</span>'}
+        ${aVerifier ? `<span class="tache-pill tp-gy">${aVerifier} à vérifier</span>` : ''}
         <span style="font-size:11px;color:var(--t3)">${tt.length + gg.length} tâche${tt.length + gg.length > 1 ? 's' : ''}</span>
       </summary>
       <div style="padding:0 10px 6px">${tt.map(rowT).join('')}${gg.length ? `<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--t2);margin:8px 0 2px">🧹 Mobilier à nettoyer (${gg.length})</div>${gg.map(rowG).join('')}` : ''}</div>
@@ -4012,7 +4050,8 @@ async function toggleTacheDone(id) {
 function renderAdminTaches() {
   const el = document.getElementById('admin-taches-list');
   if(!el) return;
-  const taches = getTaches().filter(t => t.uid === 'allan' || !USERS[t.uid] || userMagasin(t.uid) === curMag);
+  const taches = getTaches().filter(t => (t.uid === 'allan' || !USERS[t.uid] || userMagasin(t.uid) === curMag)
+    && !(t.repeat === 'once' && t.archivedAt)); // ponctuelles archivées : visibles via le filtre « Archivées » de Mes tâches
   if(!taches.length) {
     el.innerHTML='<div style="font-size:12px;color:var(--t3);padding:10px 0;text-align:center">Aucune tâche créée</div>';
     return;
@@ -4125,6 +4164,8 @@ async function saveTache() {
     doneAt: editId ? (getTaches().find(x=>x.id===editId)?.doneAt||null) : null,
     doneDays: prevT?.doneDays || [],
     doneLog: prevT?.doneLog || {},
+    archives: prevT?.archives || [],
+    archivedAt: prevT?.archivedAt || null,
   }));
   if(editId) STATE.taches = STATE.taches.map(x=>x.id===editId?all[0]:x);
   else STATE.taches.push(...all);
@@ -4845,19 +4886,22 @@ function renderMonthlyPerf() {
   // Pour chaque mois, calculer réalisé et objectif par collaborateur
   function getMonthData(monthKey) {
     const [yr, mo] = monthKey.split('-').map(Number);
-    const daysInMonth = [];
+    // Jours écoulés seulement (le mois en cours est comparé « à date », comme le Total magasin et les primes)
+    const aujISO = iso(new Date());
+    const daysInMonth = [], daysAll = [];
     Object.keys(margeData).forEach(dISO => {
       const [y,m] = dISO.split('-').map(Number);
-      if(y===yr && m===mo) daysInMonth.push(dISO);
+      if(y===yr && m===mo) { daysAll.push(dISO); if(dISO < aujISO) daysInMonth.push(dISO); }
     });
 
     const result = {};
     idsEquipeObj().forEach(uid => {
-      let objTotal = 0;
+      let objTotal = 0, objFull = 0;
       let realTotal = 0;
       // Grouper par semaine pour appliquer la bonne config de coefs
       const weeksSeen = new Set();
-      daysInMonth.forEach(dISO => {
+      daysAll.forEach(dISO => {
+        const ecoule = dISO < aujISO;
         const d2 = new Date(dISO);
         const dow = d2.getDay()===0?6:d2.getDay()-1;
         const mon2 = new Date(d2); mon2.setDate(d2.getDate()-dow);
@@ -4885,22 +4929,25 @@ function renderMonthlyPerf() {
         }, 0);
         // Objectif dynamique (déduction Allan + Internet)
         const objEquipe = objEquipeJour(dISO); // déduction lissée sur la semaine
-        objTotal += totalPoids>0 ? (poidsUid/totalPoids)*objEquipe : 0;
+        const part = totalPoids>0 ? (poidsUid/totalPoids)*objEquipe : 0;
+        objFull += part;               // objectif du mois complet (information)
+        if(ecoule) objTotal += part;   // objectif à date (jours écoulés) : base du %
         // Réalisé depuis vendeurData
         const real = vendeurData[dISO+'|'+uid];
         if(real!==undefined) realTotal += real;
       });
-      result[uid] = {obj: Math.round(objTotal), real: Math.round(realTotal), hasData: daysInMonth.some(d=>vendeurData[d+'|'+uid]!==undefined)};
+      result[uid] = {obj: Math.round(objTotal), objFull: Math.round(objFull), real: Math.round(realTotal), hasData: daysInMonth.some(d=>vendeurData[d+'|'+uid]!==undefined)};
     });
     // Total équipe
     const objTeam = Object.values(result).reduce((s,v)=>s+v.obj,0);
     const realTeam = Object.values(result).reduce((s,v)=>s+(v.hasData?v.real:0),0);
     const hasTeam = Object.values(result).some(v=>v.hasData);
-    result._team = {obj:objTeam, real:realTeam, hasData:hasTeam};
+    const objTeamFull = Object.values(result).reduce((s,v)=>s+(v.objFull||0),0);
+    result._team = {obj:objTeam, objFull:objTeamFull, real:realTeam, hasData:hasTeam};
     return result;
   }
 
-  function pctCell(obj, real, hasData, isCurrent) {
+  function pctCell(obj, real, hasData, isCurrent, objFull) {
     if(!hasData) return '<td style="text-align:center;color:var(--t3);font-size:11px">—</td>';
     if(!obj) return '<td style="text-align:center;color:var(--t3);font-size:11px">—</td>';
     const pct = Math.round(real/obj*100);
@@ -4909,7 +4956,8 @@ function renderMonthlyPerf() {
     const cur = isCurrent?' style="font-style:italic"':'';
     return `<td style="text-align:center;padding:5px 6px;background:${bg}">
       <span style="font-weight:700;color:${col};font-size:12px"${cur}>${pct}%</span>
-      <div style="font-size:9px;color:var(--t2);line-height:1.2;margin-top:1px">${real.toLocaleString('fr-FR')} / ${obj.toLocaleString('fr-FR')} €</div>
+      <div style="font-size:9px;color:var(--t2);line-height:1.2;margin-top:1px">${real.toLocaleString('fr-FR')} / ${obj.toLocaleString('fr-FR')} €${isCurrent?' <span style="color:var(--am)">à date</span>':''}</div>
+      ${isCurrent && objFull && objFull > obj ? `<div style="font-size:9px;color:var(--t3);line-height:1.2" title="Objectif de tout le mois, jours à venir compris">mois complet : ${objFull.toLocaleString('fr-FR')} €</div>` : ''}
     </td>`;
   }
 
@@ -4922,7 +4970,10 @@ function renderMonthlyPerf() {
 
   const monthData = months.map(m => getMonthData(m));
 
-  let html = `<table style="border-collapse:collapse;font-size:11px;width:100%">
+  const hier = new Date(); hier.setDate(hier.getDate()-1);
+  const libCourant = new Date(today.getFullYear(), today.getMonth(), 1).toLocaleDateString('fr-FR',{month:'long'});
+  let html = noteADate(`Mois en cours (${libCourant}*) : les pourcentages sont calculés <b>à date</b> — le réalisé est comparé à l'objectif des jours déjà écoulés (du 1er au ${hier.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})}), pas à l'objectif du mois entier. L'objectif du mois complet est rappelé en petit sous chaque case. Les mois terminés sont comparés à leur objectif complet.`)
+    + `<table style="border-collapse:collapse;font-size:11px;width:100%">
     <thead><tr>
       <th style="padding:6px 8px;text-align:left;font-weight:500;color:var(--t2);min-width:80px">Collaborateur</th>
       ${monthLabels.map(l=>`<th style="padding:6px 8px;text-align:center;font-weight:500;color:var(--t2)">${l}</th>`).join('')}
@@ -4933,24 +4984,24 @@ function renderMonthlyPerf() {
     const u = USERS[uid];
     html += `<tr style="border-top:1px solid var(--brd)">
       <td style="padding:6px 8px;font-weight:600">${u.short}</td>
-      ${months.map((m,i) => pctCell(monthData[i][uid]?.obj, monthData[i][uid]?.real, monthData[i][uid]?.hasData, m===currentMonth)).join('')}
+      ${months.map((m,i) => pctCell(monthData[i][uid]?.obj, monthData[i][uid]?.real, monthData[i][uid]?.hasData, m===currentMonth, monthData[i][uid]?.objFull)).join('')}
     </tr>`;
   });
 
   // Ligne équipe
   html += `<tr style="border-top:2px solid var(--bm);background:var(--s2)">
     <td style="padding:6px 8px;font-weight:700">👥 Équipe</td>
-    ${months.map((m,i) => pctCell(monthData[i]._team?.obj, monthData[i]._team?.real, monthData[i]._team?.hasData, m===currentMonth)).join('')}
+    ${months.map((m,i) => pctCell(monthData[i]._team?.obj, monthData[i]._team?.real, monthData[i]._team?.hasData, m===currentMonth, monthData[i]._team?.objFull)).join('')}
   </tr>`;
 
   // Ligne magasin : objectif global du magasin vs marge réelle du magasin (conditionne les primes)
   html += `<tr style="border-top:1px solid var(--bm);background:var(--bl-l)">
     <td style="padding:6px 8px;font-weight:700">🏬 Total magasin</td>
-    ${months.map(m => { const t = perfMagasinMois(m); return pctCell(Math.round(t.obj), Math.round(t.real), t.jours>0, m===currentMonth); }).join('')}
+    ${months.map(m => { const t = perfMagasinMois(m); const full = Object.keys(margeData).filter(d=>d.startsWith(m)).reduce((s,d)=>s+(margeData[d]||0),0); return pctCell(Math.round(t.obj), Math.round(t.real), t.jours>0, m===currentMonth, Math.round(full)); }).join('')}
   </tr>`;
 
   html += `</tbody></table>
-    <div style="font-size:10px;color:var(--t2);margin-top:8px">* mois en cours · 🟢 ≥90% · 🟡 75-89% · 🔴 &lt;75% · Objectifs calculés au prorata présence × coefficient · <b>Total magasin</b> = marge réelle du magasin (Allan, Internet et hors objectifs compris) / objectif global, sur les jours écoulés du mois — c'est lui qui débloque l'enveloppe des primes</div>`;
+    <div style="font-size:10px;color:var(--t2);margin-top:8px">* mois en cours, évalué à date (objectif des jours écoulés, comme dans « Ma prime du mois ») · 🟢 ≥90% · 🟡 75-89% · 🔴 &lt;75% · Objectifs calculés au prorata présence × coefficient · <b>Total magasin</b> = marge réelle du magasin (Allan, Internet et hors objectifs compris) / objectif global, sur les jours écoulés du mois — c'est lui qui débloque l'enveloppe des primes</div>`;
 
   wrap.innerHTML = html;
   renderPrimes();
@@ -4970,6 +5021,10 @@ const PRIME_PALIERS = [            // % d'atteinte de l'objectif magasin → env
   { min: -Infinity, niveau: 0, env: 0, lib: 'moins de 80 %' },
 ];
 function palierPrime(pct){ return PRIME_PALIERS.find(p => pct >= p.min); }
+// Bandeau d'explication « calcul à date » (performance mensuelle et primes)
+function noteADate(texte){
+  return `<div style="display:flex;gap:8px;align-items:flex-start;background:var(--am-l);border:1px solid var(--am-b);color:var(--am);border-radius:var(--r);padding:8px 12px;margin-bottom:10px;font-size:11px;line-height:1.5"><span style="font-size:14px">ℹ️</span><div>${texte}</div></div>`;
+}
 let primeMois = null; // mois affiché dans la section primes (AAAA-MM)
 
 // Jours d'un mois ayant un objectif ; « écoulés » = jours avant aujourd'hui (le mois en cours est évalué à date)
@@ -5055,6 +5110,7 @@ function renderPrimes(){
       <b style="font-size:13px;text-transform:capitalize">${libMois}</b>${enCours ? '<span style="font-size:11px;color:var(--am)"> · mois en cours : estimation à date (jours écoulés)</span>' : ''}
       <button ${idx < moisDispo.length - 1 ? '' : 'disabled'} onclick="window.primeChangerMois(1)" style="border:1px solid var(--brd);background:var(--s2);border-radius:6px;padding:3px 10px;cursor:pointer">▶</button>
     </div>
+    ${enCours ? noteADate(`Calcul <b>à date</b> : objectifs des jours déjà écoulés (du 1er au ${(()=>{const h=new Date();h.setDate(h.getDate()-1);return h.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});})()}), comme dans la performance mensuelle ci-dessus. Le montant évolue chaque jour ; la prime définitive est calculée sur le mois complet, une fois terminé.`) : ''}
     <div style="font-size:12px;background:var(--s2);border:1px solid var(--b);border-radius:var(--r);padding:8px 12px;margin-bottom:12px">
       🏬 <b>Magasin</b> : ${eur(mag.real)} de marge réalisée sur un objectif de ${eur(mag.obj)} (${mag.jours} jour${mag.jours > 1 ? 's' : ''})
       → <b>${pc1(mag.pct)}</b> d'atteinte → palier ${pal.niveau} → enveloppe débloquée <b>${Math.round(pal.env * 100)} %</b>
@@ -5074,7 +5130,7 @@ function renderPrimes(){
     let detailInd;
     if (P.horsObj) detailInd = `Pas encore soumis aux objectifs : Bloc 1 non applicable pour le moment.`;
     else if (P.ind.pct === null) detailInd = `Pas encore d'objectif individuel calculé ce mois-ci : coefficient 1 provisoire.`;
-    else detailInd = `Réalisé ${eur(P.ind.real)} / objectif ${eur(P.ind.obj)} = ${pc1(P.ind.pct)} → coefficient ${P.coefBrut.toFixed(2).replace('.', ',')}`
+    else detailInd = `Réalisé ${eur(P.ind.real)} / objectif${enCours ? ' à date' : ''} ${eur(P.ind.obj)} = ${pc1(P.ind.pct)} → coefficient ${P.coefBrut.toFixed(2).replace('.', ',')}`
       + (P.coef !== P.coefBrut ? ` → ramené à <b>${P.coef.toFixed(2).replace('.', ',')}</b> (${P.coef === PRIME_COEF_MIN ? 'plancher 0,70 : le collectif te porte' : 'plafond 1,30'})` : '');
     const gelSaisie = voirTout
       ? `<input type="number" min="0" step="1" value="${P.nbGel || ''}" placeholder="0" title="Total du mois à date : la nouvelle valeur remplace l'ancienne" onchange="window.saisirGel('${uid}', this.value)" onkeydown="if(event.key==='Enter')this.blur()" style="width:64px;padding:3px 6px;border:1px solid var(--bm);border-radius:5px;font-size:12px;text-align:right"> gel(s) <span style="color:var(--t3)">(total du mois)</span>`
@@ -5085,7 +5141,7 @@ function renderPrimes(){
         <div style="font-size:11px;color:var(--t2)">${libMois}${enCours ? ' · à date' : ''}</div>
       </div>
       ${ligne(1, 'Enveloppe initiale', `${eur(PRIME_BASE_35H)} pour 35 h, au prorata du contrat : ${prorata}`, eur(P.base))}
-      ${ligne(2, 'Coefficient magasin', `Objectif du magasin atteint à ${pc1(P.mag.pct)} (${P.pal.lib}) → enveloppe ${Math.round(P.pal.env * 100)} %<br>${eur(P.base)} × ${Math.round(P.pal.env * 100)} %`
+      ${ligne(2, 'Coefficient magasin', `Objectif du magasin atteint à ${pc1(P.mag.pct)}${enCours ? ' à date' : ''} (${P.pal.lib}) → enveloppe ${Math.round(P.pal.env * 100)} %<br>${eur(P.base)} × ${Math.round(P.pal.env * 100)} %`
           + (P.suivant ? `<br><span style="color:var(--bl)">Palier suivant (${P.suivant.min} %, enveloppe ${Math.round(P.suivant.env * 100)} %) : encore ${eur(P.manque)} de marge magasin à date</span>` : ''), eur(P.apresMag))}
       ${P.horsObj ? ligne(3, 'Coefficient individuel', detailInd, eur(0), 'var(--t3)') : ligne(3, 'Coefficient individuel', detailInd + `<br>${eur(P.apresMag)} × ${P.coef.toFixed(2).replace('.', ',')}`, eur(P.bloc1), 'var(--gn)')}
       ${ligne('+', 'Bonus gel (Bloc 3)', `${gelSaisie} × ${eur(PRIME_GEL)}`, eur(P.bloc3))}
