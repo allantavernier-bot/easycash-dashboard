@@ -469,7 +469,7 @@ body.halloween .hw-bat{position:fixed;font-size:22px;pointer-events:none;z-index
       oninput="window.onPinInput(this.value)"
       onkeydown="if(event.key==='Enter') window.tryLoginInput()">
     <button class="sbmit" style="width:100%;margin-top:4px" onclick="window.tryLoginInput()">Connexion</button>
-    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 23/10/2026 (b) 🎃 · <span id="collabs-load-status">chargement équipe…</span></div>
+    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 24/10/2026 (b) 🎃 · <span id="collabs-load-status">chargement équipe…</span></div>
   </div>
 </div>
 
@@ -780,6 +780,12 @@ body.halloween .hw-bat{position:fixed;font-size:22px;pointer-events:none;z-index
         </div>
         <div id="coef-grid" style="display:none"></div>
         <div id="coef-table-body" style="display:none"></div>
+      </div>
+
+      <!-- Primes (note de service 2026/00002) -->
+      <div class="acard" style="margin-top:14px">
+        <div class="actitle">💶 Ma prime du mois — calcul détaillé</div>
+        <div id="primes-wrap"><div style="font-size:12px;color:var(--t2);padding:20px;text-align:center">Chargement...</div></div>
 
 
     </div>
@@ -1191,6 +1197,7 @@ Object.defineProperty(window,'_state',{get:()=>STATE});
 let STATE = {
   // Soldes communiqués par la RH (arrêtés à une date) — décompte = absences acceptées après cette date
   collabs_supprimes: ['julie'],
+  gels: {}, // { 'AAAA-MM': { uid: nombre de gels vendus/posés } } — saisi par Allan
   soldes: {arrete:'2026-09-13', echeanceCP:'2027-05-31', echeanceRTT:'2026-12-31', mode:'ouvrables', modeV:2,
     vals:{cathy:{cp:12}, hubert:{cp:8}, allan:{cp:12,rtt:10}, anthony:{cp:7}, manon:{cp:9}}},
   absences: [
@@ -1228,6 +1235,7 @@ async function loadState(){
       const saved = snap.data();
       if(saved.absences) STATE.absences = saved.absences;
       if(saved.soldes) STATE.soldes = saved.soldes;
+      if(saved.gels) STATE.gels = saved.gels;
       if(Array.isArray(saved.collabs_supprimes)) STATE.collabs_supprimes = [...new Set([...saved.collabs_supprimes, 'julie'])];
       if(saved.slotOverrides) STATE.slotOverrides = saved.slotOverrides;
       if(saved.signatures) STATE.signatures = saved.signatures;
@@ -1266,6 +1274,7 @@ async function saveState(){
     await setDoc(STATE_DOC, {
       absences: STATE.absences,
       soldes: STATE.soldes,
+      gels: STATE.gels || {},
       collabs_supprimes: STATE.collabs_supprimes || [],
       slotOverrides: STATE.slotOverrides,
       signatures: STATE.signatures,
@@ -1370,6 +1379,7 @@ function startPolling(){
       const saved = snap.data();
       if(saved.absences) STATE.absences = saved.absences;
       if(saved.soldes) STATE.soldes = saved.soldes;
+      if(saved.gels) STATE.gels = saved.gels;
       if(Array.isArray(saved.collabs_supprimes)) STATE.collabs_supprimes = [...new Set([...saved.collabs_supprimes, 'julie'])];
       if(saved.slotOverrides) STATE.slotOverrides = saved.slotOverrides;
       if(saved.signatures) STATE.signatures = saved.signatures;
@@ -2904,6 +2914,8 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
 const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbz_om6CHk3CvB4e8dyFqdj0O_rzcVrZvjk1c9Uub1ZAx34J6VsOI5H30IRgtV67iyq1Yw/exec';
 let margeData = {};
 let vendeurData = {};
+let margeVendeursJour = {}; // somme brute des vendeurs du Sheet par jour (repli si la marge réelle manque)
+let margeReelleData = {}; // marge réelle du magasin par jour (col. I du Sheet, Web App v46+)
 
 function getMargeToken() { return localStorage.getItem('ec_access_token'); }
 function setMargeToken(t) { localStorage.setItem('ec_access_token', t); }
@@ -2983,7 +2995,7 @@ async function loadMargeData(){
     }
 
     // main_planning : [Date, CA cible, Marge cible]
-    margeData = {};
+    margeData = {}; margeReelleData = {};
     const mainRows = raw.main_planning || [];
     mainRows.slice(1).forEach(r => {
       const d = gdateGviz(r[0]);
@@ -2991,9 +3003,11 @@ async function loadMargeData(){
       const dISO = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
       const marge = parseNumGviz(r[2]); // index 2 = Marge cible (col F)
       if(marge!==null) margeData[dISO] = marge;
+      const reel = r.length > 3 ? parseNumGviz(r[3]) : null; // index 3 = Marge réelle (col I) — Web App v46+
+      if(reel!==null && reel!==0) margeReelleData[dISO] = reel;
     });
 
-    vendeurData = {};
+    vendeurData = {}; margeVendeursJour = {};
     const vendRows = raw.vendeurs || [];
     vendRows.slice(1).forEach(r => {
       const d = gdateGviz(r[0]);
@@ -3001,7 +3015,7 @@ async function loadMargeData(){
       const dISO = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
       const uid   = r[1] ? String(r[1]) : null;
       const marge = parseNumGviz(r[4]);
-      if(uid&&marge!==null) vendeurData[dISO+'|'+uid] = marge;
+      if(uid&&marge!==null) { vendeurData[dISO+'|'+uid] = marge; margeVendeursJour[dISO] = (margeVendeursJour[dISO]||0) + marge; }
     });
     // Le pipeline enregistre les vendeurs par prénom (ex. « matthieu ») ; certains collaborateurs
     // du planning ont un identifiant généré (« c17… ») : on rattache leurs ventes par prénom.
@@ -3837,7 +3851,7 @@ function renderMesTaches() {
     const due = p ? iso(d ? prochaineOccurrence(t).due : p.due) : (t.date||'9999');
     return (d?'1':'0') + due; };
   filtered.sort((x,y)=>ordre(x).localeCompare(ordre(y)));
-  const tachesHtml = filtered.map(t => {
+  const rowT = t => {
     const done = isTacheDone(t);
     const u = USERS[t.uid];
     const ini = (u?.short||t.uid).substring(0,2).toUpperCase();
@@ -3878,12 +3892,13 @@ function renderMesTaches() {
       ${prioLbl?`<span class="tache-pill ${prioCls}">${prioLbl}</span>`:''}
       ${btn}
     </div>`;
-  }).join('');
+  };
+  const tachesHtml = filtered.map(rowT).join('');
 
   // Mobilier à nettoyer (toujours « à faire » tant que non nettoyé)
   const today = iso(new Date());
   const gond = filter==='done' ? [] : getGondolesAssignees();
-  const gondHtml = gond.map(g => {
+  const rowG = g => {
     const u = USERS[g.uid];
     const ini = (u?.short||g.uid).substring(0,2).toUpperCase();
     const late = g.dateISO && g.dateISO < today;
@@ -3898,10 +3913,17 @@ function renderMesTaches() {
       ${late?'<span class="tache-pill tp-rd">En retard</span>':''}
       <button class="tache-done-btn" onclick="window.gondoleFaite(${g.n})">Fait</button>
     </div>`;
-  }).join('');
+  };
+  const gondHtml = gond.map(rowG).join('');
 
   if(!tachesHtml && !gondHtml) {
     el.innerHTML = '<div style="font-size:12px;color:var(--t3);padding:10px 0;text-align:center">Aucune tâche 🎉</div>';
+    updateTachesBadge();
+    return;
+  }
+  if (cur === 'allan') {
+    // Vue direction : regroupée par salarié
+    el.innerHTML = groupesParSalarie(filtered, gond, rowT, rowG);
     updateTachesBadge();
     return;
   }
@@ -3909,6 +3931,30 @@ function renderMesTaches() {
     (tachesHtml ? tachesHtml : '') +
     (gondHtml ? `<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--t2);margin:${tachesHtml?'16px':'0'} 0 4px">🧹 Mobilier à nettoyer (${gond.length})</div>${gondHtml}` : '');
   updateTachesBadge();
+}
+
+// Regroupe des tâches (et gondoles) par salarié : un bloc repliable par personne, ordre de l'équipe
+function ordreSalaries(uids){
+  const base = ['allan', ...(typeof collabsDuMagasin === 'function' ? collabsDuMagasin() : SIDS)];
+  return [...new Set([...base.filter(u => uids.includes(u)), ...uids])];
+}
+function groupesParSalarie(taches, gond, rowT, rowG){
+  const uids = ordreSalaries([...new Set([...taches.map(t => t.uid), ...(gond || []).map(g => g.uid)])]);
+  return uids.map(uid => {
+    const tt = taches.filter(t => t.uid === uid), gg = (gond || []).filter(g => g.uid === uid);
+    const aFaire = tt.filter(t => !isTacheDone(t)).length + gg.length;
+    const u = USERS[uid] || {};
+    const ini = (u.short || uid).substring(0, 2).toUpperCase();
+    return `<details ${aFaire ? 'open' : ''} style="border:1px solid var(--b);border-radius:var(--r);margin-bottom:8px;background:var(--sf)">
+      <summary style="cursor:pointer;padding:8px 10px;display:flex;align-items:center;gap:8px;list-style:none">
+        <div class="av" style="background:${u.bg || '#EEE'};color:${u.ct || '#333'}">${ini}</div>
+        <b style="font-size:13px;flex:1">${u.name || nomCourt(uid)}</b>
+        ${aFaire ? `<span class="tache-pill tp-am">${aFaire} à faire</span>` : '<span class="tache-pill tp-gn">Tout est fait</span>'}
+        <span style="font-size:11px;color:var(--t3)">${tt.length + gg.length} tâche${tt.length + gg.length > 1 ? 's' : ''}</span>
+      </summary>
+      <div style="padding:0 10px 6px">${tt.map(rowT).join('')}${gg.length ? `<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--t2);margin:8px 0 2px">🧹 Mobilier à nettoyer (${gg.length})</div>${gg.map(rowG).join('')}` : ''}</div>
+    </details>`;
+  }).join('') || '<div style="font-size:12px;color:var(--t3);padding:10px 0;text-align:center">Aucune tâche 🎉</div>';
 }
 
 // Enregistre un nettoyage de gondole : historique + assignation suivante si répétée
@@ -3971,7 +4017,7 @@ function renderAdminTaches() {
     el.innerHTML='<div style="font-size:12px;color:var(--t3);padding:10px 0;text-align:center">Aucune tâche créée</div>';
     return;
   }
-  el.innerHTML = taches.map(t => {
+  const rowAdm = t => {
     const done = isTacheDone(t);
     const u = USERS[t.uid];
     const ini=(u?.short||t.uid).substring(0,2).toUpperCase();
@@ -3986,7 +4032,8 @@ function renderAdminTaches() {
       <button onclick="window.editTache('${t.id}')" style="background:none;border:1px solid var(--bm);padding:3px 8px;border-radius:var(--r);cursor:pointer;font-size:11px;font-family:'IBM Plex Sans',sans-serif">✏️</button>
       <button onclick="window.deleteTache('${t.id}')" style="background:var(--rd-l);border:1px solid var(--rd-b);color:var(--rd);padding:3px 8px;border-radius:var(--r);cursor:pointer;font-size:11px;font-family:'IBM Plex Sans',sans-serif">🗑</button>
     </div>`;
-  }).join('');
+  };
+  el.innerHTML = groupesParSalarie(taches, [], rowAdm, null);
 }
 
 // Listes de collaborateurs des tâches : équipe du magasin de la session (SIDS), plus à jour automatiquement
@@ -4896,11 +4943,180 @@ function renderMonthlyPerf() {
     ${months.map((m,i) => pctCell(monthData[i]._team?.obj, monthData[i]._team?.real, monthData[i]._team?.hasData, m===currentMonth)).join('')}
   </tr>`;
 
+  // Ligne magasin : objectif global du magasin vs marge réelle du magasin (conditionne les primes)
+  html += `<tr style="border-top:1px solid var(--bm);background:var(--bl-l)">
+    <td style="padding:6px 8px;font-weight:700">🏬 Total magasin</td>
+    ${months.map(m => { const t = perfMagasinMois(m); return pctCell(Math.round(t.obj), Math.round(t.real), t.jours>0, m===currentMonth); }).join('')}
+  </tr>`;
+
   html += `</tbody></table>
-    <div style="font-size:10px;color:var(--t2);margin-top:8px">* mois en cours · 🟢 ≥90% · 🟡 75-89% · 🔴 &lt;75% · Objectifs calculés au prorata présence × coefficient</div>`;
+    <div style="font-size:10px;color:var(--t2);margin-top:8px">* mois en cours · 🟢 ≥90% · 🟡 75-89% · 🔴 &lt;75% · Objectifs calculés au prorata présence × coefficient · <b>Total magasin</b> = marge réelle du magasin (Allan, Internet et hors objectifs compris) / objectif global, sur les jours écoulés du mois — c'est lui qui débloque l'enveloppe des primes</div>`;
 
   wrap.innerHTML = html;
+  renderPrimes();
 }
+
+// ═══════════════════════════════════════════════════════
+//  PRIMES — Note de service 2026/00002 (à compter du 01/10/2026)
+// ═══════════════════════════════════════════════════════
+const PRIME_BASE_35H = 99.60;      // Bloc 1 : valeur de base mensuelle temps plein
+const PRIME_GEL = 2.50;            // Bloc 3 : par vente / pose d'hydrogel
+const PRIME_COEF_MIN = 0.70, PRIME_COEF_MAX = 1.30;
+const PRIME_PALIERS = [            // % d'atteinte de l'objectif magasin → enveloppe débloquée
+  { min: 110, niveau: 4, env: 1.15, lib: 'plus de 110 %' },
+  { min: 100, niveau: 3, env: 1.00, lib: 'de 100 à 110 %' },
+  { min: 90,  niveau: 2, env: 0.75, lib: 'de 90 à 100 %' },
+  { min: 80,  niveau: 1, env: 0.50, lib: 'de 80 à 90 %' },
+  { min: -Infinity, niveau: 0, env: 0, lib: 'moins de 80 %' },
+];
+function palierPrime(pct){ return PRIME_PALIERS.find(p => pct >= p.min); }
+let primeMois = null; // mois affiché dans la section primes (AAAA-MM)
+
+// Jours d'un mois ayant un objectif ; « écoulés » = jours avant aujourd'hui (le mois en cours est évalué à date)
+function joursDuMois(monthKey, ecoulesSeulement){
+  const auj = iso(new Date());
+  return Object.keys(margeData).filter(d => d.startsWith(monthKey) && (!ecoulesSeulement || d < auj)).sort();
+}
+// Marge réelle magasin d'un jour : colonne « marge réelle » du Sheet, sinon somme de tous les vendeurs du jour
+function margeReelleJour(dISO){
+  if (margeReelleData[dISO] !== undefined) return margeReelleData[dISO];
+  return margeVendeursJour[dISO] !== undefined ? margeVendeursJour[dISO] : null;
+}
+function perfMagasinMois(monthKey){
+  let obj = 0, real = 0, jours = 0;
+  joursDuMois(monthKey, true).forEach(d => {
+    const r = margeReelleJour(d);
+    if (r === null) return;
+    obj += margeData[d] || 0; real += r; jours++;
+  });
+  return { obj, real, jours, pct: obj > 0 ? real / obj * 100 : 0 };
+}
+// Objectif et réalisé individuels du mois sur les jours écoulés (même méthode que la performance mensuelle)
+function perfIndivMois(uid, monthKey){
+  let obj = 0, real = 0;
+  joursDuMois(monthKey, true).forEach(dISO => {
+    const d2 = new Date(dISO + 'T12:00:00');
+    const dow = d2.getDay() === 0 ? 6 : d2.getDay() - 1;
+    const mon2 = new Date(d2); mon2.setDate(d2.getDate() - dow);
+    const coefs = getCoefsAtDate(iso(mon2));
+    const pct = (coefs[uid] || 0) / 100;
+    const isSat = d2.getDay() === 6;
+    const hj = h => isSat ? (h / 5) * 1.4 : h / 5;
+    if (pct > 0) {
+      const poids = hj(BASE_SCHEDULE[uid]?.h || 35) * pct;
+      const total = idsEquipeObj().reduce((s, u2) => s + hj(BASE_SCHEDULE[u2]?.h || 35) * ((coefs[u2] || 0) / 100), 0);
+      obj += total > 0 ? poids / total * objEquipeJour(dISO) : 0;
+    }
+    const r = vendeurData[dISO + '|' + uid];
+    if (r !== undefined) real += r;
+  });
+  return { obj, real, pct: obj > 0 ? real / obj * 100 : null };
+}
+const eur = n => (Math.round(n * 100) / 100).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+const pc1 = n => (Math.round(n * 10) / 10).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' %';
+
+function calculPrime(uid, monthKey){
+  const h = contratH(uid);
+  const base = PRIME_BASE_35H * Math.min(h, 35) / 35;
+  const mag = perfMagasinMois(monthKey);
+  const pal = palierPrime(mag.pct);
+  const apresMag = base * pal.env;
+  const horsObj = estHorsObjectifs(uid);
+  const ind = horsObj ? { obj: 0, real: 0, pct: null } : perfIndivMois(uid, monthKey);
+  let coefBrut = horsObj || ind.pct === null ? 1 : ind.pct / 100;
+  const coef = Math.min(PRIME_COEF_MAX, Math.max(PRIME_COEF_MIN, coefBrut));
+  const bloc1 = horsObj ? 0 : apresMag * coef; // hors objectifs : pas encore concernés par le Bloc 1
+  const nbGel = Number(((STATE.gels || {})[monthKey] || {})[uid] || 0);
+  const bloc3 = nbGel * PRIME_GEL;
+  // Prochain palier magasin : marge supplémentaire nécessaire (sur les jours écoulés)
+  const suivant = PRIME_PALIERS.filter(p => p.min > pal.min && isFinite(p.min)).sort((a, b) => a.min - b.min)[0];
+  const manque = suivant ? Math.max(0, suivant.min / 100 * mag.obj - mag.real) : 0;
+  return { h, base, mag, pal, apresMag, horsObj, ind, coefBrut, coef, bloc1, nbGel, bloc3, total: bloc1 + bloc3, suivant, manque };
+}
+
+function renderPrimes(){
+  const wrap = document.getElementById('primes-wrap');
+  if (!wrap) return;
+  if (curMag !== 'berck' || !Object.keys(margeData).length) { wrap.innerHTML = '<div style="font-size:12px;color:var(--t3)">Données non disponibles.</div>'; return; }
+  const moisDispo = [...new Set(Object.keys(margeData).map(d => d.slice(0, 7)))].filter(m => m >= '2026-10' && joursDuMois(m, true).length).sort();
+  const moisCourant = iso(new Date()).slice(0, 7);
+  if (!primeMois || !moisDispo.includes(primeMois)) primeMois = moisDispo.includes(moisCourant) ? moisCourant : moisDispo[moisDispo.length - 1];
+  if (!primeMois) { wrap.innerHTML = '<div style="font-size:12px;color:var(--t3)">Le nouveau calcul de prime démarre le 01/10/2026.</div>'; return; }
+  const idx = moisDispo.indexOf(primeMois);
+  const libMois = new Date(primeMois + '-01T12:00:00').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  const enCours = primeMois === moisCourant;
+  const voirTout = cur === 'allan';
+  const ids = SIDS.filter(u => u !== 'allan' && (voirTout || u === cur));
+  const mag = perfMagasinMois(primeMois);
+  const pal = palierPrime(mag.pct);
+
+  const nav = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <button ${idx > 0 ? '' : 'disabled'} onclick="window.primeChangerMois(-1)" style="border:1px solid var(--brd);background:var(--s2);border-radius:6px;padding:3px 10px;cursor:pointer">◀</button>
+      <b style="font-size:13px;text-transform:capitalize">${libMois}</b>${enCours ? '<span style="font-size:11px;color:var(--am)"> · mois en cours : estimation à date (jours écoulés)</span>' : ''}
+      <button ${idx < moisDispo.length - 1 ? '' : 'disabled'} onclick="window.primeChangerMois(1)" style="border:1px solid var(--brd);background:var(--s2);border-radius:6px;padding:3px 10px;cursor:pointer">▶</button>
+    </div>
+    <div style="font-size:12px;background:var(--s2);border:1px solid var(--b);border-radius:var(--r);padding:8px 12px;margin-bottom:12px">
+      🏬 <b>Magasin</b> : ${eur(mag.real)} de marge réalisée sur un objectif de ${eur(mag.obj)} (${mag.jours} jour${mag.jours > 1 ? 's' : ''})
+      → <b>${pc1(mag.pct)}</b> d'atteinte → palier ${pal.niveau} → enveloppe débloquée <b>${Math.round(pal.env * 100)} %</b>
+    </div>`;
+
+  if (!ids.length) { wrap.innerHTML = nav + '<div style="font-size:12px;color:var(--t3)">Aucune prime à afficher pour ce compte.</div>'; return; }
+
+  const ligne = (n, titre, detail, montant, coul) => `<div style="display:flex;gap:10px;padding:7px 0;border-top:1px dashed var(--b)">
+      <div style="flex:0 0 22px;height:22px;border-radius:50%;background:var(--s3);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center">${n}</div>
+      <div style="flex:1"><div style="font-size:12px;font-weight:600">${titre}</div><div style="font-size:11px;color:var(--t2);line-height:1.5">${detail}</div></div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;white-space:nowrap;color:${coul || 'var(--tx)'}">${montant}</div></div>`;
+
+  const cartes = ids.map(uid => {
+    const P = calculPrime(uid, primeMois);
+    const u = USERS[uid] || {};
+    const prorata = P.h >= 35 ? '35 h (temps plein)' : `${P.h} h / 35 h = ${pc1(P.h / 35 * 100)}`;
+    let detailInd;
+    if (P.horsObj) detailInd = `Pas encore soumis aux objectifs : Bloc 1 non applicable pour le moment.`;
+    else if (P.ind.pct === null) detailInd = `Pas encore d'objectif individuel calculé ce mois-ci : coefficient 1 provisoire.`;
+    else detailInd = `Réalisé ${eur(P.ind.real)} / objectif ${eur(P.ind.obj)} = ${pc1(P.ind.pct)} → coefficient ${P.coefBrut.toFixed(2).replace('.', ',')}`
+      + (P.coef !== P.coefBrut ? ` → ramené à <b>${P.coef.toFixed(2).replace('.', ',')}</b> (${P.coef === PRIME_COEF_MIN ? 'plancher 0,70 : le collectif te porte' : 'plafond 1,30'})` : '');
+    const gelSaisie = voirTout
+      ? `<input type="number" min="0" step="1" value="${P.nbGel || ''}" placeholder="0" title="Total du mois à date : la nouvelle valeur remplace l'ancienne" onchange="window.saisirGel('${uid}', this.value)" onkeydown="if(event.key==='Enter')this.blur()" style="width:64px;padding:3px 6px;border:1px solid var(--bm);border-radius:5px;font-size:12px;text-align:right"> gel(s) <span style="color:var(--t3)">(total du mois)</span>`
+      : `${P.nbGel} gel(s)`;
+    return `<div style="background:var(--sf);border:1px solid var(--b);border-radius:var(--rl);padding:14px 16px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+        <div style="font-size:14px;font-weight:600">${u.name || uid}</div>
+        <div style="font-size:11px;color:var(--t2)">${libMois}${enCours ? ' · à date' : ''}</div>
+      </div>
+      ${ligne(1, 'Enveloppe initiale', `${eur(PRIME_BASE_35H)} pour 35 h, au prorata du contrat : ${prorata}`, eur(P.base))}
+      ${ligne(2, 'Coefficient magasin', `Objectif du magasin atteint à ${pc1(P.mag.pct)} (${P.pal.lib}) → enveloppe ${Math.round(P.pal.env * 100)} %<br>${eur(P.base)} × ${Math.round(P.pal.env * 100)} %`
+          + (P.suivant ? `<br><span style="color:var(--bl)">Palier suivant (${P.suivant.min} %, enveloppe ${Math.round(P.suivant.env * 100)} %) : encore ${eur(P.manque)} de marge magasin à date</span>` : ''), eur(P.apresMag))}
+      ${P.horsObj ? ligne(3, 'Coefficient individuel', detailInd, eur(0), 'var(--t3)') : ligne(3, 'Coefficient individuel', detailInd + `<br>${eur(P.apresMag)} × ${P.coef.toFixed(2).replace('.', ',')}`, eur(P.bloc1), 'var(--gn)')}
+      ${ligne('+', 'Bonus gel (Bloc 3)', `${gelSaisie} × ${eur(PRIME_GEL)}`, eur(P.bloc3))}
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding:10px 12px;background:var(--gn-l);border:1px solid var(--gn-b);border-radius:var(--r)">
+        <div style="font-size:12px;font-weight:600;color:var(--gn)">Prime estimée du mois<br><span style="font-weight:400;font-size:10px">Bloc 1 + Bloc 3 · hors Bloc 2 (QSP, trimestriel)</span></div>
+        <div style="font-size:20px;font-weight:700;color:var(--gn);font-family:'IBM Plex Mono',monospace">${eur(P.total)}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  wrap.innerHTML = nav + `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px">${cartes}</div>
+    <div style="font-size:10px;color:var(--t3);margin-top:8px">Estimation indicative selon la note de service 2026/00002 ; le montant définitif est calculé en fin de mois sur les chiffres validés.${voirTout ? ' · Vue direction : chaque collaborateur ne voit que sa propre case.' : ''}</div>`;
+}
+window.primeChangerMois = function(d){
+  const moisDispo = [...new Set(Object.keys(margeData).map(x => x.slice(0, 7)))].filter(m => m >= '2026-10' && joursDuMois(m, true).length).sort();
+  const i = moisDispo.indexOf(primeMois) + d;
+  if (i >= 0 && i < moisDispo.length) { primeMois = moisDispo[i]; renderPrimes(); }
+};
+window.saisirGel = async function(uid, val){
+  if (cur !== 'allan') return;
+  if (!STATE.gels) STATE.gels = {};
+  if (!STATE.gels[primeMois]) STATE.gels[primeMois] = {};
+  // La nouvelle quantité REMPLACE l'ancienne (total du mois à date, pas un ajout)
+  const n = Math.max(0, parseInt(val, 10) || 0);
+  STATE.gels[primeMois][uid] = n;
+  renderPrimes();
+  try {
+    await updateDoc(STATE_DOC, new FieldPath('gels', primeMois, uid), n);
+    toast(`✓ ${nomCourt(uid)} : ${n} gel(s) en ${new Date(primeMois + '-01T12:00:00').toLocaleDateString('fr-FR', { month: 'long' })}`);
+  } catch (e) { console.error('saisirGel', e); await saveState(); toast('✓ Gels enregistrés'); }
+};
 
 window.renderMonthlyPerf = renderMonthlyPerf;
 window.renderBriefs = renderBriefs;
