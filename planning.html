@@ -62,6 +62,7 @@ header{background:var(--sf);border-bottom:1px solid var(--b);padding:0 20px;heig
 .tab:hover{color:var(--tx);}
 .tab.on{color:var(--tx);border-bottom-color:var(--tx);}
 .adm{display:none;}
+.plan-mgr{display:none;}
 
 main{padding:16px 18px;max-width:1180px;margin:0 auto;}
 .view{display:none;}
@@ -414,7 +415,55 @@ main{padding:16px 18px;max-width:1180px;margin:0 auto;}
   #scroll-hint{display:block!important;}
 }
 
-/* ═══ THÈME HALLOWEEN (actif automatiquement jusqu'au 01/11 inclus — voir script en bas de page) ═══ */
+/* ═══ THÈME AUTOMNE (22/09→14/10 et 02/11→30/11) ═══ */
+body.automne{--bg:#FBF1E6;--s2:#FDF6EE;--s3:#F5E3D0;--bl:#A0471B;--bl-l:#FCE9DB;--bl-b:#EDB894;
+  background-color:#FBF1E6;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Ctext x='20' y='60' font-size='22' opacity='.10'%3E🍂%3C/text%3E%3Ctext x='150' y='150' font-size='20' opacity='.09'%3E🍁%3C/text%3E%3Ctext x='70' y='215' font-size='16' opacity='.08'%3E🌰%3C/text%3E%3C/svg%3E");}
+body.automne header{background:linear-gradient(90deg,#5A2E14,#8B3A1A 60%,#B5541F);border-bottom:3px solid #E39B3A;}
+body.automne header .htitle,body.automne header .huser,body.automne header .huser b,body.automne header #sync-label{color:#FFEBD2!important;}
+body.automne header .hbadge,body.automne .lbadge{background:#E39B3A;color:#3E1E0B;}
+body.automne header .logbtn{color:#FFEBD2;border-color:rgba(255,235,210,.4);}
+body.automne header .logbtn:hover{background:rgba(227,155,58,.25);}
+body.automne header .htitle::after{content:" 🍁";}
+body.automne .tabs{background:#FDF6EE;border-bottom:1px solid #EDB894;}
+body.automne .tab.on,body.automne .tab:hover{color:#A0471B;}
+body.automne .tab.on{border-bottom-color:#C2561B;}
+body.automne .sbmit{background:#C2561B;color:#fff;}
+body.automne .sbmit:hover{background:#A0471B;}
+body.automne .acard,body.automne .aform{border-color:#F0D2B6;}
+body.automne .actitle::before{content:"🍂 ";}
+body.automne #login{background:radial-gradient(circle at 50% 30%,#B5541F 0%,#7A3415 55%,#3E1E0B 100%);}
+body.automne #login .lbox{border:2px solid #E39B3A;box-shadow:0 0 40px rgba(227,155,58,.35);position:relative;}
+body.automne #login .lbox::before{content:"🍁 Bel automne 🍂";position:absolute;top:-34px;left:0;right:0;text-align:center;color:#FFD9A8;font-weight:600;letter-spacing:.05em;font-size:14px;}
+
+/* ═══ THÈME NOËL (01/12→06/01) ═══ */
+body.noel{--bg:#F4F7F2;--s2:#F9FBF7;--s3:#E8F0E4;--bl:#1E6B3A;--bl-l:#E3F2E7;--bl-b:#A8D5B5;
+  background-color:#F4F7F2;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Ctext x='30' y='50' font-size='18' opacity='.10'%3E❄%3C/text%3E%3Ctext x='150' y='120' font-size='22' opacity='.08'%3E✨%3C/text%3E%3Ctext x='60' y='190' font-size='16' opacity='.10'%3E❄%3C/text%3E%3C/svg%3E");}
+body.noel header{background:linear-gradient(90deg,#7A1515,#B32828 60%,#C8352E);border-bottom:3px solid #D4AF37;}
+body.noel header .htitle,body.noel header .huser,body.noel header .huser b,body.noel header #sync-label{color:#FFF4E0!important;}
+body.noel header .hbadge,body.noel .lbadge{background:#D4AF37;color:#5A0F0F;}
+body.noel header .logbtn{color:#FFF4E0;border-color:rgba(255,244,224,.45);}
+body.noel header .logbtn:hover{background:rgba(212,175,55,.25);}
+body.noel header .htitle::after{content:" 🎄";}
+body.noel .tabs{background:#F9FBF7;border-bottom:1px solid #A8D5B5;}
+body.noel .tab.on,body.noel .tab:hover{color:#1E6B3A;}
+body.noel .tab.on{border-bottom-color:#B32828;}
+body.noel .sbmit{background:#1E6B3A;color:#fff;}
+body.noel .sbmit:hover{background:#15522C;}
+body.noel .acard,body.noel .aform{border-color:#CFE3D4;}
+body.noel .actitle::before{content:"🎄 ";}
+body.noel #login{background:radial-gradient(circle at 50% 30%,#1E6B3A 0%,#0F3D20 55%,#06210F 100%);}
+body.noel #login .lbox{border:2px solid #D4AF37;box-shadow:0 0 40px rgba(212,175,55,.35);position:relative;}
+body.noel #login .lbox::before{content:"🎄 Joyeux Noël 🎄";position:absolute;top:-34px;left:0;right:0;text-align:center;color:#F3D778;font-weight:600;letter-spacing:.05em;font-size:14px;}
+
+/* Particules saisonnières (feuilles, flocons) */
+.th-part{position:fixed;top:-40px;pointer-events:none;z-index:1;opacity:.55;animation:thfall linear infinite;}
+@keyframes thfall{0%{transform:translate(0,-40px) rotate(0)}50%{transform:translate(40px,50vh) rotate(180deg)}100%{transform:translate(-20px,105vh) rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.th-part{display:none}}
+@media print{.th-part{display:none}body.automne,body.noel{background:#fff!important}}
+
+/* ═══ THÈME HALLOWEEN (15/10→01/11) ═══ */
 body.halloween{--bg:#FFF1E2;--s2:#FFF7EE;--s3:#FBE7D3;
   --bl:#B84A00;--bl-l:#FFE9D6;--bl-b:#F4B583;--vl:#5B2A86;--vl-l:#F1E6FA;--vl-b:#CDB2E6;
   background-color:#FFF1E2;
@@ -469,7 +518,7 @@ body.halloween .hw-bat{position:fixed;font-size:22px;pointer-events:none;z-index
       oninput="window.onPinInput(this.value)"
       onkeydown="if(event.key==='Enter') window.tryLoginInput()">
     <button class="sbmit" style="width:100%;margin-top:4px" onclick="window.tryLoginInput()">Connexion</button>
-    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 24/10/2026 (e) 🎃 · <span id="collabs-load-status">chargement équipe…</span></div>
+    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 03/11/2026 · <span id="collabs-load-status">chargement équipe…</span></div>
   </div>
 </div>
 
@@ -518,6 +567,7 @@ body.halloween .hw-bat{position:fixed;font-size:22px;pointer-events:none;z-index
     <button class="tab adm" onclick="window.showTab('admin-abs',this)">Demandes</button>
     <button class="tab adm" onclick="window.showTab('admin-team',this)">Équipe &amp; PIN</button>
     <button class="tab" id="tab-briefs" onclick="window.showBriefs(this)">📋 Briefs</button>
+    <button class="tab adm" id="tab-codir" onclick="window.showCodir(this)">🏛 CODIR</button>
   </div>
 
   <main>
@@ -538,7 +588,7 @@ body.halloween .hw-bat{position:fixed;font-size:22px;pointer-events:none;z-index
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
           <span style="font-size:11px;color:var(--t3);font-family:'IBM Plex Mono',monospace" id="wkn"></span>
-          <button class="tbtn adm" id="edit-toggle" onclick="window.toggleEdit()" style="border-color:var(--bl-b);color:var(--bl)">✎ Modifier</button>
+          <button class="tbtn plan-mgr" id="edit-toggle" onclick="window.toggleEdit()" style="border-color:var(--bl-b);color:var(--bl)">✎ Modifier</button>
         </div>
       </div>
       <div class="edit-bar" id="edit-bar" style="display:none">
@@ -696,6 +746,10 @@ body.halloween .hw-bat{position:fixed;font-size:22px;pointer-events:none;z-index
               <span style="font-size:13px">Renfort (ventes comptées hors objectifs) à :</span>
               <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin:0;cursor:pointer"><input type="checkbox" id="cm-renfort-berck"> Berck</label>
               <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin:0;cursor:pointer"><input type="checkbox" id="cm-renfort-abbeville"> Abbeville</label>
+            </div>
+            <div class="mrow" style="grid-column:1/-1;display:flex;align-items:center;gap:10px;padding:0 0 8px">
+              <input type="checkbox" id="cm-gere-planning" style="width:16px;height:16px;cursor:pointer">
+              <label for="cm-gere-planning" style="margin:0;cursor:pointer;font-size:13px">Peut gérer le planning <span style="color:var(--t3);font-size:11px">(modifier les horaires de l'équipe, sans les autres droits administrateur)</span></label>
             </div>
             <div class="mrow" style="grid-column:1/-1;display:flex;align-items:center;gap:10px;padding:0 0 8px">
               <input type="checkbox" id="cm-admin" style="width:16px;height:16px;cursor:pointer">
@@ -1249,6 +1303,7 @@ async function loadState(){
       if(saved.coefs_hist) STATE.coefs_hist = saved.coefs_hist;
       if(saved.seeds) STATE.seeds = saved.seeds;
       if(saved.briefs) STATE.briefs = saved.briefs;
+      if(saved.codirs) STATE.codirs = saved.codirs;
       if(saved.contrats) {
         STATE.contrats = saved.contrats;
         Object.entries(saved.contrats).forEach(([uid, h]) => {
@@ -1289,6 +1344,7 @@ async function saveState(){
       nettoyage: STATE.nettoyage,
       nettoyage_json: JSON.stringify(STATE.nettoyage),
       briefs: STATE.briefs || [],
+      codirs: STATE.codirs || [], // comptes rendus de CODIR (section réservée aux administrateurs)
       // coefs_history (ancien format) et coefs_hist (nouveau) ne sont JAMAIS écrits ici :
       // coefs_hist est écrit uniquement par saveCoefs() via updateDoc ciblé.
     }, { merge: true });
@@ -1393,6 +1449,7 @@ function startPolling(){
       if(saved.coefs_hist) STATE.coefs_hist = saved.coefs_hist;
       if(saved.seeds) STATE.seeds = saved.seeds;
       if(saved.briefs) STATE.briefs = saved.briefs;
+      if(saved.codirs) STATE.codirs = saved.codirs;
       if(saved.contrats) {
         STATE.contrats = saved.contrats;
         Object.entries(saved.contrats).forEach(([uid, h]) => {
@@ -1764,14 +1821,13 @@ function tryLogin(){
     document.getElementById('login').style.display='none';
     document.getElementById('app').style.display='block';
     document.getElementById('huser').textContent=USERS[uid].short;
-    if(isAdmin(uid))document.querySelectorAll('.adm').forEach(e=>e.style.display='block');
+    majVisibiliteDroits(uid);
     loadState().then(()=>{
       syncCollabsFromState();
       migrateCoefsHist();
       seedNouveauxCollabs();
       // Afficher les éléments admin si l'utilisateur est admin
-      if(isAdmin(uid)) document.querySelectorAll('.adm').forEach(e=>e.style.display='block');
-      else document.querySelectorAll('.adm').forEach(e=>e.style.display='none');
+      majVisibiliteDroits(uid);
       renderAll();updateNotifBadge();verifierSignatureAuLogin(uid);
       // Les collaborateurs arrivent directement sur leurs tâches (Allan garde le planning)
       if(uid!=='allan') showTab('taches', document.getElementById('tab-taches'));
@@ -1794,7 +1850,7 @@ function logout(){
   const pinInp=document.getElementById('pin-input');if(pinInp)pinInp.value='';
   document.getElementById('app').style.display='none';
   document.getElementById('login').style.display='flex';
-  document.querySelectorAll('.adm').forEach(e=>e.style.display='none');
+  document.querySelectorAll('.adm,.plan-mgr').forEach(e=>e.style.display='none');
   showTab('planning',document.querySelector('.tab'));
 }
 
@@ -1833,7 +1889,7 @@ function showTab(name,btn){
 //  NAVIGATION SEMAINE
 // ═══════════════════════════════════════════════════════
 function cw(dir){
-  const isAdm=isAdmin(cur);const n=woff+dir;
+  const isAdm=peutGererPlanning(cur);const n=woff+dir;
   if(!isAdm&&n>5){toast('Seules les 5 prochaines semaines sont visibles.');return;}
   woff=n;renderPlanning();
   if(document.getElementById('view-signatures').classList.contains('on'))renderSigPage();
@@ -1927,7 +1983,7 @@ function renderPlanning(){
   const mon=monday(woff);
   const dates=DAYS.map((_,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i);return d;});
   const wk=monKey(woff);
-  const isAdm=isAdmin(cur);
+  const isAdm=peutGererPlanning(cur); // admins + gestionnaires du planning
 
   document.getElementById('wtitle').textContent=`Semaine du ${fmt(dates[0])} au ${fmt(dates[5])}`;
   document.getElementById('wkn').textContent=`S${wknum(mon)} · ${mon.getFullYear()}`;
@@ -2048,7 +2104,7 @@ function renderPlanning(){
     }
   });
 
-  if(isAdm)bH+=`<div class="sstrip"><span style="font-size:11px;color:var(--t3)">Vue directeur — toutes semaines accessibles</span></div>`;
+  if(isAdm)bH+=`<div class="sstrip"><span style="font-size:11px;color:var(--t3)">${isAdmin(cur)?'Vue directeur':'Gestion du planning'} — toutes semaines accessibles</span></div>`;
   document.getElementById('pbody').innerHTML=bH;
 
   // Totaux
@@ -2110,7 +2166,7 @@ function cwSig(dir){
   if(dir===0){ sigOff=0; }
   else {
     const n=sigOff+dir;
-    if(!isAdmin(cur)&&n>5){toast('Seules les 5 prochaines semaines sont visibles.');return;}
+    if(!peutGererPlanning(cur)&&n>5){toast('Seules les 5 prochaines semaines sont visibles.');return;}
     sigOff=n;
   }
   const hint=document.getElementById('sig-nav-hint');
@@ -2733,7 +2789,7 @@ function renderAdminTeam(){
 //  MODE ÉDITION
 // ═══════════════════════════════════════════════════════
 function toggleEdit(){
-  if(!isAdmin(cur))return;
+  if(!peutGererPlanning(cur))return;
   editMode=!editMode;
   document.getElementById('edit-bar').style.display=editMode?'block':'none';
   const btn=document.getElementById('edit-toggle');
@@ -2744,7 +2800,7 @@ function toggleEdit(){
 }
 
 function openModal(uid,dayKey){
-  if(!editMode||!isAdmin(cur))return;
+  if(!editMode||!peutGererPlanning(cur))return;
   const mon=monday(woff);
   const dayIdx=DAYS.indexOf(dayKey);
   const dt=new Date(mon);dt.setDate(mon.getDate()+dayIdx);
@@ -3310,6 +3366,20 @@ window.updatePoidsRow = function(uid) {
 
 // Retourne la config de coefficients active à une date ISO donnée
 // Vérifier si un uid est admin (STATE.collabs prioritaire sur USERS en dur)
+// Gestion du planning (modifier les horaires, toutes les semaines) : admins + collaborateurs autorisés
+// (case « Peut gérer le planning » dans Équipe & PIN → collab.gerePlanning ; par défaut : Cathy).
+const GERE_PLANNING_DEFAUT = ['cathy'];
+function peutGererPlanning(uid) {
+  if (!uid) return false;
+  if (isAdmin(uid)) return true;
+  const c = (STATE.collabs || []).find(x => x.id === uid);
+  if (c && typeof c.gerePlanning === 'boolean') return c.gerePlanning;
+  return GERE_PLANNING_DEFAUT.includes(uid);
+}
+function majVisibiliteDroits(uid) {
+  document.querySelectorAll('.adm').forEach(e => e.style.display = isAdmin(uid) ? 'block' : 'none');
+  document.querySelectorAll('.plan-mgr').forEach(e => e.style.display = peutGererPlanning(uid) ? 'inline-block' : 'none');
+}
 function isAdmin(uid) {
   if (!uid) return false;
   // Chercher dans STATE.collabs d'abord (source de vérité Firestore)
@@ -3635,6 +3705,7 @@ function openCollabModal(mode, id){
     document.getElementById('cm-acces-berck').checked=cAcc.includes('berck');
     document.getElementById('cm-acces-abbeville').checked=cAcc.includes('abbeville');
     document.getElementById('cm-hors-obj').checked=estHorsObjectifs(id);
+    { const g=document.getElementById('cm-gere-planning'); if(g) g.checked = typeof c.gerePlanning==='boolean' ? c.gerePlanning : GERE_PLANNING_DEFAUT.includes(id); }
     ['berck','abbeville'].forEach(m=>{const e=document.getElementById('cm-renfort-'+m); if(e) e.checked=estRenfort(id,m);});
   } else {
     ['cm-nom','cm-poste','cm-pin','cm-email'].forEach(i=>document.getElementById(i).value='');
@@ -3644,6 +3715,7 @@ function openCollabModal(mode, id){
     document.getElementById('cm-acces-berck').checked=false;
     document.getElementById('cm-acces-abbeville').checked=false;
     document.getElementById('cm-hors-obj').checked=false;
+    { const g=document.getElementById('cm-gere-planning'); if(g) g.checked=false; }
     ['berck','abbeville'].forEach(m=>{const e=document.getElementById('cm-renfort-'+m); if(e) e.checked=false;});
     const adm=document.getElementById('cm-admin'); if(adm) adm.checked=false;
   }
@@ -3682,6 +3754,7 @@ async function saveCollab(){
     magasins_acces: ['berck','abbeville'].filter(m=>document.getElementById('cm-acces-'+m)?.checked && m!==document.getElementById('cm-magasin').value),
     active: true,
     horsObjectifs: !!document.getElementById('cm-hors-obj')?.checked,
+    gerePlanning: !!document.getElementById('cm-gere-planning')?.checked,
     renfortMags: ['berck','abbeville'].filter(m=>document.getElementById('cm-renfort-'+m)?.checked && m!==document.getElementById('cm-magasin').value),
   };
   if(collabEditId==='allan') data.magasin='all';
@@ -4618,7 +4691,7 @@ let evCtxDate=null;
 let evTemp=[];
 
 function openEvModal(dateISO){
-  if(!editMode||!isAdmin(cur))return;
+  if(!editMode||!peutGererPlanning(cur))return;
   evCtxDate=dateISO;
   const[y,m,d]=dateISO.split('-');
   const jns=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
@@ -5177,7 +5250,17 @@ window.saisirGel = async function(uid, val){
 window.renderMonthlyPerf = renderMonthlyPerf;
 window.renderBriefs = renderBriefs;
 window.openBriefRead = openBriefRead;
+window.showCodir = function(btn) {
+  if(!isAdmin(cur)) return;
+  docMode = 'codirs';
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  if(btn) btn.classList.add('on');
+  renderBriefs();
+  const ov = document.getElementById('briefs-overlay');
+  if(ov) ov.style.display='block';
+};
 window.showBriefs = function(btn) {
+  docMode = 'briefs';
   // Désactiver les autres onglets visuellement
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
   if(btn) btn.classList.add('on');
@@ -5197,20 +5280,28 @@ window.hideBriefs = function() {
 //  BRIEFS DU SAMEDI
 // ═══════════════════════════════════════════════════════
 let briefCurrent = null; // brief ouvert
+// Le même module sert aux briefs d'équipe et aux comptes rendus de CODIR
+let docMode = 'briefs'; // 'briefs' | 'codirs'
+const DOC_LBL = { briefs: { titre: '📋 Briefs du samedi', un: 'Brief du ', nouveau: '+ Nouveau brief', vide: 'Aucun brief', creer: '📋 Nouveau brief', placeholder: 'Contenu du brief...' },
+                  codirs: { titre: '🏛 Comptes rendus de CODIR', un: 'CODIR du ', nouveau: '+ Nouveau CODIR', vide: 'Aucun CODIR', creer: '🏛 Nouveau CODIR', placeholder: 'Résumé du CODIR : participants, points abordés, décisions, actions (qui / quand)...' } };
+function docsActifs(){ if(!STATE[docMode]) STATE[docMode] = []; return STATE[docMode]; }
 
 function renderBriefs() {
   const list = document.getElementById('brief-list');
   const newBtn = document.getElementById('briefs-new-btn');
   if(newBtn) newBtn.style.display = isAdmin(cur) ? 'inline-block' : 'none';
   if(!list) return;
-  const briefs = (STATE.briefs||[]).slice().sort((a,b)=>b.date.localeCompare(a.date));
+  const L = DOC_LBL[docMode];
+  const ttl = document.getElementById('briefs-overlay-title'); if(ttl) ttl.textContent = L.titre;
+  if(newBtn) newBtn.textContent = L.nouveau;
+  const briefs = docsActifs().slice().sort((a,b)=>b.date.localeCompare(a.date));
   if(!briefs.length){
-    list.innerHTML='<div style="color:#888;font-size:13px;padding:40px;text-align:center">'+(isAdmin(cur)?'Aucun brief — cliquez "+ Nouveau brief" pour commencer.':'Aucun brief pour le moment.')+'</div>';
+    list.innerHTML='<div style="color:#888;font-size:13px;padding:40px;text-align:center">'+(isAdmin(cur)?L.vide+' — cliquez "'+L.nouveau+'" pour commencer.':L.vide+' pour le moment.')+'</div>';
     return;
   }
   list.innerHTML = briefs.map(b=>{
     const d=new Date(b.date);
-    const label='Brief du '+d.toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+    const label=L.un+d.toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
     const preview=(b.content||'').split('\n').join(' ').substring(0,100);
     return '<div onclick="window.openBriefRead(\''+b.id+'\')" style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border:1px solid #e5e5e5;border-radius:8px;margin-bottom:10px;cursor:pointer;background:#fff" onmouseover="this.style.background=\'#f9f9f9\'" onmouseout="this.style.background=\'#fff\'"><div><div style="font-weight:600;font-size:14px">'+label+'</div>'+(preview?'<div style="font-size:12px;color:#888;margin-top:3px">'+preview+(b.content.length>100?'…':'')+'</div>':'')+'</div><span style="font-size:20px;color:#ccc">›</span></div>';
   }).join('');
@@ -5218,11 +5309,11 @@ function renderBriefs() {
 
 
 function openBriefRead(id) {
-  const b = (STATE.briefs||[]).find(x=>x.id===id);
+  const b = docsActifs().find(x=>x.id===id);
   if (!b) return;
   briefCurrent = b;
   const d = new Date(b.date);
-  const label = 'Brief du ' + d.toLocaleDateString('fr-FR', {weekday:'long', day:'2-digit', month:'long', year:'numeric'});
+  const label = DOC_LBL[docMode].un + d.toLocaleDateString('fr-FR', {weekday:'long', day:'2-digit', month:'long', year:'numeric'});
   document.getElementById('brief-modal-title').textContent = label;
   document.getElementById('brief-modal-date').textContent = d.toLocaleDateString('fr-FR', {day:'2-digit', month:'long', year:'numeric'});
   document.getElementById('brief-content-display').textContent = b.content || '(contenu vide)';
@@ -5242,21 +5333,21 @@ window.openBriefModal = function() {
   const dow = today.getDay(); // 0=dim, 6=sam
   const lastSat = new Date(today);
   lastSat.setDate(today.getDate() - (dow === 6 ? 0 : dow + 1));
-  const suggestISO = lastSat.toISOString().substring(0,10);
+  const suggestISO = docMode === 'codirs' ? iso(today) : iso(lastSat); // CODIR : aujourd'hui par défaut
 
   // Créer une mini-modale de choix de date
   const datePicker = document.createElement('div');
   datePicker.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10000;display:flex;align-items:center;justify-content:center';
   datePicker.innerHTML = `
     <div style="background:#fff;border-radius:12px;padding:28px;width:340px;font-family:sans-serif">
-      <div style="font-weight:700;font-size:15px;margin-bottom:6px">📋 Nouveau brief</div>
-      <div style="font-size:12px;color:#888;margin-bottom:16px">Choisissez la date du brief</div>
+      <div style="font-weight:700;font-size:15px;margin-bottom:6px">${DOC_LBL[docMode].creer}</div>
+      <div style="font-size:12px;color:#888;margin-bottom:16px">Choisissez la date</div>
       <label style="font-size:12px;color:#555;display:block;margin-bottom:6px">Date</label>
       <input type="date" id="brief-date-picker" value="${suggestISO}"
         style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #ddd;border-radius:7px;font-size:14px;margin-bottom:18px">
       <div style="display:flex;gap:8px">
         <button onclick="this.closest('div[style*=fixed]').remove()" style="flex:1;padding:9px;border:1px solid #ddd;border-radius:6px;cursor:pointer;font-size:13px">Annuler</button>
-        <button id="brief-date-confirm" style="flex:2;padding:9px;background:#111;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">Créer le brief</button>
+        <button id="brief-date-confirm" style="flex:2;padding:9px;background:#111;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">Créer</button>
       </div>
     </div>`;
   document.body.appendChild(datePicker);
@@ -5266,8 +5357,9 @@ window.openBriefModal = function() {
     if(!dateISO) return;
     datePicker.remove();
     const d = new Date(dateISO);
-    const label = 'Brief du ' + d.toLocaleDateString('fr-FR', {weekday:'long', day:'2-digit', month:'long', year:'numeric'});
-    briefCurrent = {id: 'brief-'+Date.now(), date: dateISO, content: ''};
+    const label = DOC_LBL[docMode].un + d.toLocaleDateString('fr-FR', {weekday:'long', day:'2-digit', month:'long', year:'numeric'});
+    briefCurrent = {id: (docMode==='codirs'?'codir-':'brief-')+Date.now(), date: dateISO, content: ''};
+    document.getElementById('brief-content-input').placeholder = DOC_LBL[docMode].placeholder;
     document.getElementById('brief-modal-title').textContent = label;
     document.getElementById('brief-modal-date').textContent = '';
     document.getElementById('brief-content-input').value = '';
@@ -5300,12 +5392,12 @@ window.saveBrief = async function() {
   briefCurrent.content = document.getElementById('brief-content-input').value;
   briefCurrent.updatedAt = new Date().toISOString();
   briefCurrent.updatedBy = cur;
-  if (!STATE.briefs) STATE.briefs = [];
-  const idx = STATE.briefs.findIndex(b => b.id === briefCurrent.id);
-  if (idx >= 0) STATE.briefs[idx] = briefCurrent;
-  else STATE.briefs.push(briefCurrent);
+  const docs = docsActifs();
+  const idx = docs.findIndex(b => b.id === briefCurrent.id);
+  if (idx >= 0) docs[idx] = briefCurrent;
+  else docs.push(briefCurrent);
   await saveState();
-  toast('Brief enregistré ✓');
+  toast(docMode==='codirs' ? 'CODIR enregistré ✓' : 'Brief enregistré ✓');
   window.closeBriefModal();
   renderBriefs();
 };
@@ -5478,7 +5570,7 @@ startPolling();
   <div style="max-width:800px;margin:0 auto">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
       <button onclick="window.hideBriefs()" style="background:none;border:1px solid #ccc;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:13px">← Retour</button>
-      <h2 style="margin:0;font-size:16px">📋 Briefs du samedi</h2>
+      <h2 id="briefs-overlay-title" style="margin:0;font-size:16px">📋 Briefs du samedi</h2>
       <button id="briefs-new-btn" onclick="window.openBriefModal()" style="display:none;background:#111;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500">+ Nouveau brief</button>
     </div>
     <div id="brief-list"></div>
@@ -5507,15 +5599,29 @@ startPolling();
 </div>
 
 
-<!-- Thème Halloween : s'active tout seul du 15/10 au 01/11 (supprimer ce bloc pour le retirer) -->
+<!-- Thèmes saisonniers automatiques : automne (22/09→14/10 et 02/11→30/11), Halloween (15/10→01/11), Noël (01/12→06/01) -->
 <script>
 (function(){
-  var d=new Date(), m=d.getMonth()+1, j=d.getDate();
-  if(!((m===10&&j>=15)||(m===11&&j===1))) return;
-  document.body.classList.add('halloween');
-  [['🦇','12%','0s'],['🦇','28%','6s'],['🦇','64%','11s']].forEach(function(b){
-    var e=document.createElement('div'); e.className='hw-bat'; e.textContent=b[0];
-    e.style.top=b[1]; e.style.left='0'; e.style.animationDelay=b[2]; document.body.appendChild(e);
+  var d=new Date(), m=d.getMonth()+1, j=d.getDate(), theme=null;
+  if((m===10&&j>=15)||(m===11&&j===1)) theme='halloween';
+  else if(m===12||(m===1&&j<=6)) theme='noel';
+  else if((m===9&&j>=22)||(m===10&&j<15)||m===11) theme='automne';
+  if(!theme) return;
+  document.body.classList.add(theme);
+  if(theme==='halloween'){
+    [['🦇','12%','0s'],['🦇','28%','6s'],['🦇','64%','11s']].forEach(function(b){
+      var e=document.createElement('div'); e.className='hw-bat'; e.textContent=b[0];
+      e.style.top=b[1]; e.style.left='0'; e.style.animationDelay=b[2]; document.body.appendChild(e);
+    });
+    return;
+  }
+  var items = theme==='noel' ? ['❄','❅','❄','❆','❄','✨'] : ['🍂','🍁','🍂','🍁','🍂'];
+  items.forEach(function(t,i){
+    var e=document.createElement('div'); e.className='th-part'; e.textContent=t;
+    e.style.left=(8+i*17)+'%'; e.style.fontSize=(14+(i%3)*5)+'px';
+    e.style.animationDuration=(14+i*3)+'s'; e.style.animationDelay=(i*2.5)+'s';
+    if(theme==='noel') e.style.color='#9CC3E6';
+    document.body.appendChild(e);
   });
 })();
 </script>
