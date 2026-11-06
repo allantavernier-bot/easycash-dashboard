@@ -1758,7 +1758,12 @@ loadData();
 //  RÉALISÉ VS OBJECTIF
 // ═══════════════════════════════════════════════════════
 const VENDEUR_TAB = 'Marge_par_vendeur';
-const COEFS_RVO = { anthony:20, cathy:50, hubert:100, manon:100 };
+const COEFS_RVO = { anthony:20, cathy:50, hubert:100, manon:100, kevin:50 };
+// Date d'entrée dans les objectifs (avant : hors objectifs). Kévin : à partir du 01/12/2026 (décision 06/11/2026).
+const DEBUT_OBJ = { kevin: new Date(2026, 11, 1) };
+const COLLABS_HORS_OBJ_UIDS = ['kevin', 'matthieu', 'jeremy', 'remy'];
+function horsObjIdx(uid, d){ return COLLABS_HORS_OBJ_UIDS.includes(uid) && !(DEBUT_OBJ[uid] && d && d >= DEBUT_OBJ[uid]); }
+function dansObjIdx(uid, d){ return !!COEFS_RVO[uid] && !horsObjIdx(uid, d); }
 const INTERNET_SHARE = 0.15; // 15% de la marge réalisée par Libre Service/Internet
 // COLLABS_EQUIPE : salariés avec objectif de vente pondéré
 const COLLABS_EQUIPE = [
@@ -1766,6 +1771,7 @@ const COLLABS_EQUIPE = [
   {uid:'cathy',  nom:'Cathy',  coef:50},
   {uid:'hubert', nom:'Hubert', coef:100},
   {uid:'manon',  nom:'Manon',  coef:100},
+  {uid:'kevin',  nom:'Kévin',  coef:50},   // à partir du 01/12/2026 (DEBUT_OBJ)
 ];
 // COLLABS_AUTRES : Allan + Libre Service, affichés en info sans objectif
 const COLLABS_AUTRES = [
@@ -1778,6 +1784,7 @@ const COLLABS_HORS_OBJ = [
   {uid:'kevin',    nom:'Kévin'},
   {uid:'matthieu', nom:'Matthieu'},
   {uid:'jeremy',   nom:'Jérémy (renfort Abbeville)'},
+  {uid:'remy',     nom:'Rémy (renfort Abbeville)'},
 ];
 window.vendeurRows = null;
 // Part de la semaine (lun→sam) de dISO à déduire de l'objectif du jour : marge Allan + Internet + hors objectifs
@@ -1792,7 +1799,7 @@ function deductionLisseeJour(dISO, dayObj){
   const sem = monOf(gdate(r0['A']));
   const jours = new Set(); let objSem = 0;
   rows.forEach(r => { const g = gdate(r['A']); if (g && monOf(g) === sem) { jours.add(keyOf(g)); objSem += parseNum(r['F']) || 0; } });
-  const ded = (window.vendeurRows || []).filter(v => jours.has(v.dateISO) && (v.uid === 'allan' || v.uid === 'libre_service' || COLLABS_HORS_OBJ.some(h => h.uid === v.uid)))
+  const ded = (window.vendeurRows || []).filter(v => jours.has(v.dateISO) && (v.uid === 'allan' || v.uid === 'libre_service' || horsObjIdx(v.uid, v.date)))
                                         .reduce((s, r) => s + (r.marge || 0), 0);
   return objSem > 0 ? ded * dayObj / objSem : 0;
 }
@@ -1898,21 +1905,23 @@ function rvoRender(){
   const margeTotal = vend.reduce((s,r) => s + (r.marge||0), 0);
 
   // Rendu équipe (avec objectifs)
-  const cardsEquipe = COLLABS_EQUIPE.map(c => {
-    const rows = vend.filter(r => r.uid === c.uid);
+  const cardsEquipe = COLLABS_EQUIPE.filter(c => !DEBUT_OBJ[c.uid] || to >= DEBUT_OBJ[c.uid]).map(c => {
+    const rows = vend.filter(r => r.uid === c.uid && dansObjIdx(c.uid, r.date));
     const realMarge = rows.reduce((s,r) => s + (r.marge||0), 0);
     let objMarge = 0;
     main.forEach(dayRow => {
-      const dISO = toISO(gdate(dayRow['A']));
+      const dDay = gdate(dayRow['A']);
+      const dISO = toISO(dDay);
       const dayObj = parseNum(dayRow['F']) || 0;
       if (!dayObj) return;
+      if (!dansObjIdx(c.uid, dDay)) return; // pas encore soumis aux objectifs ce jour-là
       // Objectif dynamique : déduire ce qu'Allan et Libre Service ont réellement fait
       // Déduction LISSÉE SUR LA SEMAINE (décision 23/10/2026) : la marge d'Allan, Internet et des
       // collaborateurs hors objectifs de toute la semaine est répartie au prorata de l'objectif de chaque jour.
       const autresMarge = deductionLisseeJour(dISO, dayObj);
       // Reste à faire par l'équipe = max(0, objectif - réalisé Allan - Libre Service - collaborateurs hors objectifs)
       const objEquipe   = Math.max(0, dayObj - autresMarge);
-      const presentUIDs = vend.filter(v => v.dateISO === dISO && COEFS_RVO[v.uid]).map(v => v.uid);
+      const presentUIDs = vend.filter(v => v.dateISO === dISO && dansObjIdx(v.uid, v.date)).map(v => v.uid);
       const totalPart   = presentUIDs.reduce((s,uid) => s + (COEFS_RVO[uid]||0)/100, 0);
       if (presentUIDs.includes(c.uid) && totalPart > 0)
         objMarge += (c.coef/100/totalPart) * objEquipe;
@@ -1963,9 +1972,9 @@ function rvoRender(){
     : '';
 
   // Collaborateurs hors objectifs (Kévin, Matthieu) : info, leur marge réduit l'objectif équipe
-  const totalHors = vend.filter(r => COLLABS_HORS_OBJ.some(h => h.uid === r.uid)).reduce((s,r) => s + (r.marge||0), 0);
-  const cardsHors = COLLABS_HORS_OBJ.map(c => {
-    const rows = vend.filter(r => r.uid === c.uid);
+  const totalHors = vend.filter(r => horsObjIdx(r.uid, r.date)).reduce((s,r) => s + (r.marge||0), 0);
+  const cardsHors = COLLABS_HORS_OBJ.filter(c => !DEBUT_OBJ[c.uid] || from < DEBUT_OBJ[c.uid]).map(c => {
+    const rows = vend.filter(r => r.uid === c.uid && horsObjIdx(c.uid, r.date));
     const realMarge = rows.reduce((s,r) => s + (r.marge||0), 0);
     const partTotal = margeTotal > 0 ? (realMarge/margeTotal*100) : 0;
     return `<div class="rvo-card" style="border-left:3px solid var(--purple)">

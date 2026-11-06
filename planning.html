@@ -518,7 +518,7 @@ body.halloween .hw-bat{position:fixed;font-size:22px;pointer-events:none;z-index
       oninput="window.onPinInput(this.value)"
       onkeydown="if(event.key==='Enter') window.tryLoginInput()">
     <button class="sbmit" style="width:100%;margin-top:4px" onclick="window.tryLoginInput()">Connexion</button>
-    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 03/11/2026 · <span id="collabs-load-status">chargement équipe…</span></div>
+    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 06/11/2026 · <span id="collabs-load-status">chargement équipe…</span></div>
   </div>
 </div>
 
@@ -1252,7 +1252,8 @@ Object.defineProperty(window,'_state',{get:()=>STATE});
 let STATE = {
   // Soldes communiqués par la RH (arrêtés à une date) — décompte = absences acceptées après cette date
   collabs_supprimes: ['julie'],
-  gels: {}, // { 'AAAA-MM': { uid: nombre de gels vendus/posés } } — saisi par Allan
+  gels: {}, // { 'AAAA-MM': { uid: nombre de gels vendus/posés } } — saisi par la direction (admins)
+  gelsMaj: {}, // { 'AAAA-MM': { uid: { at: ISO, by: uid } } } — date de dernière mise à jour
   soldes: {arrete:'2026-09-13', echeanceCP:'2027-05-31', echeanceRTT:'2026-12-31', mode:'ouvrables', modeV:2,
     vals:{cathy:{cp:12}, hubert:{cp:8}, allan:{cp:12,rtt:10}, anthony:{cp:7}, manon:{cp:9}}},
   absences: [
@@ -1291,6 +1292,7 @@ async function loadState(){
       if(saved.absences) STATE.absences = saved.absences;
       if(saved.soldes) STATE.soldes = saved.soldes;
       if(saved.gels) STATE.gels = saved.gels;
+      if(saved.gelsMaj) STATE.gelsMaj = saved.gelsMaj;
       if(Array.isArray(saved.collabs_supprimes)) STATE.collabs_supprimes = [...new Set([...saved.collabs_supprimes, 'julie'])];
       if(saved.slotOverrides) STATE.slotOverrides = saved.slotOverrides;
       if(saved.signatures) STATE.signatures = saved.signatures;
@@ -1331,6 +1333,7 @@ async function saveState(){
       absences: STATE.absences,
       soldes: STATE.soldes,
       gels: STATE.gels || {},
+      gelsMaj: STATE.gelsMaj || {},
       collabs_supprimes: STATE.collabs_supprimes || [],
       slotOverrides: STATE.slotOverrides,
       signatures: STATE.signatures,
@@ -1437,6 +1440,7 @@ function startPolling(){
       if(saved.absences) STATE.absences = saved.absences;
       if(saved.soldes) STATE.soldes = saved.soldes;
       if(saved.gels) STATE.gels = saved.gels;
+      if(saved.gelsMaj) STATE.gelsMaj = saved.gelsMaj;
       if(Array.isArray(saved.collabs_supprimes)) STATE.collabs_supprimes = [...new Set([...saved.collabs_supprimes, 'julie'])];
       if(saved.slotOverrides) STATE.slotOverrides = saved.slotOverrides;
       if(saved.signatures) STATE.signatures = saved.signatures;
@@ -1511,7 +1515,12 @@ function prenomKey(uid){
   const n = ((USERS[uid] && USERS[uid].name) || uid).split(' ')[0];
   return n.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 }
-function estHorsObjectifs(uid){
+// Fin de la période « hors objectifs » (date incluse) : au-delà, le collaborateur compte dans les objectifs
+// Kévin : intègre les objectifs à partir de la semaine du 30/11/2026 (décembre) — décision Allan 06/11/2026.
+const HORS_OBJ_FIN = { kevin: '2026-11-29' };
+function estHorsObjectifs(uid, dISO){
+  const ref = dISO || iso(new Date());
+  if (HORS_OBJ_FIN[uid] && ref > HORS_OBJ_FIN[uid]) return false;
   const c = (STATE.collabs || []).find(x => x.id === uid);
   if (c && typeof c.horsObjectifs === 'boolean') return c.horsObjectifs;
   return HORS_OBJ_DEFAUT.includes(uid) || HORS_OBJ_DEFAUT.includes(prenomKey(uid));
@@ -1519,19 +1528,21 @@ function estHorsObjectifs(uid){
 // Renforts : collaborateurs d'un autre magasin dont les ventes faites ici sont comptées
 // « hors objectifs » (pas d'objectif perso, leur marge réduit l'objectif de l'équipe).
 // Réglable dans Équipe & PIN (case « Renfort à … ») ; par défaut Jérémy (Abbeville) à Berck.
-const RENFORTS_DEFAUT = { berck: ['jeremy'] };
+// Jérémy et Rémy (Abbeville) : ventes faites à Berck comptées hors objectifs (Rémy ajouté le 06/11/2026).
+const RENFORTS_DEFAUT = { berck: ['jeremy', 'remy'] };
 function estRenfort(uid, mag){
+  if ((RENFORTS_DEFAUT[mag] || []).includes(uid)) return true;
   const c = (STATE.collabs || []).find(x => x.id === uid);
-  if (c && Array.isArray(c.renfortMags)) return c.renfortMags.includes(mag);
-  return (RENFORTS_DEFAUT[mag] || []).includes(uid);
+  return !!(c && Array.isArray(c.renfortMags) && c.renfortMags.includes(mag));
 }
 function idsRenforts(){
   return Object.keys(USERS).filter(u => u !== 'allan' && !SIDS.includes(u) && USERS[u] && USERS[u].active !== false
     && userMagasin(u) !== curMag && userMagasin(u) !== 'all' && estRenfort(u, curMag));
 }
-function idsEquipeObj(){ return SIDS.filter(u => !estHorsObjectifs(u)); }
-function idsHorsObj(){ return [...SIDS.filter(u => estHorsObjectifs(u)), ...idsRenforts()]; }
-function margeHorsObjJour(dISO){ return idsHorsObj().reduce((s, u) => s + (vendeurData[`${dISO}|${u}`] || 0), 0); }
+// dISO (optionnel) = date de référence ; sans date : aujourd'hui
+function idsEquipeObj(dISO){ return SIDS.filter(u => !estHorsObjectifs(u, dISO)); }
+function idsHorsObj(dISO){ return [...SIDS.filter(u => estHorsObjectifs(u, dISO)), ...idsRenforts()]; }
+function margeHorsObjJour(dISO){ return idsHorsObj(dISO).reduce((s, u) => s + (vendeurData[`${dISO}|${u}`] || 0), 0); }
 
 // Objectif de l'équipe pour un jour — déduction LISSÉE SUR LA SEMAINE (décision Allan 23/10/2026) :
 // la marge réalisée par Allan, Internet (libre service) et les collaborateurs hors objectifs sur toute
@@ -3108,8 +3119,9 @@ function renderObjectifs(){
   }
   if (vObj) [...vObj.children].forEach(ch => { ch.style.display = (ch === noObj) === (curMag !== 'berck') ? '' : 'none'; });
   if (curMag !== 'berck') return;
-  const EQ = idsEquipeObj();   // collaborateurs avec objectif
-  const HO = idsHorsObj();     // collaborateurs hors objectifs
+  const semRef = iso(monday(woff));
+  const EQ = idsEquipeObj(semRef);   // collaborateurs avec objectif (selon la semaine affichée)
+  const HO = idsHorsObj(semRef);     // collaborateurs hors objectifs
   const mon = monday(woff);
   const dates = DAYS.map((_,i)=>{ const d=new Date(mon); d.setDate(mon.getDate()+i); return d; });
   document.getElementById('marge-week-label').textContent = `S${wknum(mon)} — ${fmt(mon)} au ${fmt(dates[5])}`;
@@ -3407,6 +3419,13 @@ function getCoefSince(uid, dateISO) {
 
 // % vente d'un collaborateur à une date : dernière valeur enregistrée <= date
 function getCoefAt(uid, dateISO) {
+  const v = getCoefAtBrut(uid, dateISO);
+  // Collaborateur qui intègre les objectifs (ex. Kévin en décembre) sans % vente saisi depuis : 50 % par défaut
+  const fin = (typeof HORS_OBJ_FIN !== 'undefined') ? HORS_OBJ_FIN[uid] : null;
+  if (!v && fin && dateISO > fin) { const since = getCoefSince(uid, dateISO); if (!since || since <= fin) return 50; }
+  return v;
+}
+function getCoefAtBrut(uid, dateISO) {
   const since = getCoefSince(uid, dateISO);
   if(since) return Number(STATE.coefs_hist[uid][since]) || 0;
   // Aucune valeur avant cette date → valeur de base (fiche collaborateur)
@@ -3881,7 +3900,7 @@ function estArchivee(t) {
   return !!t.archivedAt;
 }
 async function archiverTache(id, restaurer) {
-  if (cur !== 'allan') return;
+  if (!isAdmin(cur)) return; // contrôle des tâches : direction
   const t = (STATE.taches || []).find(x => x.id === id);
   if (!t) return;
   const p = periodeTache(t);
@@ -4044,7 +4063,7 @@ function renderMesTaches() {
 
 // Regroupe des tâches (et gondoles) par salarié : un bloc repliable par personne, ordre de l'équipe
 function ordreSalaries(uids){
-  const base = ['allan', ...(typeof collabsDuMagasin === 'function' ? collabsDuMagasin() : SIDS)];
+  const base = ['allan', ...(typeof collabsDuMagasin === 'function' ? collabsDuMagasin() : SIDS), ...Object.keys(USERS)];
   return [...new Set([...base.filter(u => uids.includes(u)), ...uids])];
 }
 function groupesParSalarie(taches, gond, rowT, rowG){
@@ -4052,7 +4071,7 @@ function groupesParSalarie(taches, gond, rowT, rowG){
   return uids.map(uid => {
     const tt = taches.filter(t => t.uid === uid), gg = (gond || []).filter(g => g.uid === uid);
     const aFaire = tt.filter(t => !isTacheDone(t)).length + gg.length;
-    const aVerifier = cur === 'allan' && rowG ? tt.filter(t => isTacheDone(t) && !estArchivee(t)).length : 0;
+    const aVerifier = isAdmin(cur) ? tt.filter(t => isTacheDone(t) && !estArchivee(t)).length : 0;
     const u = USERS[uid] || {};
     const ini = (u.short || uid).substring(0, 2).toUpperCase();
     return `<details ${aFaire || aVerifier ? 'open' : ''} style="border:1px solid var(--b);border-radius:var(--r);margin-bottom:8px;background:var(--sf)">
@@ -4120,32 +4139,78 @@ async function toggleTacheDone(id) {
   if(p && !done) { toast(`✓ Fait — revient ${t.repeat==='daily'?'demain':'le '+fmtJour(p.nextStart)}`); }
 }
 
+// ── Onglet « Gérer » (direction) : toutes les tâches de tous les collaborateurs, des deux magasins ──
+const gererFiltres = { mag: 'tous', uid: 'tous', etat: 'tous', date: 'toutes' };
+function echeanceTache(t){
+  const p = periodeTache(t);
+  if (p) return iso(isTacheDone(t) ? prochaineOccurrence(t).due : p.due);
+  return t.date || '';
+}
+function etatTache(t){
+  const done = isTacheDone(t);
+  if (done) return estArchivee(t) ? 'controlee' : 'a_controler';
+  const e = echeanceTache(t);
+  return e && e < iso(new Date()) ? 'retard' : 'a_faire';
+}
+const ETAT_LBL = { a_faire: ['À faire', 'tp-gy'], retard: ['En retard', 'tp-rd'], a_controler: ['Faite · à contrôler', 'tp-am'], controlee: ['Contrôlée', 'tp-gn'] };
+function magTache(t){ const m = userMagasin(t.uid); return m === 'all' ? 'tous' : m; }
+window.setGererFiltre = function(k, v){ gererFiltres[k] = v; renderAdminTaches(); };
 function renderAdminTaches() {
   const el = document.getElementById('admin-taches-list');
   if(!el) return;
-  const taches = getTaches().filter(t => (t.uid === 'allan' || !USERS[t.uid] || userMagasin(t.uid) === curMag)
-    && !(t.repeat === 'once' && t.archivedAt)); // ponctuelles archivées : visibles via le filtre « Archivées » de Mes tâches
-  if(!taches.length) {
-    el.innerHTML='<div style="font-size:12px;color:var(--t3);padding:10px 0;text-align:center">Aucune tâche créée</div>';
-    return;
-  }
+  const auj = iso(new Date());
+  const lun = iso(monday(0)), dim = (() => { const d = monday(0); d.setDate(d.getDate() + 6); return iso(d); })();
+  const mois = auj.slice(0, 7);
+  const F = gererFiltres;
+  const toutes = getTaches();
+  const taches = toutes.filter(t => {
+    if (F.mag !== 'tous' && magTache(t) !== F.mag && magTache(t) !== 'tous') return false;
+    if (F.uid !== 'tous' && t.uid !== F.uid) return false;
+    const et = etatTache(t);
+    if (F.etat !== 'tous' && et !== F.etat) return false;
+    if (F.etat === 'tous' && et === 'controlee' && t.repeat === 'once') return false; // contrôlées ponctuelles : via le filtre « Contrôlée »
+    const e = echeanceTache(t);
+    if (F.date === 'jour' && e !== auj) return false;
+    if (F.date === 'semaine' && !(e >= lun && e <= dim)) return false;
+    if (F.date === 'mois' && e.slice(0, 7) !== mois) return false;
+    if (F.date === 'depassee' && !(e && e < auj && !isTacheDone(t))) return false;
+    if (F.date === 'sans' && e) return false;
+    return true;
+  });
+  // Menus déroulants
+  const uidsListe = [...new Set(toutes.map(t => t.uid))].filter(u => F.mag === 'tous' || magTache({ uid: u }) === F.mag || magTache({ uid: u }) === 'tous');
+  const sel = (k, opts) => `<select onchange="window.setGererFiltre('${k}', this.value)" style="font-size:12px;padding:5px 8px;border:1px solid var(--bm);border-radius:var(--r);font-family:'IBM Plex Sans',sans-serif;background:var(--sf)">${opts.map(([v, l]) => `<option value="${v}" ${F[k] === v ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
+  const nb = et => toutes.filter(t => etatTache(t) === et && (F.mag === 'tous' || magTache(t) === F.mag || magTache(t) === 'tous')).length;
+  const barre = `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+      ${sel('mag', [['tous', '🏬 Tous les magasins'], ['berck', 'Berck'], ['abbeville', 'Abbeville']])}
+      ${sel('uid', [['tous', '👥 Tous les collaborateurs'], ...ordreSalaries(uidsListe).map(u => [u, nomCourt(u)])])}
+      ${sel('etat', [['tous', '📋 Tous les états'], ['a_faire', `À faire (${nb('a_faire')})`], ['retard', `En retard (${nb('retard')})`], ['a_controler', `Faite · à contrôler (${nb('a_controler')})`], ['controlee', `Contrôlée (${nb('controlee')})`]])}
+      ${sel('date', [['toutes', '📅 Toutes les échéances'], ['jour', "Échéance aujourd'hui"], ['semaine', 'Échéance cette semaine'], ['mois', 'Échéance ce mois-ci'], ['depassee', 'Échéance dépassée'], ['sans', 'Sans échéance']])}
+      <span style="font-size:11px;color:var(--t3)">${taches.length} tâche${taches.length > 1 ? 's' : ''}</span>
+    </div>`;
   const rowAdm = t => {
     const done = isTacheDone(t);
     const u = USERS[t.uid];
     const ini=(u?.short||t.uid).substring(0,2).toUpperCase();
     const bg=u?.bg||'#EEE'; const ct=u?.ct||'#333';
+    const et = etatTache(t); const [lib, cls] = ETAT_LBL[et];
+    const e = echeanceTache(t);
+    const m = magTache(t);
     return `<div class="tache-row">
       <div class="av" style="background:${bg};color:${ct}">${ini}</div>
       <div style="flex:1">
         <div class="tache-titre">${t.titre}</div>
-        <div class="tache-sub">${u?.short||t.uid} · ${REPEAT_LBL[t.repeat]||t.repeat}${(()=>{const p=periodeTache(t);if(!p)return '';const d=done?prochaineOccurrence(t).due:p.due;return ' · '+(done?'prochaine avant le ':'avant le ')+fmtJour(d);})()}</div>
+        <div class="tache-sub">${u?.short||t.uid}${m !== 'tous' ? ' · ' + (MAGASIN_LBL[m] || m).replace('Easy Cash ', '') : ''} · ${REPEAT_LBL[t.repeat]||t.repeat}${e ? ' · ' + (done && periodeTache(t) ? 'prochaine avant le ' : 'avant le ') + fmtJour(new Date(e + 'T12:00:00')) : ''}</div>
       </div>
-      <span class="tache-pill ${done?'tp-gn':'tp-gy'}">${done?(t.repeat==='daily'?"Fait aujourd'hui":t.repeat==='weekly'?'Fait cette semaine':t.repeat==='monthly'?'Fait ce mois':'Fait'):'En cours'}</span>
+      <span class="tache-pill ${cls}">${lib}</span>
+      ${et === 'a_controler' ? `<button class="tache-done-btn" style="background:var(--s3)" title="Vérifiée : marquer comme contrôlée" onclick="window.archiverTache('${t.id}')">📦 Contrôlée</button>` : ''}
+      ${et === 'controlee' ? `<button class="tache-done-btn" title="Remettre à contrôler" onclick="window.archiverTache('${t.id}', true)">↩</button>` : ''}
       <button onclick="window.editTache('${t.id}')" style="background:none;border:1px solid var(--bm);padding:3px 8px;border-radius:var(--r);cursor:pointer;font-size:11px;font-family:'IBM Plex Sans',sans-serif">✏️</button>
       <button onclick="window.deleteTache('${t.id}')" style="background:var(--rd-l);border:1px solid var(--rd-b);color:var(--rd);padding:3px 8px;border-radius:var(--r);cursor:pointer;font-size:11px;font-family:'IBM Plex Sans',sans-serif">🗑</button>
     </div>`;
   };
-  el.innerHTML = groupesParSalarie(taches, [], rowAdm, null);
+  el.innerHTML = barre + (taches.length ? groupesParSalarie(taches, [], rowAdm, null)
+    : '<div style="font-size:12px;color:var(--t3);padding:10px 0;text-align:center">Aucune tâche pour ces filtres</div>');
 }
 
 // Listes de collaborateurs des tâches : équipe du magasin de la session (SIDS), plus à jour automatiquement
@@ -4957,6 +5022,8 @@ function renderMonthlyPerf() {
   }
 
   // Pour chaque mois, calculer réalisé et objectif par collaborateur
+  // Lignes : collaborateurs soumis aux objectifs au moins un jour sur la période affichée
+  const lignesPerf = SIDS.filter(u => u !== 'allan' && Object.keys(margeData).some(d => !estHorsObjectifs(u, d)));
   function getMonthData(monthKey) {
     const [yr, mo] = monthKey.split('-').map(Number);
     // Jours écoulés seulement (le mois en cours est comparé « à date », comme le Total magasin et les primes)
@@ -4968,12 +5035,13 @@ function renderMonthlyPerf() {
     });
 
     const result = {};
-    idsEquipeObj().forEach(uid => {
+    lignesPerf.forEach(uid => {
       let objTotal = 0, objFull = 0;
       let realTotal = 0;
       // Grouper par semaine pour appliquer la bonne config de coefs
       const weeksSeen = new Set();
       daysAll.forEach(dISO => {
+        if (estHorsObjectifs(uid, dISO)) return; // pas encore soumis aux objectifs ce jour-là
         const ecoule = dISO < aujISO;
         const d2 = new Date(dISO);
         const dow = d2.getDay()===0?6:d2.getDay()-1;
@@ -4994,7 +5062,7 @@ function renderMonthlyPerf() {
         const hJour = isSat ? (h/5)*1.4 : h/5;
         const poidsUid = hJour * pct;
         // Poids total équipe ce jour (simplifié)
-        const totalPoids = idsEquipeObj().reduce((s,u2) => {
+        const totalPoids = idsEquipeObj(dISO).reduce((s,u2) => {
           const c2 = (getCoefsAtDate(weekKey)[u2]||0)/100;
           const h2 = BASE_SCHEDULE[u2]?.h || 35;
           const hj2 = isSat ? (h2/5)*1.4 : h2/5;
@@ -5007,9 +5075,9 @@ function renderMonthlyPerf() {
         if(ecoule) objTotal += part;   // objectif à date (jours écoulés) : base du %
         // Réalisé depuis vendeurData
         const real = vendeurData[dISO+'|'+uid];
-        if(real!==undefined) realTotal += real;
+        if(real!==undefined && ecoule) realTotal += real;
       });
-      result[uid] = {obj: Math.round(objTotal), objFull: Math.round(objFull), real: Math.round(realTotal), hasData: daysInMonth.some(d=>vendeurData[d+'|'+uid]!==undefined)};
+      result[uid] = {obj: Math.round(objTotal), objFull: Math.round(objFull), real: Math.round(realTotal), hasData: daysInMonth.some(d=>!estHorsObjectifs(uid, d) && vendeurData[d+'|'+uid]!==undefined)};
     });
     // Total équipe
     const objTeam = Object.values(result).reduce((s,v)=>s+v.obj,0);
@@ -5053,7 +5121,7 @@ function renderMonthlyPerf() {
     </tr></thead>
     <tbody>`;
 
-  idsEquipeObj().forEach(uid => {
+  lignesPerf.forEach(uid => {
     const u = USERS[uid];
     html += `<tr style="border-top:1px solid var(--brd)">
       <td style="padding:6px 8px;font-weight:600">${u.short}</td>
@@ -5132,7 +5200,7 @@ function perfIndivMois(uid, monthKey){
     const hj = h => isSat ? (h / 5) * 1.4 : h / 5;
     if (pct > 0) {
       const poids = hj(BASE_SCHEDULE[uid]?.h || 35) * pct;
-      const total = idsEquipeObj().reduce((s, u2) => s + hj(BASE_SCHEDULE[u2]?.h || 35) * ((coefs[u2] || 0) / 100), 0);
+      const total = idsEquipeObj(dISO).reduce((s, u2) => s + hj(BASE_SCHEDULE[u2]?.h || 35) * ((coefs[u2] || 0) / 100), 0);
       obj += total > 0 ? poids / total * objEquipeJour(dISO) : 0;
     }
     const r = vendeurData[dISO + '|' + uid];
@@ -5149,7 +5217,7 @@ function calculPrime(uid, monthKey){
   const mag = perfMagasinMois(monthKey);
   const pal = palierPrime(mag.pct);
   const apresMag = base * pal.env;
-  const horsObj = estHorsObjectifs(uid);
+  const horsObj = estHorsObjectifs(uid, monthKey + '-28'); // statut du mois (Kévin : soumis dès décembre)
   const ind = horsObj ? { obj: 0, real: 0, pct: null } : perfIndivMois(uid, monthKey);
   let coefBrut = horsObj || ind.pct === null ? 1 : ind.pct / 100;
   const coef = Math.min(PRIME_COEF_MAX, Math.max(PRIME_COEF_MIN, coefBrut));
@@ -5173,7 +5241,7 @@ function renderPrimes(){
   const idx = moisDispo.indexOf(primeMois);
   const libMois = new Date(primeMois + '-01T12:00:00').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
   const enCours = primeMois === moisCourant;
-  const voirTout = cur === 'allan';
+  const voirTout = isAdmin(cur); // direction (Allan, Anthony, Cathy…) : toutes les cases, saisie des gels
   const ids = SIDS.filter(u => u !== 'allan' && (voirTout || u === cur));
   const mag = perfMagasinMois(primeMois);
   const pal = palierPrime(mag.pct);
@@ -5205,9 +5273,10 @@ function renderPrimes(){
     else if (P.ind.pct === null) detailInd = `Pas encore d'objectif individuel calculé ce mois-ci : coefficient 1 provisoire.`;
     else detailInd = `Réalisé ${eur(P.ind.real)} / objectif${enCours ? ' à date' : ''} ${eur(P.ind.obj)} = ${pc1(P.ind.pct)} → coefficient ${P.coefBrut.toFixed(2).replace('.', ',')}`
       + (P.coef !== P.coefBrut ? ` → ramené à <b>${P.coef.toFixed(2).replace('.', ',')}</b> (${P.coef === PRIME_COEF_MIN ? 'plancher 0,70 : le collectif te porte' : 'plafond 1,30'})` : '');
+    const majGel = `<div style="font-size:10px;color:var(--t3);margin-top:2px">🕒 ${libMajGel(uid, primeMois)}</div>`;
     const gelSaisie = voirTout
-      ? `<input type="number" min="0" step="1" value="${P.nbGel || ''}" placeholder="0" title="Total du mois à date : la nouvelle valeur remplace l'ancienne" onchange="window.saisirGel('${uid}', this.value)" onkeydown="if(event.key==='Enter')this.blur()" style="width:64px;padding:3px 6px;border:1px solid var(--bm);border-radius:5px;font-size:12px;text-align:right"> gel(s) <span style="color:var(--t3)">(total du mois)</span>`
-      : `${P.nbGel} gel(s)`;
+      ? `<input type="number" min="0" step="1" value="${P.nbGel || ''}" placeholder="0" title="Total du mois à date : la nouvelle valeur remplace l'ancienne" onchange="window.saisirGel('${uid}', this.value)" onkeydown="if(event.key==='Enter')this.blur()" style="width:64px;padding:3px 6px;border:1px solid var(--bm);border-radius:5px;font-size:12px;text-align:right"> gel(s) <span style="color:var(--t3)">(total du mois)</span>${majGel}`
+      : `${P.nbGel} gel(s)${majGel}`;
     return `<div style="background:var(--sf);border:1px solid var(--b);border-radius:var(--rl);padding:14px 16px">
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
         <div style="font-size:14px;font-weight:600">${u.name || uid}</div>
@@ -5233,16 +5302,26 @@ window.primeChangerMois = function(d){
   const i = moisDispo.indexOf(primeMois) + d;
   if (i >= 0 && i < moisDispo.length) { primeMois = moisDispo[i]; renderPrimes(); }
 };
+function libMajGel(uid, mois){
+  const m = ((STATE.gelsMaj || {})[mois] || {})[uid];
+  if (!m || !m.at) return 'jamais mis à jour';
+  const d = new Date(m.at);
+  return 'maj le ' + d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) + ' à ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) + (m.by ? ' par ' + nomCourt(m.by) : '');
+}
 window.saisirGel = async function(uid, val){
-  if (cur !== 'allan') return;
+  if (!isAdmin(cur)) return; // direction : Allan, Anthony, Cathy…
   if (!STATE.gels) STATE.gels = {};
   if (!STATE.gels[primeMois]) STATE.gels[primeMois] = {};
   // La nouvelle quantité REMPLACE l'ancienne (total du mois à date, pas un ajout)
   const n = Math.max(0, parseInt(val, 10) || 0);
   STATE.gels[primeMois][uid] = n;
+  if (!STATE.gelsMaj) STATE.gelsMaj = {};
+  if (!STATE.gelsMaj[primeMois]) STATE.gelsMaj[primeMois] = {};
+  const maj = { at: new Date().toISOString(), by: cur };
+  STATE.gelsMaj[primeMois][uid] = maj;
   renderPrimes();
   try {
-    await updateDoc(STATE_DOC, new FieldPath('gels', primeMois, uid), n);
+    await updateDoc(STATE_DOC, new FieldPath('gels', primeMois, uid), n, new FieldPath('gelsMaj', primeMois, uid), maj);
     toast(`✓ ${nomCourt(uid)} : ${n} gel(s) en ${new Date(primeMois + '-01T12:00:00').toLocaleDateString('fr-FR', { month: 'long' })}`);
   } catch (e) { console.error('saisirGel', e); await saveState(); toast('✓ Gels enregistrés'); }
 };
