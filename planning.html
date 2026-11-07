@@ -518,7 +518,7 @@ body.halloween .hw-bat{position:fixed;font-size:22px;pointer-events:none;z-index
       oninput="window.onPinInput(this.value)"
       onkeydown="if(event.key==='Enter') window.tryLoginInput()">
     <button class="sbmit" style="width:100%;margin-top:4px" onclick="window.tryLoginInput()">Connexion</button>
-    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 06/11/2026 · <span id="collabs-load-status">chargement équipe…</span></div>
+    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 07/11/2026 · <span id="collabs-load-status">chargement équipe…</span></div>
   </div>
 </div>
 
@@ -5250,6 +5250,7 @@ function renderPrimes(){
       <button ${idx > 0 ? '' : 'disabled'} onclick="window.primeChangerMois(-1)" style="border:1px solid var(--brd);background:var(--s2);border-radius:6px;padding:3px 10px;cursor:pointer">◀</button>
       <b style="font-size:13px;text-transform:capitalize">${libMois}</b>${enCours ? '<span style="font-size:11px;color:var(--am)"> · mois en cours : estimation à date (jours écoulés)</span>' : ''}
       <button ${idx < moisDispo.length - 1 ? '' : 'disabled'} onclick="window.primeChangerMois(1)" style="border:1px solid var(--brd);background:var(--s2);border-radius:6px;padding:3px 10px;cursor:pointer">▶</button>
+      ${voirTout ? `<button onclick="window.exporterPrimesPDF()" title="Synthèse des primes de tous les collaborateurs pour ce mois (PDF)" style="margin-left:auto;border:1px solid var(--bm);background:var(--sf);border-radius:6px;padding:4px 12px;cursor:pointer;font-size:12px;font-weight:600;font-family:'IBM Plex Sans',sans-serif">📄 Exporter PDF</button>` : ''}
     </div>
     ${enCours ? noteADate(`Calcul <b>à date</b> : objectifs des jours déjà écoulés (du 1er au ${(()=>{const h=new Date();h.setDate(h.getDate()-1);return h.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});})()}), comme dans la performance mensuelle ci-dessus. Le montant évolue chaque jour ; la prime définitive est calculée sur le mois complet, une fois terminé.`) : ''}
     <div style="font-size:12px;background:var(--s2);border:1px solid var(--b);border-radius:var(--r);padding:8px 12px;margin-bottom:12px">
@@ -5295,8 +5296,95 @@ function renderPrimes(){
   }).join('');
 
   wrap.innerHTML = nav + `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px">${cartes}</div>
-    <div style="font-size:10px;color:var(--t3);margin-top:8px">Estimation indicative selon la note de service 2026/00002 ; le montant définitif est calculé en fin de mois sur les chiffres validés.${voirTout ? ' · Vue direction : chaque collaborateur ne voit que sa propre case.' : ''}</div>`;
+    <div style="font-size:10px;color:var(--t3);margin-top:8px">Estimation indicative selon la note de service 2026/00002 ; le montant définitif est calculé en fin de mois sur les chiffres validés.${voirTout ? ' · Vue direction : chaque collaborateur ne voit que sa propre case. « 📄 Exporter PDF » : synthèse du mois pour la paie.' : ''}</div>`;
 }
+// ── Export PDF : synthèse des primes du mois sélectionné (direction) ──
+// Ouvre une page imprimable ; « Enregistrer au format PDF » dans la boîte d'impression.
+window.exporterPrimesPDF = function(){
+  if (!isAdmin(cur) || !primeMois) return;
+  const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const libMois = new Date(primeMois + '-01T12:00:00').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  const moisCourant = iso(new Date()).slice(0, 7);
+  const enCours = primeMois === moisCourant;
+  const hier = (() => { const h = new Date(); h.setDate(h.getDate() - 1); return h.toLocaleDateString('fr-FR'); })();
+  const ids = SIDS.filter(u => u !== 'allan');
+  const mag = perfMagasinMois(primeMois);
+  const pal = palierPrime(mag.pct);
+  const coefTxt = c => c.toFixed(2).replace('.', ',');
+  let tB1 = 0, tB3 = 0, tGel = 0, tTot = 0;
+  const lignes = ids.map(uid => {
+    const P = calculPrime(uid, primeMois);
+    tB1 += P.bloc1; tB3 += P.bloc3; tGel += P.nbGel; tTot += P.total;
+    const nom = (USERS[uid] && USERS[uid].name) || nomCourt(uid);
+    const indiv = P.horsObj ? '<span class="na">hors objectifs</span>'
+      : P.ind.pct === null ? '<span class="na">—</span>'
+      : `${eur(P.ind.real)} / ${eur(P.ind.obj)}<br><b>${pc1(P.ind.pct)}</b>`;
+    const coef = P.horsObj ? '<span class="na">—</span>' : coefTxt(P.coef) + (P.coef !== P.coefBrut ? `<br><span class="na">(${P.coef === PRIME_COEF_MIN ? 'plancher' : 'plafond'})</span>` : '');
+    return `<tr>
+      <td class="g"><b>${esc(nom)}</b></td>
+      <td>${P.h} h</td>
+      <td>${eur(P.base)}</td>
+      <td>${P.horsObj ? '<span class="na">—</span>' : eur(P.apresMag)}</td>
+      <td>${indiv}</td>
+      <td>${coef}</td>
+      <td>${eur(P.bloc1)}</td>
+      <td>${P.nbGel}<br><span class="na">${esc(libMajGel(uid, primeMois))}</span></td>
+      <td>${eur(P.bloc3)}</td>
+      <td class="tot">${eur(P.total)}</td>
+    </tr>`;
+  }).join('');
+  const edite = new Date().toLocaleDateString('fr-FR') + ' à ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Primes ${esc(libMois)} - Easy Cash Berck</title>
+<style>
+  @page { size: A4 landscape; margin: 12mm; }
+  * { box-sizing: border-box; }
+  body { font-family: Arial, Helvetica, sans-serif; color: #1a1a18; font-size: 11px; margin: 0; padding: 16px; }
+  h1 { font-size: 18px; margin: 0 0 2px; } .sub { color: #666; font-size: 11px; margin-bottom: 12px; }
+  .box { border: 1px solid #ccc; border-radius: 6px; padding: 8px 12px; margin-bottom: 10px; background: #f7f7f5; }
+  .warn { border-color: #e0b85c; background: #fdf6e3; color: #7a5a10; }
+  table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+  th { background: #1a1a18; color: #fff; font-size: 10px; font-weight: 600; padding: 6px 5px; text-align: right; }
+  td { border-bottom: 1px solid #ddd; padding: 6px 5px; text-align: right; vertical-align: top; }
+  th.g, td.g { text-align: left; } td.tot { font-weight: 700; background: #eef7ee; }
+  tfoot td { font-weight: 700; border-top: 2px solid #1a1a18; border-bottom: none; background: #f2f2ef; }
+  .na { color: #888; font-size: 9px; }
+  .notes { margin-top: 12px; font-size: 9.5px; color: #555; line-height: 1.5; }
+  .sign { display: flex; gap: 40px; margin-top: 22px; font-size: 10px; } .sign div { flex: 1; border-top: 1px solid #999; padding-top: 4px; }
+  .bar { text-align: right; margin-bottom: 10px; } .bar button { font-size: 13px; padding: 6px 14px; cursor: pointer; }
+  @media print { .bar { display: none; } body { padding: 0; } tr { page-break-inside: avoid; } }
+</style></head><body>
+<div class="bar"><button onclick="window.print()">🖨️ Imprimer / Enregistrer en PDF</button></div>
+<h1>Synthèse des primes — ${esc(libMois.charAt(0).toUpperCase() + libMois.slice(1))}</h1>
+<div class="sub">Easy Cash Berck-sur-Mer · Victuris Occasion · Note de service 2026/00002 · édité le ${edite} par ${esc(nomCourt(cur))}</div>
+${enCours ? `<div class="box warn"><b>Mois en cours : estimation à date</b> (jours écoulés jusqu'au ${hier}). Les montants évoluent chaque jour ; la prime définitive est calculée sur le mois complet.</div>` : ''}
+<div class="box"><b>Magasin</b> : marge réalisée ${eur(mag.real)} sur un objectif de ${eur(mag.obj)} (${mag.jours} jour${mag.jours > 1 ? 's' : ''})
+  → <b>${pc1(mag.pct)}</b> d'atteinte → palier ${pal.niveau} (${pal.lib}) → enveloppe débloquée <b>${Math.round(pal.env * 100)} %</b></div>
+<table>
+  <thead><tr>
+    <th class="g">Collaborateur</th><th>Contrat</th><th>Enveloppe initiale</th><th>Après coef. magasin (${Math.round(pal.env * 100)} %)</th>
+    <th>Réalisé / objectif individuel</th><th>Coef. individuel retenu</th><th>Bloc 1</th><th>Gels</th><th>Bloc 3 (gels × ${eur(PRIME_GEL)})</th><th>Prime estimée</th>
+  </tr></thead>
+  <tbody>${lignes}</tbody>
+  <tfoot><tr><td class="g">Total (${ids.length} collaborateurs)</td><td></td><td></td><td></td><td></td><td></td><td>${eur(tB1)}</td><td>${tGel}</td><td>${eur(tB3)}</td><td class="tot">${eur(tTot)}</td></tr></tfoot>
+</table>
+<div class="notes">
+  <b>Méthode</b> — Bloc 1 : ${eur(PRIME_BASE_35H)} pour 35 h, au prorata du contrat (plafonné à 35 h) × enveloppe débloquée selon l'atteinte de l'objectif magasin (moins de 80 % : 0 % · 80-90 % : 50 % · 90-100 % : 75 % · 100-110 % : 100 % · plus de 110 % : 115 %) × coefficient individuel (réalisé / objectif individuel, borné entre 0,70 et 1,30).
+  Bloc 3 : ${eur(PRIME_GEL)} par gel vendu / posé (nombre saisi par la direction).
+  Bloc 2 (QSP, trimestriel) non inclus. Collaborateurs hors objectifs : pas de Bloc 1.
+  Estimation indicative ; le montant définitif est validé sur les chiffres de fin de mois.
+</div>
+<div class="sign"><div>Visa direction</div><div>Transmis à la paie le</div></div>
+<script>setTimeout(() => window.print(), 400);<\/script>
+</body></html>`;
+  const w = window.open('', '_blank');
+  if (w) { w.document.open(); w.document.write(html); w.document.close(); return; }
+  // Fenêtre bloquée : impression via un cadre caché
+  const f = document.createElement('iframe');
+  f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0';
+  document.body.appendChild(f);
+  f.contentDocument.open(); f.contentDocument.write(html.replace(/<script>[\s\S]*?<\/script>/, '')); f.contentDocument.close();
+  setTimeout(() => { f.contentWindow.focus(); f.contentWindow.print(); setTimeout(() => f.remove(), 2000); }, 400);
+};
 window.primeChangerMois = function(d){
   const moisDispo = [...new Set(Object.keys(margeData).map(x => x.slice(0, 7)))].filter(m => m >= '2026-10' && joursDuMois(m, true).length).sort();
   const i = moisDispo.indexOf(primeMois) + d;
