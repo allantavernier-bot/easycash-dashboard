@@ -518,7 +518,7 @@ body.halloween .hw-bat{position:fixed;font-size:22px;pointer-events:none;z-index
       oninput="window.onPinInput(this.value)"
       onkeydown="if(event.key==='Enter') window.tryLoginInput()">
     <button class="sbmit" style="width:100%;margin-top:4px" onclick="window.tryLoginInput()">Connexion</button>
-    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 07/11/2026 · <span id="collabs-load-status">chargement équipe…</span></div>
+    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 07/11/2026 (2) · <span id="collabs-load-status">chargement équipe…</span></div>
   </div>
 </div>
 
@@ -5300,7 +5300,7 @@ function renderPrimes(){
 }
 // ── Export PDF : synthèse des primes du mois sélectionné (direction) ──
 // Ouvre une page imprimable ; « Enregistrer au format PDF » dans la boîte d'impression.
-window.exporterPrimesPDF = function(){
+window.exporterPrimesImpression = function(){
   if (!isAdmin(cur) || !primeMois) return;
   const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const libMois = new Date(primeMois + '-01T12:00:00').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
@@ -5384,6 +5384,88 @@ ${enCours ? `<div class="box warn"><b>Mois en cours : estimation à date</b> (jo
   document.body.appendChild(f);
   f.contentDocument.open(); f.contentDocument.write(html.replace(/<script>[\s\S]*?<\/script>/, '')); f.contentDocument.close();
   setTimeout(() => { f.contentWindow.focus(); f.contentWindow.print(); setTimeout(() => f.remove(), 2000); }, 400);
+};
+// Export PDF direct (fichier A4 PAYSAGE, téléchargé) avec jsPDF : orientation fixée dans le fichier,
+// lisible et signable dans Adobe. Repli sur la page imprimable si la bibliothèque ne charge pas.
+function chargerScript(url){
+  return new Promise((ok, ko) => { const sc = document.createElement('script'); sc.src = url; sc.onload = ok; sc.onerror = ko; document.head.appendChild(sc); });
+}
+async function chargerJsPDF(){
+  if (!(window.jspdf && window.jspdf.jsPDF)) await chargerScript('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js');
+  const proto = window.jspdf.jsPDF.API;
+  if (!proto.autoTable) await chargerScript('https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js');
+  return window.jspdf.jsPDF;
+}
+window.exporterPrimesPDF = async function(){
+  if (!isAdmin(cur) || !primeMois) return;
+  let JsPDF;
+  try { JsPDF = await chargerJsPDF(); }
+  catch (e) { console.warn('jsPDF indisponible, export par impression', e); return window.exporterPrimesImpression(); }
+  // Polices PDF standard : pas d'espaces insécables fines ni de flèches
+  const T = t => String(t ?? '').replace(/[  ]/g, ' ').replace(/→/g, '>').replace(/[^\x00-\xFF€—–’…]/g, '');
+  const libMois = new Date(primeMois + '-01T12:00:00').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  const libMoisMaj = libMois.charAt(0).toUpperCase() + libMois.slice(1);
+  const enCours = primeMois === iso(new Date()).slice(0, 7);
+  const hier = (() => { const h = new Date(); h.setDate(h.getDate() - 1); return h.toLocaleDateString('fr-FR'); })();
+  const ids = SIDS.filter(u => u !== 'allan');
+  const mag = perfMagasinMois(primeMois);
+  const pal = palierPrime(mag.pct);
+  const cf = c => c.toFixed(2).replace('.', ',');
+  let tB1 = 0, tB3 = 0, tGel = 0, tTot = 0;
+  const body = ids.map(uid => {
+    const P = calculPrime(uid, primeMois);
+    tB1 += P.bloc1; tB3 += P.bloc3; tGel += P.nbGel; tTot += P.total;
+    const nom = (USERS[uid] && USERS[uid].name) || nomCourt(uid);
+    return [
+      nom, P.h + ' h', eur(P.base), P.horsObj ? '—' : eur(P.apresMag),
+      P.horsObj ? 'hors objectifs' : P.ind.pct === null ? '—' : `${eur(P.ind.real)} / ${eur(P.ind.obj)}\n${pc1(P.ind.pct)}`,
+      P.horsObj ? '—' : cf(P.coef) + (P.coef !== P.coefBrut ? (P.coef === PRIME_COEF_MIN ? ' (plancher)' : ' (plafond)') : ''),
+      eur(P.bloc1), String(P.nbGel), eur(P.bloc3), eur(P.total)
+    ].map(T);
+  });
+  const doc = new JsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), M = 15;
+  let y = M + 2;
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.setTextColor(26, 26, 24);
+  doc.text(T(`Synthèse des primes — ${libMoisMaj}`), M, y); y += 6;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(100);
+  const edite = new Date().toLocaleDateString('fr-FR') + ' à ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  doc.text(T(`Easy Cash Berck-sur-Mer · Victuris Occasion · Note de service 2026/00002 · édité le ${edite} par ${nomCourt(cur)}`), M, y); y += 6;
+  const encadre = (txt, fond, bord, coul) => {
+    const lignes = doc.splitTextToSize(T(txt), W - 2 * M - 8);
+    const h = lignes.length * 4.2 + 4;
+    doc.setFillColor(...fond); doc.setDrawColor(...bord); doc.roundedRect(M, y, W - 2 * M, h, 1.5, 1.5, 'FD');
+    doc.setTextColor(...coul); doc.setFontSize(9); doc.text(lignes, M + 4, y + 5); y += h + 3;
+  };
+  if (enCours) encadre(`Mois en cours : estimation à date (jours écoulés jusqu'au ${hier}). Les montants évoluent chaque jour ; la prime définitive est calculée sur le mois complet.`, [253, 246, 227], [224, 184, 92], [122, 90, 16]);
+  encadre(`Magasin : marge réalisée ${eur(mag.real)} sur un objectif de ${eur(mag.obj)} (${mag.jours} jour${mag.jours > 1 ? 's' : ''}) > ${pc1(mag.pct)} d'atteinte > palier ${pal.niveau} (${pal.lib}) > enveloppe débloquée ${Math.round(pal.env * 100)} %`, [247, 247, 245], [204, 204, 204], [26, 26, 24]);
+  doc.autoTable({
+    startY: y, margin: { left: M, right: M, bottom: 18 },
+    head: [['Collaborateur', 'Contrat', 'Enveloppe initiale', `Après coef. magasin (${Math.round(pal.env * 100)} %)`, 'Réalisé / objectif individuel', 'Coef. individuel', 'Bloc 1', 'Gels', `Bloc 3 (× ${eur(PRIME_GEL)})`, 'Prime estimée'].map(T)],
+    body,
+    foot: [[T(`Total (${ids.length} collaborateurs)`), '', '', '', '', '', T(eur(tB1)), String(tGel), T(eur(tB3)), T(eur(tTot))]],
+    theme: 'grid',
+    styles: { font: 'helvetica', fontSize: 8.5, cellPadding: 2, valign: 'middle', halign: 'right', lineColor: [221, 221, 221], lineWidth: 0.2 },
+    headStyles: { fillColor: [26, 26, 24], textColor: 255, fontStyle: 'bold', fontSize: 8 },
+    footStyles: { fillColor: [242, 242, 239], textColor: [26, 26, 24], fontStyle: 'bold' },
+    columnStyles: { 0: { halign: 'left', fontStyle: 'bold', cellWidth: 42 }, 9: { fontStyle: 'bold', fillColor: [238, 247, 238] } },
+    didParseCell: d => { if (d.section !== 'body' && d.column.index === 0) d.cell.styles.halign = 'left'; },
+  });
+  y = doc.lastAutoTable.finalY + 6;
+  const methode = `Méthode — Bloc 1 : ${eur(PRIME_BASE_35H)} pour 35 h, au prorata du contrat (plafonné à 35 h) × enveloppe débloquée selon l'atteinte de l'objectif magasin (moins de 80 % : 0 % · 80-90 % : 50 % · 90-100 % : 75 % · 100-110 % : 100 % · plus de 110 % : 115 %) × coefficient individuel (réalisé / objectif individuel, borné entre 0,70 et 1,30). Bloc 3 : ${eur(PRIME_GEL)} par gel vendu / posé (nombre saisi par la direction). Bloc 2 (QSP, trimestriel) non inclus. Collaborateurs hors objectifs : pas de Bloc 1. Estimation indicative ; le montant définitif est validé sur les chiffres de fin de mois.`;
+  doc.setFontSize(8); doc.setTextColor(85);
+  const lm = doc.splitTextToSize(T(methode), W - 2 * M);
+  if (y + lm.length * 3.6 + 30 > H - M) { doc.addPage(); y = M + 2; }
+  doc.text(lm, M, y); y += lm.length * 3.6 + 8;
+  // Zones de signature (espace libre pour signer dans Adobe)
+  const larg = (W - 2 * M - 20) / 2;
+  doc.setDrawColor(150); doc.setTextColor(60); doc.setFontSize(9);
+  [[M, 'Visa direction (date et signature)'], [M + larg + 20, 'Transmis à la paie le']].forEach(([x, lib]) => {
+    doc.text(T(lib), x, y); doc.rect(x, y + 2, larg, 22);
+  });
+  const n = doc.getNumberOfPages();
+  for (let i = 1; i <= n; i++) { doc.setPage(i); doc.setFontSize(7.5); doc.setTextColor(140); doc.text(T(`Easy Cash Berck · Primes ${libMois} · page ${i}/${n}`), W - M, H - 8, { align: 'right' }); }
+  doc.save(`Primes_EasyCash_Berck_${primeMois}${enCours ? '_a-date' : ''}.pdf`);
 };
 window.primeChangerMois = function(d){
   const moisDispo = [...new Set(Object.keys(margeData).map(x => x.slice(0, 7)))].filter(m => m >= '2026-10' && joursDuMois(m, true).length).sort();
