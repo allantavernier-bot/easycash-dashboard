@@ -1762,7 +1762,11 @@ const COEFS_RVO = { anthony:20, cathy:50, hubert:100, manon:100, kevin:50 };
 // Date d'entrée dans les objectifs (avant : hors objectifs). Kévin : à partir du 01/12/2026 (décision 06/11/2026).
 const DEBUT_OBJ = { kevin: new Date(2026, 11, 1) };
 const COLLABS_HORS_OBJ_UIDS = ['kevin', 'matthieu', 'jeremy', 'remy'];
-function horsObjIdx(uid, d){ return COLLABS_HORS_OBJ_UIDS.includes(uid) && !(DEBUT_OBJ[uid] && d && d >= DEBUT_OBJ[uid]); }
+// Date de SORTIE de l'équipe Berck (incluse). Anthony : planning d'Abbeville à partir du lundi 30/11/2026 (décision 13/11/2026).
+// Ensuite, ses ventes éventuelles à Berck sont comptées hors objectifs (comme un renfort) et réduisent l'objectif équipe.
+const FIN_OBJ = { anthony: new Date(2026, 10, 30) };
+function sortiIdx(uid, d){ return !!(FIN_OBJ[uid] && d && d >= FIN_OBJ[uid]); }
+function horsObjIdx(uid, d){ return (COLLABS_HORS_OBJ_UIDS.includes(uid) && !(DEBUT_OBJ[uid] && d && d >= DEBUT_OBJ[uid])) || sortiIdx(uid, d); }
 function dansObjIdx(uid, d){ return !!COEFS_RVO[uid] && !horsObjIdx(uid, d); }
 const INTERNET_SHARE = 0.15; // 15% de la marge réalisée par Libre Service/Internet
 // COLLABS_EQUIPE : salariés avec objectif de vente pondéré
@@ -1785,6 +1789,7 @@ const COLLABS_HORS_OBJ = [
   {uid:'matthieu', nom:'Matthieu'},
   {uid:'jeremy',   nom:'Jérémy (renfort Abbeville)'},
   {uid:'remy',     nom:'Rémy (renfort Abbeville)'},
+  {uid:'anthony',  nom:'Anthony (Abbeville depuis le 30/11)'},   // affiché seulement à partir du 30/11 (FIN_OBJ)
 ];
 window.vendeurRows = null;
 // Part de la semaine (lun→sam) de dISO à déduire de l'objectif du jour : marge Allan + Internet + hors objectifs
@@ -1905,7 +1910,7 @@ function rvoRender(){
   const margeTotal = vend.reduce((s,r) => s + (r.marge||0), 0);
 
   // Rendu équipe (avec objectifs)
-  const cardsEquipe = COLLABS_EQUIPE.filter(c => !DEBUT_OBJ[c.uid] || to >= DEBUT_OBJ[c.uid]).map(c => {
+  const cardsEquipe = COLLABS_EQUIPE.filter(c => (!DEBUT_OBJ[c.uid] || to >= DEBUT_OBJ[c.uid]) && (!FIN_OBJ[c.uid] || from < FIN_OBJ[c.uid])).map(c => {
     const rows = vend.filter(r => r.uid === c.uid && dansObjIdx(c.uid, r.date));
     const realMarge = rows.reduce((s,r) => s + (r.marge||0), 0);
     let objMarge = 0;
@@ -1973,7 +1978,7 @@ function rvoRender(){
 
   // Collaborateurs hors objectifs (Kévin, Matthieu) : info, leur marge réduit l'objectif équipe
   const totalHors = vend.filter(r => horsObjIdx(r.uid, r.date)).reduce((s,r) => s + (r.marge||0), 0);
-  const cardsHors = COLLABS_HORS_OBJ.filter(c => !DEBUT_OBJ[c.uid] || from < DEBUT_OBJ[c.uid]).map(c => {
+  const cardsHors = COLLABS_HORS_OBJ.filter(c => (!DEBUT_OBJ[c.uid] || from < DEBUT_OBJ[c.uid]) && (!FIN_OBJ[c.uid] || to >= FIN_OBJ[c.uid])).map(c => {
     const rows = vend.filter(r => r.uid === c.uid && horsObjIdx(c.uid, r.date));
     const realMarge = rows.reduce((s,r) => s + (r.marge||0), 0);
     const partTotal = margeTotal > 0 ? (realMarge/margeTotal*100) : 0;

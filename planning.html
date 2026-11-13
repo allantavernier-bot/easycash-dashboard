@@ -518,7 +518,7 @@ body.halloween .hw-bat{position:fixed;font-size:22px;pointer-events:none;z-index
       oninput="window.onPinInput(this.value)"
       onkeydown="if(event.key==='Enter') window.tryLoginInput()">
     <button class="sbmit" style="width:100%;margin-top:4px" onclick="window.tryLoginInput()">Connexion</button>
-    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 07/11/2026 (2) · <span id="collabs-load-status">chargement équipe…</span></div>
+    <div id="app-version" style="font-size:10px;color:#9A9A96;text-align:center;margin-top:10px">version du 13/11/2026 (2) · <span id="collabs-load-status">chargement équipe…</span></div>
   </div>
 </div>
 
@@ -591,6 +591,7 @@ body.halloween .hw-bat{position:fixed;font-size:22px;pointer-events:none;z-index
           <button class="tbtn plan-mgr" id="edit-toggle" onclick="window.toggleEdit()" style="border-color:var(--bl-b);color:var(--bl)">✎ Modifier</button>
         </div>
       </div>
+      <div id="alerte-saisie" style="display:none"></div>
       <div class="edit-bar" id="edit-bar" style="display:none">
         <span>Mode édition — cliquez sur une cellule pour modifier les horaires</span>
         <button onclick="window.openDupWeek()" style="background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;padding:4px 12px;border-radius:var(--r);font-size:11px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;margin-right:6px">📋 Dupliquer la semaine</button>
@@ -733,6 +734,10 @@ body.halloween .hw-bat{position:fixed;font-size:22px;pointer-events:none;z-index
                 <option value="berck">Easy Cash Berck</option>
                 <option value="abbeville">Easy Cash Abbeville</option>
               </select>
+            </div>
+            <div class="mrow"><label>Visible dans le planning de</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin:4px 0"><input type="checkbox" id="cm-vis-berck"> Berck</label>
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin:0"><input type="checkbox" id="cm-vis-abbeville"> Abbeville</label>
             </div>
             <div class="mrow"><label>Peut aussi se connecter à</label>
               <label style="display:flex;align-items:center;gap:6px;font-size:12px;margin:4px 0"><input type="checkbox" id="cm-acces-berck"> Berck</label>
@@ -1045,6 +1050,13 @@ body.halloween .hw-bat{position:fixed;font-size:22px;pointer-events:none;z-index
           <option value="form">Formation</option>
         </select>
       </div>
+      <div class="mrow" id="m-mag-row" style="display:none">
+        <label>Magasin où sont faites ces heures</label>
+        <select id="m-mag" style="width:100%;padding:7px 9px;border:1px solid var(--bm);border-radius:var(--r);font-family:'IBM Plex Sans',sans-serif;font-size:13px">
+          <option value="berck">Easy Cash Berck</option>
+          <option value="abbeville">Easy Cash Abbeville</option>
+        </select>
+      </div>
       <div id="m-times" style="display:none">
         <div class="mrow" id="m-mat-row">
           <div class="tlabel">Matin</div>
@@ -1196,13 +1208,34 @@ const KEVIN_SEMAINE_TYPE = {
 };
 const KEVIN_PREMIERE_SEMAINE = '2026-10-05';
 
-// Règle clés & coffre : Allan ou Anthony doit toujours être présent
+// Règle clés & coffre (Berck) : Allan ou Anthony doit toujours être présent
 const CLES_COFFRE = ['allan', 'anthony'];
+// À partir du 30/11/2026 Anthony part à Abbeville : PROPOSITION Cathy à sa place (direction de Berck).
+// ⚠ Non activée tant qu'Allan ne l'a pas confirmé : passer CLES_COFFRE_RELAIS.actif à true.
+const CLES_COFFRE_RELAIS = { date: '2026-11-30', ids: ['allan', 'cathy'], actif: false };
+function clesCoffreAt(dISO){ return (CLES_COFFRE_RELAIS.actif && dISO >= CLES_COFFRE_RELAIS.date) ? CLES_COFFRE_RELAIS.ids : CLES_COFFRE; }
 
 // ── MAGASIN DE LA SESSION (choisi à la connexion) ──
 const MAGASIN_LBL = { berck:'Easy Cash Berck', abbeville:'Easy Cash Abbeville' };
 let curMag = 'berck';
-function userMagasin(uid){ return (USERS[uid] && USERS[uid].magasin) || 'berck'; }
+// Affectation datée de magasin (décision Allan 13/11/2026) : à partir de « date » (lundi, incluse) le collaborateur
+// appartient au planning de « mag ». Avant : son magasin de fiche. La fiche Firestore n'est PAS modifiée
+// (ni suppression, ni doublon) ; magasins_acces inchangé → connexion possible aux deux magasins.
+const MAGASIN_DEPUIS = { anthony: { date: '2026-11-30', mag: 'abbeville' } };
+let scopeISO = null; // lundi de la semaine affichée (planning / objectifs / signatures) ; null = aujourd'hui
+function isoAuj(){ const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function userMagasin(uid, dISO){
+  const ref = dISO || scopeISO || isoAuj();
+  const md = MAGASIN_DEPUIS[uid];
+  if (md && ref >= md.date) return md.mag;
+  return (USERS[uid] && USERS[uid].magasin) || 'berck';
+}
+// Salariés du magasin de la session à une date donnée (Allan à part)
+function sidsAt(dISO){
+  const ref = dISO || scopeISO || isoAuj();
+  return Object.keys(USERS).filter(uid =>
+    uid !== 'allan' && USERS[uid].active !== false && BASE_SCHEDULE[uid] && userMagasin(uid, ref) === curMag);
+}
 // SIDS = salariés du magasin de la session (Allan à part)
 // Collaborateurs supprimés (Équipe & PIN) : restent inactifs même s'ils ont une fiche en dur dans USERS.
 // Leurs données passées (absences, signatures, ventes) sont conservées.
@@ -1210,12 +1243,41 @@ function appliquerSuppressions(){
   (STATE.collabs_supprimes || []).forEach(id => { if (USERS[id]) USERS[id].active = false; });
   (STATE.collabs_supprimes || []).forEach(id => { const i = SIDS.indexOf(id); if (i > -1) SIDS.splice(i, 1); });
 }
-function applyMagasinScope(){
+// ── Visibilité dans le planning de chaque magasin (13/11/2026) ──
+// Cases « Visible dans » de l'onglet Équipe & PIN → collab.magVisibles = ['berck','abbeville'].
+// Sans case cochée : magasin de rattachement (fiche + affectation datée MAGASIN_DEPUIS).
+const MAGASINS = ['berck', 'abbeville'];
+function magVisiblesFiche(uid){
+  const c = (typeof STATE !== 'undefined' && STATE.collabs || []).find(x => x.id === uid);
+  return (c && Array.isArray(c.magVisibles) && c.magVisibles.length) ? c.magVisibles : null;
+}
+function visibleDans(uid, mag, dISO){
+  // Affectation datée (ex. Anthony → Abbeville à partir du 30/11/2026) : toujours visible dans ce magasin ensuite
+  const md = MAGASIN_DEPUIS[uid];
+  if (md && md.mag === mag && (dISO || scopeISO || isoAuj()) >= md.date) return true;
+  const v = magVisiblesFiche(uid);
+  return v ? v.includes(mag) : userMagasin(uid, dISO) === mag;
+}
+// Magasin où sont effectuées les heures d'un créneau : choisi dans la case (slot.mag), sinon magasin de rattachement
+function magSlot(uid, slot, dISO){ return (slot && slot.mag) || userMagasin(uid, dISO); }
+const estTravaille = s => !!s && s.type !== 'off' && s.type !== 'cp' && s.type !== 'am';
+// A-t-il un créneau saisi dans ce magasin pendant la semaine du lundi wISO ?
+function aCreneauIci(uid, wISO){
+  if (typeof STATE === 'undefined' || !STATE.slotOverrides) return false;
+  const m = new Date(wISO + 'T12:00:00');
+  return DAYS.some((dk, i) => { const d = new Date(m); d.setDate(m.getDate() + i); const k = iso(d);
+    const sl = STATE.slotOverrides[`${uid}-${k}`]; return estTravaille(sl) && sl.mag === curMag; });
+}
+// dISO (optionnel) : lundi de la semaine affichée → SIDS = collaborateurs visibles dans le planning du magasin
+function applyMagasinScope(dISO){
+  if (dISO !== undefined) scopeISO = dISO;
   if (typeof STATE !== 'undefined') appliquerSuppressions();
-  const ids = Object.keys(USERS).filter(uid =>
-    uid !== 'allan' && USERS[uid].active !== false && BASE_SCHEDULE[uid] && userMagasin(uid) === curMag);
+  const ref = scopeISO || isoAuj();
+  const ids = Object.keys(USERS).filter(uid => uid !== 'allan' && USERS[uid].active !== false && BASE_SCHEDULE[uid]
+    && (visibleDans(uid, curMag, ref) || aCreneauIci(uid, ref)));
   SIDS.splice(0, SIDS.length, ...ids);
 }
+function scopeSemaine(off){ const w = iso(monday(off)); if (scopeISO !== w) applyMagasinScope(w); }
 function peutSeConnecter(uid, mag){
   const u = USERS[uid]; if(!u || u.active === false) return false;
   const um = u.magasin || 'berck';
@@ -1529,19 +1591,28 @@ function estHorsObjectifs(uid, dISO){
 // « hors objectifs » (pas d'objectif perso, leur marge réduit l'objectif de l'équipe).
 // Réglable dans Équipe & PIN (case « Renfort à … ») ; par défaut Jérémy (Abbeville) à Berck.
 // Jérémy et Rémy (Abbeville) : ventes faites à Berck comptées hors objectifs (Rémy ajouté le 06/11/2026).
-const RENFORTS_DEFAUT = { berck: ['jeremy', 'remy'] };
+// Anthony (Abbeville à partir du 30/11/2026) : ses ventes faites à Berck ensuite sont comptées hors objectifs.
+const RENFORTS_DEFAUT = { berck: ['jeremy', 'remy', 'anthony'] };
 function estRenfort(uid, mag){
   if ((RENFORTS_DEFAUT[mag] || []).includes(uid)) return true;
   const c = (STATE.collabs || []).find(x => x.id === uid);
   return !!(c && Array.isArray(c.renfortMags) && c.renfortMags.includes(mag));
 }
-function idsRenforts(){
-  return Object.keys(USERS).filter(u => u !== 'allan' && !SIDS.includes(u) && USERS[u] && USERS[u].active !== false
-    && userMagasin(u) !== curMag && userMagasin(u) !== 'all' && estRenfort(u, curMag));
+function idsRenforts(dISO){
+  const equipe = sidsAt(dISO);
+  return Object.keys(USERS).filter(u => u !== 'allan' && !equipe.includes(u) && USERS[u] && USERS[u].active !== false
+    && userMagasin(u, dISO) !== curMag && userMagasin(u, dISO) !== 'all' && estRenfort(u, curMag));
 }
 // dISO (optionnel) = date de référence ; sans date : aujourd'hui
-function idsEquipeObj(dISO){ return SIDS.filter(u => !estHorsObjectifs(u, dISO)); }
-function idsHorsObj(dISO){ return [...SIDS.filter(u => estHorsObjectifs(u, dISO)), ...idsRenforts()]; }
+function idsEquipeObj(dISO){ return sidsAt(dISO).filter(u => !estHorsObjectifs(u, dISO)); }
+function idsHorsObj(dISO){ return [...sidsAt(dISO).filter(u => estHorsObjectifs(u, dISO)), ...idsRenforts(dISO)]; }
+// Collaborateurs présents dans l'équipe du magasin au moins un jour du mois (primes, export)
+function membresMois(monthKey){
+  const set = new Set();
+  Object.keys(margeData).filter(d => d.startsWith(monthKey)).forEach(d => sidsAt(d).forEach(u => set.add(u)));
+  if (!set.size) SIDS.forEach(u => set.add(u));
+  return [...set];
+}
 function margeHorsObjJour(dISO){ return idsHorsObj(dISO).reduce((s, u) => s + (vendeurData[`${dISO}|${u}`] || 0), 0); }
 
 // Objectif de l'équipe pour un jour — déduction LISSÉE SUR LA SEMAINE (décision Allan 23/10/2026) :
@@ -1567,8 +1638,9 @@ function objEquipeJour(dISO){
 
 // Minutes d'un créneau qui comptent pour les objectifs
 // (Formation = journée entière exclue ; horsObjMins = partie de journée exclue)
-function objMins(slot){
+function objMins(slot, uid, dISO){
   if(!slot || !slot.mins) return 0;
+  if(uid && dISO && magSlot(uid, slot, dISO) !== curMag) return 0; // heures faites dans l'autre magasin
   if(slot.type === 'form') return 0;
   return Math.max(0, slot.mins - (slot.horsObjMins || 0));
 }
@@ -1588,6 +1660,30 @@ function getSlotRaw(uid, dayKey, dateISO){
   return BASE_SCHEDULE[uid][dayKey];
 }
 
+// Présence d'Allan par magasin (une clé de surcharge par magasin, cf. ovKey)
+function cleAllan(mag){ return mag === 'berck' ? 'allan' : `allan@${mag}`; }
+function slotAllanMag(mag, dayKey, dateISO){
+  const k = cleAllan(mag);
+  return STATE.slotOverrides[`${k}-${dateISO}`] || STATE.scheduleOverrides[`${k}-${dayKey}`]
+    || (mag === 'berck' ? BASE_SCHEDULE.allan[dayKey] : { type: 'off', mins: 0 });
+}
+const allanMat = s => !!s && s.type !== 'off' && s.type !== 'apm';
+const allanApm = s => !!s && s.type !== 'off' && s.type !== 'mat';
+function slotAllanDemi(mat, apm){
+  if (mat && apm) return { type: 'dir', mat: 'Matin', apm: 'APM', mins: 0 };
+  if (mat) return { type: 'mat', mat: 'Matin', apm: null, mins: 0 };
+  if (apm) return { type: 'apm', mat: null, apm: 'APM', mins: 0 };
+  return { type: 'off', mins: 0 };
+}
+// Demi-journées d'Allan dans l'autre magasin (affichage)
+function allanAilleurs(dayKey, dateISO){
+  return MAGASINS.filter(m => m !== curMag).map(m => {
+    const s = slotAllanMag(m, dayKey, dateISO);
+    const parts = [allanMat(s) ? 'Matin' : null, allanApm(s) ? 'APM' : null].filter(Boolean);
+    return parts.length ? `📍 ${parts.join(' + ')} à ${(MAGASIN_LBL[m] || m).replace('Easy Cash ', '')}` : '';
+  }).filter(Boolean).join('<br>');
+}
+
 // Allan présent un jour donné (forfait jours)
 function allanPresent(dayKey, dateISO){
   const abs=absStatus('allan',dateISO);
@@ -1598,7 +1694,7 @@ function allanPresent(dayKey, dateISO){
 
 // Couverture clés/coffre : Allan OU Anthony doit être présent
 function couvertureClés(dayKey, dateISO, presentsSIDS){
-  return allanPresent(dayKey,dateISO) || presentsSIDS.includes('anthony');
+  return allanPresent(dayKey,dateISO) || clesCoffreAt(dateISO).some(u => u !== 'allan' && presentsSIDS.includes(u));
 }
 
 function absStatus(uid,dateISO){
@@ -1722,7 +1818,9 @@ function presentOnDay(off,dayIdx){
     const abs=absStatus(uid,dateISO);
     if(abs==='approved'||abs==='repos_echange')return false;
     if(isFerieChome(uid,dateISO))return false;
-    const t=getSlot(uid,day,dateISO).type;
+    const sl0=getSlot(uid,day,dateISO);
+    if(magSlot(uid,sl0,dateISO)!==curMag)return false; // travaille dans l'autre magasin ce jour-là
+    const t=sl0.type;
     return t==='full'||t==='apm'||t==='sat'||t==='mat';
   });
 }
@@ -1919,11 +2017,13 @@ function slotHTML(uid,dayKey,dateISO){
     // Par défaut : présent Matin + APM. Le slot peut désactiver l'un ou l'autre.
     const showMat = s.type!=='off' && s.type!=='apm';
     const showApm = s.type!=='off' && s.type!=='mat';
-    if(!showMat && !showApm) return'<div class="sl so">Absent</div>';
+    const ailleurs = allanAilleurs(dayKey,dateISO);
+    const tagAilleurs = ailleurs ? `<div class="pause-tag" style="color:var(--bl)">${ailleurs}</div>` : '';
+    if(!showMat && !showApm) return'<div class="sl so">Absent</div>'+tagAilleurs;
     let html='';
     if(showMat) html+=`<div class="sl" style="background:#EFEFED;color:#444;border:1px solid #CCC;font-size:9px">▸ Matin</div>`;
     if(showApm) html+=`<div class="sl" style="background:#EFEFED;color:#444;border:1px solid #CCC;font-size:9px;margin-top:1px">▸ APM</div>`;
-    return html;
+    return html+tagAilleurs;
   }
   // Magasin fermé
   if(magasinFerme(dateISO)){
@@ -1949,6 +2049,53 @@ function slotHTML(uid,dayKey,dateISO){
   return slotHTMLBase(uid,dayKey,dateISO,abs);
 }
 
+// ── Alerte « aucun horaire saisi » (13/11/2026) — lecture seule, n'écrit rien dans Firestore ──
+// Minutes réellement SAISIES (surcharges datées ou permanentes) d'un collaborateur sur une semaine.
+// Les jours d'absence (acceptée ou en attente) et de fermeture sont « couverts ».
+function saisieSemaine(uid, off){
+  const mon = monday(off); let mins = 0, jours = 0, couverts = 0;
+  DAYS.forEach((dk, i) => {
+    const d = new Date(mon); d.setDate(mon.getDate() + i); const dISO = iso(d);
+    if (magasinFerme(dISO) || isFerieChome(uid, dISO)) { couverts++; return; }
+    const abs = absStatus(uid, dISO);
+    if (abs) { couverts++; return; }
+    const k = ovKey(uid);
+    if (STATE.slotOverrides[`${k}-${dISO}`] || STATE.scheduleOverrides[`${k}-${dk}`]) { jours++; mins += (getSlot(uid, dk, dISO).mins || 0); }
+  });
+  return { mins, jours, couverts };
+}
+// Collaborateurs actifs (contrat > 0) sans aucune minute planifiée sur la semaine « off »
+function sansHoraire(off){
+  const w = iso(monday(off));
+  return sidsAt(w).filter(u => (BASE_SCHEDULE[u] && BASE_SCHEDULE[u].h > 0) && (() => { const r = saisieSemaine(u, off); return r.mins === 0 && r.couverts < 6; })());
+}
+const SAISIE_HORIZON = 4; // semaines à venir contrôlées en plus de la semaine affichée
+function renderAlerteSaisie(){
+  const el = document.getElementById('alerte-saisie');
+  if (!el) return;
+  if (!peutGererPlanning(cur) || woff < 0) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  const lignes = [];
+  const lien = (off, txt) => `<a href="#" onclick="window.allerSaisir(${off});return false" style="color:var(--rd);font-weight:600;text-decoration:underline">${txt}</a>`;
+  const ici = sansHoraire(woff);
+  if (ici.length) lignes.push(`<b>⚠ Aucun horaire saisi cette semaine</b> pour ${ici.map(nomCourt).join(', ')} — ${editMode ? 'cliquez sur leurs cases pour saisir' : lien(woff, '✎ Saisir maintenant')}`);
+  // Semaines suivantes : signalées seulement si le planning de la semaine est commencé pour d'autres (oubli probable)
+  for (let off = Math.max(woff, 0) + 1; off <= Math.max(woff, 0) + SAISIE_HORIZON; off++) {
+    const manq = sansHoraire(off);
+    const equipe = sidsAt(iso(monday(off))).filter(u => BASE_SCHEDULE[u] && BASE_SCHEDULE[u].h > 0);
+    if (!manq.length || manq.length === equipe.length) continue;
+    const m = monday(off);
+    lignes.push(`S${wknum(m)} (semaine du ${fmt(m)}) : ${manq.map(nomCourt).join(', ')} — ${lien(off, 'aller à cette semaine')}`);
+  }
+  el.innerHTML = lignes.length ? lignes.map(l => `<div style="margin:2px 0">${l}</div>`).join('') : '';
+  el.style.cssText = lignes.length ? 'display:block;background:var(--rd-l);border:1px solid var(--rd-b);color:var(--rd);border-radius:var(--r);padding:8px 12px;margin:0 0 8px;font-size:12px;line-height:1.5' : 'display:none';
+}
+window.allerSaisir = function(off){
+  if (!peutGererPlanning(cur)) return;
+  woff = off;
+  if (!editMode) toggleEdit(); else renderPlanning();
+  const t = document.getElementById('pbody'); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
 function slotHTMLBase(uid,dayKey,dateISO,abs){
   if(abs==='approved')return'<div class="sl sa">Absence</div>';
   if(abs==='pending') return'<div class="sl sv">Abs. (att.)</div>';
@@ -1962,6 +2109,11 @@ function slotHTMLBase(uid,dayKey,dateISO,abs){
     return'<div class="sl so" style="color:var(--t3);font-style:italic;font-size:10px">—</div>';
 
   const s=getSlot(uid,dayKey,dateISO);
+  if(estTravaille(s) && magSlot(uid,s,dateISO)!==curMag){
+    const autre=(MAGASIN_LBL[magSlot(uid,s,dateISO)]||'autre magasin').replace('Easy Cash ','');
+    const h=[s.mat,s.apm].filter(Boolean).join(' · ')||s.detail||'';
+    return`<div class="sl so" style="font-size:9px;color:var(--bl);border-style:dashed">📍 à ${autre}</div><div class="pause-tag">${h}</div><div class="pause-tag" style="color:var(--t3)">${mh(s.mins||0)} · hors ce magasin</div>`;
+  }
   const note=(s.note?`<div class="pause-tag" style="color:var(--bl)">${s.note}</div>`:'')
     +(s.horsObjMins?`<div class="pause-tag" style="color:var(--am);font-weight:600">🎓 ${mh(s.horsObjMins)} ${s.horsObjLabel||''} · hors obj.</div>`:'');
 
@@ -1981,6 +2133,7 @@ function slotHTMLBase(uid,dayKey,dateISO,abs){
     case'mat': return`<div class="prep-tag">▸ ${s.prep} prépa</div><div class="sl sw">${s.mat}</div>${note}`;
     case'form':return`<div class="sl sf">Formation (${mh(s.mins||minsFormation(uid))} · 1/5 contrat)</div><div class="pause-tag">${s.detail||''}</div><div class="pause-tag" style="color:var(--am)">contrat ✓ · hors objectifs</div>`;
     case'off': return`<div class="sl so">Repos</div>`;
+    case'work':return`<div class="sl sw">${(s.start||'')}${s.end?'–'+s.end:''}</div>${note}`;
     default:   return'';
   }
 }
@@ -1991,6 +2144,7 @@ function slotHTMLBase(uid,dayKey,dateISO,abs){
 function renderAll(){renderPlanning();renderMyAbs();}
 
 function renderPlanning(){
+  scopeSemaine(woff); // équipe du magasin pour la semaine affichée (affectations datées)
   const mon=monday(woff);
   const dates=DAYS.map((_,i)=>{const d=new Date(mon);d.setDate(mon.getDate()+i);return d;});
   const wk=monKey(woff);
@@ -2079,6 +2233,7 @@ function renderPlanning(){
 
   // Lignes salariés
   const cnt=[0,0,0,0,0,0];
+  const sansSaisie = (isAdm && woff >= 0) ? sansHoraire(woff) : [];
   SIDS.forEach(uid=>{
     const u=USERS[uid];
     const ini=u.name.split(' ').map(w=>w[0]).join('').slice(0,2);
@@ -2087,12 +2242,13 @@ function renderPlanning(){
       <div class="av" style="background:${u.bg};color:${u.ct}">${ini}</div>
       <div><div class="pname">${u.short}</div><div class="prole">${u.role.split('·')[0].trim()}</div>
       ${signed?`<div class="psigned">✓ Signé</div>`:''}
+      ${sansSaisie.includes(uid)?`<div style="font-size:9px;font-weight:600;color:var(--rd);cursor:pointer" title="Aucun horaire saisi cette semaine" onclick="window.allerSaisir(${woff})">⚠ aucun horaire saisi</div>`:''}
       </div></div>`;
     DAYS.forEach((d,i)=>{
       const dISO=iso(dates[i]);
       const abs=absStatus(uid,dISO);
       const slot=getSlot(uid,d,dISO);
-      const here=!abs&&abs!=='repos_echange'&&!isFerieChome(uid,dISO)&&(slot.type==='full'||slot.type==='apm'||slot.type==='sat'||slot.type==='mat');
+      const here=!abs&&abs!=='repos_echange'&&!isFerieChome(uid,dISO)&&(slot.type==='full'||slot.type==='apm'||slot.type==='sat'||slot.type==='mat')&&magSlot(uid,slot,dISO)===curMag;
       if(here)cnt[i]++;
       const ec=(editMode&&isAdm)?` editable" onclick="window.openModal('${uid}','${d}'`:'';
       const dupBtn=(editMode&&isAdm&&!magasinFerme(dISO))?`<button onclick="event.stopPropagation();window.openDupDay('${uid}','${d}','${dISO}')" style="position:absolute;top:2px;right:2px;background:var(--am-l);border:1px solid var(--am-b);color:var(--am);border-radius:3px;font-size:9px;padding:1px 4px;cursor:pointer;z-index:2" title="Dupliquer ce jour">⧉</button>`:'';
@@ -2117,6 +2273,7 @@ function renderPlanning(){
 
   if(isAdm)bH+=`<div class="sstrip"><span style="font-size:11px;color:var(--t3)">${isAdmin(cur)?'Vue directeur':'Gestion du planning'} — toutes semaines accessibles</span></div>`;
   document.getElementById('pbody').innerHTML=bH;
+  renderAlerteSaisie();
 
   // Totaux
   let tH='<div class="ptc">Présents</div>';
@@ -2186,6 +2343,7 @@ function cwSig(dir){
 }
 
 function renderSigPage(){
+  scopeSemaine(sigOff);
   const mon=monday(sigOff);
   const wk=monKey(sigOff);
   document.getElementById('sig-week-label').textContent=`Semaine du ${fmt(mon)} au ${fmt(new Date(mon.getTime()+5*864e5))} (S${wknum(mon)})`;
@@ -2444,7 +2602,7 @@ function salariesDecompte(){
   const S=getSoldes();
   // Allan figure dans le tableau de Berck ; on ajoute toute personne ayant un solde saisi dans ce magasin
   const out = (curMag==='berck' ? ['allan'] : []).concat(ids.filter(u=>u!=='allan'));
-  Object.keys(S.vals).forEach(u=>{ if(!out.includes(u) && (u==='allan'?curMag==='berck':userMagasin(u)===curMag)) out.push(u); });
+  Object.keys(S.vals).forEach(u=>{ if(!out.includes(u) && (u==='allan'?curMag==='berck':userMagasin(u, isoAuj())===curMag)) out.push(u); });
   return out;
 }
 function celluleReste(d){
@@ -2836,16 +2994,17 @@ function openModal(uid,dayKey){
       allanUI.id='allan-checkboxes';
       document.getElementById('m-type').parentElement.after(allanUI);
     }
-    const isMat=s.type!=='off'&&s.type!=='apm';
-    const isApm=s.type!=='off'&&s.type!=='mat';
+    // Magasin de chaque demi-journée (le magasin affiché en priorité, sinon l'autre)
+    const ordre=[curMag,...MAGASINS.filter(m=>m!==curMag)];
+    const ouMat=ordre.find(m=>allanMat(slotAllanMag(m,dayKey,dateISO)))||'';
+    const ouApm=ordre.find(m=>allanApm(slotAllanMag(m,dayKey,dateISO)))||'';
+    const sel=(id,val)=>`<select id="${id}" style="flex:1;padding:6px 8px;border:1px solid var(--bm);border-radius:var(--r);font-size:13px;font-family:'IBM Plex Sans',sans-serif">
+        <option value="" ${val===''?'selected':''}>Absent</option>
+        ${MAGASINS.map(m=>`<option value="${m}" ${val===m?'selected':''}>${MAGASIN_LBL[m]}</option>`).join('')}</select>`;
     allanUI.innerHTML=`
-      <div style="margin-bottom:8px;font-size:11px;font-weight:500;color:var(--t2)">Présence ce jour</div>
-      <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;font-size:13px">
-        <input type="checkbox" id="chk-mat" ${isMat?'checked':''} style="width:16px;height:16px"> Matin
-      </label>
-      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
-        <input type="checkbox" id="chk-apm" ${isApm?'checked':''} style="width:16px;height:16px"> Après-midi
-      </label>`;
+      <div style="margin-bottom:8px;font-size:11px;font-weight:500;color:var(--t2)">Présence ce jour — magasin de chaque demi-journée</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px"><span style="width:90px">Matin</span>${sel('sel-mat',ouMat)}</div>
+      <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="width:90px">Après-midi</span>${sel('sel-apm',ouApm)}</div>`;
     allanUI.style.display='block';
     document.getElementById('modal').style.display='flex';
     return;
@@ -2855,6 +3014,9 @@ function openModal(uid,dayKey){
   const allanUI=document.getElementById('allan-checkboxes');
   if(allanUI) allanUI.style.display='none';
   document.getElementById('m-type').value=s.type||'off';
+  { const mm=document.getElementById('m-mag'); if(mm){
+      const saisi=STATE.slotOverrides[`${ovKey(uid)}-${dateISO}`]||STATE.scheduleOverrides[`${ovKey(uid)}-${dayKey}`];
+      mm.value = saisi ? magSlot(uid,s,dateISO) : curMag; } }
   const hoInp=document.getElementById('m-horsobj'), hoLbl=document.getElementById('m-horsobj-lbl');
   if(hoInp) hoInp.value=s.horsObjMins?(s.horsObjMins/60):'';
   if(hoLbl) hoLbl.value=s.horsObjLabel||'';
@@ -2886,6 +3048,7 @@ function slotMinsFromInputs(){
 function onTypeChange(){
   const type=document.getElementById('m-type').value;
   const show=type!=='off';
+  { const r=document.getElementById('m-mag-row'); if(r) r.style.display=(show && !(modalCtx && BASE_SCHEDULE[modalCtx.uid].h===0))?'block':'none'; }
   document.getElementById('m-times').style.display=show?'block':'none';
   document.getElementById('mpreview').style.display=show?'flex':'none';
   const hoRow=document.getElementById('m-horsobj-row'); if(hoRow) hoRow.style.display=(show&&type!=='form')?'block':'none';
@@ -2927,14 +3090,12 @@ function saveSlot(){
   const type=document.getElementById('m-type').value;
   let newSlot;
 
-  // Allan (forfait jours) : lire les checkboxes
+  // Allan (forfait jours) : un magasin par demi-journée → une présence par magasin (clés allan-… / allan@abbeville-…)
   if(BASE_SCHEDULE[uid].h===0){
-    const mat=document.getElementById('chk-mat')?.checked;
-    const apm=document.getElementById('chk-apm')?.checked;
-    if(mat&&apm)       newSlot={type:'dir', mat:'Matin',apm:'APM',mins:0};
-    else if(mat&&!apm) newSlot={type:'mat', mat:'Matin',apm:null, mins:0};
-    else if(!mat&&apm) newSlot={type:'apm', mat:null,   apm:'APM',mins:0};
-    else               newSlot={type:'off', mins:0};
+    const ouMat=(document.getElementById('sel-mat')||{}).value||'';
+    const ouApm=(document.getElementById('sel-apm')||{}).value||'';
+    MAGASINS.forEach(m=>{ STATE.slotOverrides[`${cleAllan(m)}-${dateISO}`]=slotAllanDemi(ouMat===m, ouApm===m); });
+    newSlot=null;
   } else {
     const slotM=slotMinsFromInputs();
     const ms=document.getElementById('m-mat-s').value,me=document.getElementById('m-mat-e').value;
@@ -2956,10 +3117,12 @@ function saveSlot(){
         newSlot.horsObjLabel=((document.getElementById('m-horsobj-lbl')||{}).value||'').trim()||'Hors objectifs';
       }
     }
+    if(newSlot.type!=='off') newSlot.mag=(document.getElementById('m-mag')||{}).value||curMag;
   }
 
-  // Sauvegarder par DATE EXACTE dans slotOverrides
-  STATE.slotOverrides[`${ovKey(uid)}-${dateISO}`]=newSlot;
+  // Sauvegarder par DATE EXACTE dans slotOverrides (Allan : déjà fait pour chaque magasin)
+  if(newSlot) STATE.slotOverrides[`${ovKey(uid)}-${dateISO}`]=newSlot;
+  else newSlot=getSlot(uid,dayKey,dateISO);
   const wk=monKey(woff);
   if(STATE.signatures[`${uid}-${wk}`]) delete STATE.signatures[`${uid}-${wk}`];
   const dayLabel=DLBL[DAYS.indexOf(dayKey)];
@@ -3122,6 +3285,7 @@ function renderObjectifs(){
   const semRef = iso(monday(woff));
   const EQ = idsEquipeObj(semRef);   // collaborateurs avec objectif (selon la semaine affichée)
   const HO = idsHorsObj(semRef);     // collaborateurs hors objectifs
+  scopeSemaine(woff);
   const mon = monday(woff);
   const dates = DAYS.map((_,i)=>{ const d=new Date(mon); d.setDate(mon.getDate()+i); return d; });
   document.getElementById('marge-week-label').textContent = `S${wknum(mon)} — ${fmt(mon)} au ${fmt(dates[5])}`;
@@ -3143,7 +3307,7 @@ function renderObjectifs(){
       const slot = getSlot(uid, dayKey, dISO);
       const isVierge = dISO >= VIERGE_FROM && !STATE.slotOverrides[`${ovKey(uid)}-${dISO}`] && !STATE.scheduleOverrides[`${ovKey(uid)}-${dayKey}`];
       const present = !isVierge && absS !== 'approved' && slot && slot.type !== 'off' && slot.type !== 'cp' && slot.type !== 'am';
-      return total + (present ? objMins(slot) / 60 : 0);
+      return total + (present ? objMins(slot, uid, dISO) / 60 : 0);
     }, 0);
   }
 
@@ -3205,11 +3369,11 @@ function renderObjectifs(){
         const a2 = absStatus(u2, dISO);
         const iv2 = dISO >= VIERGE_FROM && !STATE.slotOverrides[`${u2}-${dISO}`] && !STATE.scheduleOverrides[`${u2}-${dayKey}`];
         const p2 = !iv2 && a2 !== 'approved' && s2 && s2.type !== 'off' && s2.type !== 'cp' && s2.type !== 'am';
-        const mins2 = p2 ? objMins(s2) / 60 : 0;
+        const mins2 = p2 ? objMins(s2, u2, dISO) / 60 : 0;
         return acc + mins2 * (weekCoef(u2) / 100);
       }, 0);
 
-      const hJour = present ? objMins(slot) / 60 : 0;
+      const hJour = present ? objMins(slot, uid, dISO) / 60 : 0;
       if(!present || pct === 0 || hJour === 0) {
         const why = present && hJour === 0 ? '<div style="font-size:8px;color:var(--am)">hors obj.</div>' : '';
         return `<td style="text-align:center;color:var(--t3);font-size:10px">—${why}</td>`;
@@ -3690,12 +3854,14 @@ function renderCollabMgr(){
   el.innerHTML=collabs.map(c=>{
     const signed=STATE.signatures[`${c.id}-${wk}`];
     const ini=(c.short||c.nom).substring(0,2).toUpperCase();
-    return `<div style="display:grid;grid-template-columns:30px 1fr auto auto auto;align-items:center;gap:10px;padding:10px 12px;background:var(--sf);border:1px solid var(--b);border-radius:var(--r);margin-bottom:6px">
+    const visCases = c.id==='allan' ? '<div></div>' : `<div style="display:flex;gap:8px;align-items:center;font-size:11px;color:var(--t2)" title="Planning(s) dans lesquels ce collaborateur apparaît">👁 ${MAGASINS.map(m=>`<label style="display:flex;align-items:center;gap:3px;cursor:pointer;margin:0"><input type="checkbox" ${visibleDans(c.id,m,isoAuj())?'checked':''} onchange="window.toggleVisible('${c.id}','${m}',this.checked)">${(MAGASIN_LBL[m]||m).replace('Easy Cash ','')}</label>`).join('')}${MAGASIN_DEPUIS[c.id]?`<span style="font-size:10px;color:var(--bl)">(${(MAGASIN_LBL[MAGASIN_DEPUIS[c.id].mag]||'').replace('Easy Cash ','')} dès le ${MAGASIN_DEPUIS[c.id].date.split('-').reverse().slice(0,2).join('/')})</span>`:''}</div>`;
+    return `<div style="display:grid;grid-template-columns:30px 1fr auto auto auto auto;align-items:center;gap:10px;padding:10px 12px;background:var(--sf);border:1px solid var(--b);border-radius:var(--r);margin-bottom:6px">
       <div class="av" style="width:30px;height:30px;font-size:10px;background:${c.bg||'#EEE'};color:${c.ct||'#333'};border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600">${ini}</div>
       <div>
         <div style="font-weight:500;font-size:12px">${c.nom}${c.admin?'<span style="font-size:9px;background:var(--bl-l);color:var(--bl);border:1px solid var(--bl-b);padding:1px 6px;border-radius:10px;margin-left:6px">Admin</span>':''}${c.id!=='allan'&&estHorsObjectifs(c.id)?'<span style="font-size:9px;background:var(--s3);color:var(--vl);border:1px solid var(--bm);padding:1px 6px;border-radius:10px;margin-left:6px">Hors objectifs</span>':''}</div>
         <div style="font-size:10px;color:var(--t3)">${c.role||''} · ${c.h===0?'Forfait jours':c.h+'h/sem'} · PIN: ${c.pin} · 🏬 ${c.id==='allan'?'Tous':(MAGASIN_LBL[c.magasin||USERS[c.id]?.magasin||'berck']||'').replace('Easy Cash ','')}${(c.magasins_acces||USERS[c.id]?.magasins_acces||[]).length?' (+ accès '+(c.magasins_acces||USERS[c.id]?.magasins_acces).map(m=>(MAGASIN_LBL[m]||m).replace('Easy Cash ','')).join(', ')+')':''}</div>
       </div>
+      ${visCases}
       <div style="font-size:10px;color:${signed?'var(--gn)':'var(--t3)'}">${signed?'✓ Signé':'Non signé'}</div>
       <button onclick="window.openCollabModal('edit','${c.id}')" style="background:var(--s2);border:1px solid var(--b);padding:4px 10px;border-radius:var(--r);font-size:11px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif">✏️ Modifier</button>
       ${!c.admin?`<button onclick="window.openDelCollab('${c.id}','${c.nom}')" style="background:var(--rd-l);border:1px solid var(--rd-b);color:var(--rd);padding:4px 10px;border-radius:var(--r);font-size:11px;cursor:pointer;font-family:'IBM Plex Sans',sans-serif">🗑</button>`:'<div></div>'}
@@ -3726,6 +3892,7 @@ function openCollabModal(mode, id){
     document.getElementById('cm-hors-obj').checked=estHorsObjectifs(id);
     { const g=document.getElementById('cm-gere-planning'); if(g) g.checked = typeof c.gerePlanning==='boolean' ? c.gerePlanning : GERE_PLANNING_DEFAUT.includes(id); }
     ['berck','abbeville'].forEach(m=>{const e=document.getElementById('cm-renfort-'+m); if(e) e.checked=estRenfort(id,m);});
+    MAGASINS.forEach(m=>{const e=document.getElementById('cm-vis-'+m); if(e) e.checked=visibleDans(id,m,isoAuj());});
   } else {
     ['cm-nom','cm-poste','cm-pin','cm-email'].forEach(i=>document.getElementById(i).value='');
     document.getElementById('cm-h').value='35';
@@ -3736,6 +3903,7 @@ function openCollabModal(mode, id){
     document.getElementById('cm-hors-obj').checked=false;
     { const g=document.getElementById('cm-gere-planning'); if(g) g.checked=false; }
     ['berck','abbeville'].forEach(m=>{const e=document.getElementById('cm-renfort-'+m); if(e) e.checked=false;});
+    MAGASINS.forEach(m=>{const e=document.getElementById('cm-vis-'+m); if(e) e.checked=(m===curMag);});
     const adm=document.getElementById('cm-admin'); if(adm) adm.checked=false;
   }
   document.getElementById('modal-collab').style.display='flex';
@@ -3775,6 +3943,7 @@ async function saveCollab(){
     horsObjectifs: !!document.getElementById('cm-hors-obj')?.checked,
     gerePlanning: !!document.getElementById('cm-gere-planning')?.checked,
     renfortMags: ['berck','abbeville'].filter(m=>document.getElementById('cm-renfort-'+m)?.checked && m!==document.getElementById('cm-magasin').value),
+    magVisibles: MAGASINS.filter(m=>document.getElementById('cm-vis-'+m)?.checked),
   };
   if(collabEditId==='allan') data.magasin='all';
 
@@ -3800,6 +3969,22 @@ async function saveCollab(){
   syncCollabsFromState();
   toast(collabEditId?'✓ Collaborateur modifié':'✓ Nouveau collaborateur ajouté');
 }
+
+// Case « Visible dans » de la liste Équipe & PIN : enregistrée tout de suite dans la fiche (collab.magVisibles)
+window.toggleVisible = async function(id, mag, on){
+  if(!isAdmin(cur)) return;
+  const cl = getActiveCollabs().map(c => ({...c}));
+  const c = cl.find(x => x.id === id); if(!c) return;
+  const vis = new Set(MAGASINS.filter(m => visibleDans(id, m, isoAuj())));
+  if(on) vis.add(mag); else vis.delete(mag);
+  if(!vis.size){ toast('⚠ Au moins un magasin doit rester coché'); renderCollabMgr(); return; }
+  c.magVisibles = MAGASINS.filter(m => vis.has(m));
+  STATE.collabs = cl;
+  applyMagasinScope();
+  await saveState();
+  renderCollabMgr();
+  toast(`✓ ${c.short || c.nom} : visible à ${c.magVisibles.map(m => (MAGASIN_LBL[m]||m).replace('Easy Cash ','')).join(' + ')}`);
+};
 
 function openDelCollab(id, nom){
   collabDelId=id;
@@ -4153,7 +4338,7 @@ function etatTache(t){
   return e && e < iso(new Date()) ? 'retard' : 'a_faire';
 }
 const ETAT_LBL = { a_faire: ['À faire', 'tp-gy'], retard: ['En retard', 'tp-rd'], a_controler: ['Faite · à contrôler', 'tp-am'], controlee: ['Contrôlée', 'tp-gn'] };
-function magTache(t){ const m = userMagasin(t.uid); return m === 'all' ? 'tous' : m; }
+function magTache(t){ const m = userMagasin(t.uid, isoAuj()); return m === 'all' ? 'tous' : m; }
 window.setGererFiltre = function(k, v){ gererFiltres[k] = v; renderAdminTaches(); };
 function renderAdminTaches() {
   const el = document.getElementById('admin-taches-list');
@@ -4219,7 +4404,10 @@ function collabsDuMagasin() {
   if (typeof syncCollabsFromState === 'function') syncCollabsFromState();
   const ids = new Set(SIDS);
   Object.keys(USERS).forEach(u => {
-    if (u !== 'allan' && USERS[u] && USERS[u].active !== false && userMagasin(u) === curMag) ids.add(u);
+    if (u !== 'allan' && USERS[u] && USERS[u].active !== false && userMagasin(u, isoAuj()) === curMag) ids.add(u);
+    // affectation datée à venir vers ce magasin (ex. Anthony → Abbeville) : déjà assignable
+    if (MAGASIN_DEPUIS[u] && MAGASIN_DEPUIS[u].mag === curMag && USERS[u] && USERS[u].active !== false) ids.add(u);
+    if (u !== 'allan' && USERS[u] && USERS[u].active !== false && magVisiblesFiche(u) && magVisiblesFiche(u).includes(curMag)) ids.add(u);
   });
   (STATE.collabs || []).forEach(c => {
     if (c.id && c.id !== 'allan' && c.active !== false && (c.magasin || USERS[c.id]?.magasin || 'berck') === curMag) ids.add(c.id);
@@ -5023,7 +5211,11 @@ function renderMonthlyPerf() {
 
   // Pour chaque mois, calculer réalisé et objectif par collaborateur
   // Lignes : collaborateurs soumis aux objectifs au moins un jour sur la période affichée
-  const lignesPerf = SIDS.filter(u => u !== 'allan' && Object.keys(margeData).some(d => !estHorsObjectifs(u, d)));
+  const lignesPerf = (() => {
+    const set = new Set();
+    Object.keys(margeData).forEach(d => sidsAt(d).forEach(u => { if (u !== 'allan' && !estHorsObjectifs(u, d)) set.add(u); }));
+    return [...set];
+  })();
   function getMonthData(monthKey) {
     const [yr, mo] = monthKey.split('-').map(Number);
     // Jours écoulés seulement (le mois en cours est comparé « à date », comme le Total magasin et les primes)
@@ -5042,6 +5234,7 @@ function renderMonthlyPerf() {
       const weeksSeen = new Set();
       daysAll.forEach(dISO => {
         if (estHorsObjectifs(uid, dISO)) return; // pas encore soumis aux objectifs ce jour-là
+        if (!sidsAt(dISO).includes(uid)) return;  // pas dans l'équipe du magasin ce jour-là (ex. Anthony à Abbeville)
         const ecoule = dISO < aujISO;
         const d2 = new Date(dISO);
         const dow = d2.getDay()===0?6:d2.getDay()-1;
@@ -5077,7 +5270,7 @@ function renderMonthlyPerf() {
         const real = vendeurData[dISO+'|'+uid];
         if(real!==undefined && ecoule) realTotal += real;
       });
-      result[uid] = {obj: Math.round(objTotal), objFull: Math.round(objFull), real: Math.round(realTotal), hasData: daysInMonth.some(d=>!estHorsObjectifs(uid, d) && vendeurData[d+'|'+uid]!==undefined)};
+      result[uid] = {obj: Math.round(objTotal), objFull: Math.round(objFull), real: Math.round(realTotal), hasData: daysInMonth.some(d=>!estHorsObjectifs(uid, d) && sidsAt(d).includes(uid) && vendeurData[d+'|'+uid]!==undefined)};
     });
     // Total équipe
     const objTeam = Object.values(result).reduce((s,v)=>s+v.obj,0);
@@ -5191,6 +5384,7 @@ function perfMagasinMois(monthKey){
 function perfIndivMois(uid, monthKey){
   let obj = 0, real = 0;
   joursDuMois(monthKey, true).forEach(dISO => {
+    if (!sidsAt(dISO).includes(uid)) return; // jour où il n'est pas dans l'équipe du magasin
     const d2 = new Date(dISO + 'T12:00:00');
     const dow = d2.getDay() === 0 ? 6 : d2.getDay() - 1;
     const mon2 = new Date(d2); mon2.setDate(d2.getDate() - dow);
@@ -5242,7 +5436,7 @@ function renderPrimes(){
   const libMois = new Date(primeMois + '-01T12:00:00').toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
   const enCours = primeMois === moisCourant;
   const voirTout = isAdmin(cur); // direction (Allan, Anthony, Cathy…) : toutes les cases, saisie des gels
-  const ids = SIDS.filter(u => u !== 'allan' && (voirTout || u === cur));
+  const ids = membresMois(primeMois).filter(u => u !== 'allan' && (voirTout || u === cur));
   const mag = perfMagasinMois(primeMois);
   const pal = palierPrime(mag.pct);
 
@@ -5307,7 +5501,7 @@ window.exporterPrimesImpression = function(){
   const moisCourant = iso(new Date()).slice(0, 7);
   const enCours = primeMois === moisCourant;
   const hier = (() => { const h = new Date(); h.setDate(h.getDate() - 1); return h.toLocaleDateString('fr-FR'); })();
-  const ids = SIDS.filter(u => u !== 'allan');
+  const ids = membresMois(primeMois).filter(u => u !== 'allan');
   const mag = perfMagasinMois(primeMois);
   const pal = palierPrime(mag.pct);
   const coefTxt = c => c.toFixed(2).replace('.', ',');
@@ -5407,7 +5601,7 @@ window.exporterPrimesPDF = async function(){
   const libMoisMaj = libMois.charAt(0).toUpperCase() + libMois.slice(1);
   const enCours = primeMois === iso(new Date()).slice(0, 7);
   const hier = (() => { const h = new Date(); h.setDate(h.getDate() - 1); return h.toLocaleDateString('fr-FR'); })();
-  const ids = SIDS.filter(u => u !== 'allan');
+  const ids = membresMois(primeMois).filter(u => u !== 'allan');
   const mag = perfMagasinMois(primeMois);
   const pal = palierPrime(mag.pct);
   const cf = c => c.toFixed(2).replace('.', ',');
